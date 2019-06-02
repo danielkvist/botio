@@ -29,29 +29,24 @@ func main() {
 		log.Fatalf("while connecting to the database: %v", err)
 	}
 
-	commands, err := db.GetAll(collection)
-	if err != nil {
-		log.Fatalf("while getting commands: %v", err)
-	}
+	bot.HandleMessage(".", func(m *tbot.Message) {
+		log.Printf("%v: %s", m.Chat.ID, m.Text)
 
-	actions := make(map[string]string, len(commands))
-	for _, cmd := range commands {
-		actions[cmd.Cmd] = cmd.Response
-	}
-
-	bot.HandleMessage("/.", func(m *tbot.Message) {
-		log.Print(m.Chat.ID, m.Text)
-
+		resp := make(chan string)
 		req := strings.TrimPrefix(m.Text, "/")
 		c.SendChatAction(m.Chat.ID, tbot.ActionTyping)
 
-		resp, ok := actions[req]
-		if !ok {
-			c.SendMessage(m.Chat.ID, " I'm sorry. I didn't understand you. Bzz")
-		}
+		go func() {
+			cmd, err := db.Get(collection, req)
+			if err != nil || cmd.Response == "" {
+				resp <- " I'm sorry. I didn't understand you. Bzz"
+			}
+
+			resp <- cmd.Response
+		}()
 
 		time.Sleep(1 * time.Second)
-		c.SendMessage(m.Chat.ID, resp)
+		c.SendMessage(m.Chat.ID, <-resp)
 	})
 
 	log.Fatal(bot.Start())
