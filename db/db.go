@@ -9,28 +9,36 @@ import (
 	bolt "go.etcd.io/bbolt"
 )
 
-type DB struct {
+type Bolter interface {
+	Set(col string, el string, val string) (*models.Command, error)
+	Get(col string, el string) (*models.Command, error)
+	GetAll(col string) ([]*models.Command, error)
+	Remove(col string, el string) error
+	Update(col string, el string, val string) (*models.Command, error)
+}
+
+type BDB struct {
 	db *bolt.DB
 }
 
-func Open(path string) (*DB, error) {
+func Open(path string) (*BDB, error) {
 	db, err := bolt.Open(path, 0600, &bolt.Options{Timeout: 2 * time.Second})
 	if err != nil {
 		return nil, fmt.Errorf("while opening to DB on %q: %v", path, err)
 	}
 
-	return &DB{db}, nil
+	return &BDB{db}, nil
 }
 
-func (db *DB) Set(collection string, element string, value string) (*models.Command, error) {
-	err := db.db.Update(func(tx *bolt.Tx) error {
-		bucket := []byte(collection)
+func (bdb *BDB) Set(col string, el string, val string) (*models.Command, error) {
+	err := bdb.db.Update(func(tx *bolt.Tx) error {
+		bucket := []byte(col)
 		if _, err := tx.CreateBucketIfNotExists(bucket); err != nil {
 			return err
 		}
 
 		b := tx.Bucket(bucket)
-		return b.Put([]byte(element), []byte(value))
+		return b.Put([]byte(el), []byte(val))
 	})
 
 	if err != nil {
@@ -38,18 +46,18 @@ func (db *DB) Set(collection string, element string, value string) (*models.Comm
 	}
 
 	command := &models.Command{
-		Cmd:      element,
-		Response: value,
+		Cmd:      el,
+		Response: val,
 	}
 
 	return command, nil
 }
 
-func (db *DB) Get(collection string, element string) (*models.Command, error) {
+func (bdb *BDB) Get(col string, el string) (*models.Command, error) {
 	var val []byte
-	err := db.db.View(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte(collection))
-		val = bucket.Get([]byte(element))
+	err := bdb.db.View(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket([]byte(col))
+		val = bucket.Get([]byte(el))
 		return nil
 	})
 
@@ -58,17 +66,17 @@ func (db *DB) Get(collection string, element string) (*models.Command, error) {
 	}
 
 	command := &models.Command{
-		Cmd:      element,
+		Cmd:      el,
 		Response: string(val),
 	}
 
 	return command, nil
 }
 
-func (db *DB) GetAll(collection string) ([]*models.Command, error) {
+func (bdb *BDB) GetAll(col string) ([]*models.Command, error) {
 	var commands []*models.Command
-	err := db.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(collection))
+	err := bdb.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(col))
 		c := b.Cursor()
 
 		for k, v := c.First(); k != nil; k, v = c.Next() {
@@ -84,13 +92,13 @@ func (db *DB) GetAll(collection string) ([]*models.Command, error) {
 	return commands, err
 }
 
-func (db *DB) Remove(collection string, element string) error {
-	return db.db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(collection))
-		return b.Delete([]byte(element))
+func (bdb *BDB) Remove(col string, el string) error {
+	return bdb.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(col))
+		return b.Delete([]byte(el))
 	})
 }
 
-func (db *DB) Update(collection string, element string, value string) (*models.Command, error) {
-	return db.Set(collection, element, value)
+func (bdb *BDB) Update(col string, el string, val string) (*models.Command, error) {
+	return bdb.Set(col, el, val)
 }
