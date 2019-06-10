@@ -22,6 +22,8 @@ func main() {
 	database := os.Getenv("DATABASE")
 	collection := os.Getenv("COLLECTION")
 	listenAddr := os.Getenv("LISTEN_ADDRESS")
+	username := os.Getenv("API_USERNAME")
+	password := os.Getenv("API_PASSWORD")
 
 	bot := tbot.New(ttoken)
 	c := bot.Client()
@@ -61,7 +63,7 @@ func main() {
 	}()
 
 	go func() {
-		server := api.NewServer(bdb, listenAddr)
+		server := api.NewServer(bdb, listenAddr, username, password)
 		if err := server.ListenAndServe(); err != nil {
 			log.Printf("%v", err)
 			done <- struct{}{}

@@ -7,7 +7,7 @@ import (
 	"github.com/danielkvist/botio/db"
 )
 
-func NewServer(bolter db.Bolter, listenAddr string) *http.Server {
+func NewServer(bolter db.Bolter, listenAddr string, username string, password string) *http.Server {
 	routes := []*Route{
 		&Route{
 			Name:        "GET Commands",
@@ -44,9 +44,23 @@ func NewServer(bolter db.Bolter, listenAddr string) *http.Server {
 	r := NewRouter(routes)
 	return &http.Server{
 		Addr:         listenAddr,
-		Handler:      r,
+		Handler:      basicAuth(username, password, r),
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  120 * time.Second,
 	}
+}
+
+func basicAuth(username string, password string, h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user, pass, _ := r.BasicAuth()
+
+		if username != user || password != pass {
+			w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		h.ServeHTTP(w, r)
+	})
 }
