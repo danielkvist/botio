@@ -28,7 +28,7 @@ func main() {
 	bot := tbot.New(ttoken)
 	c := bot.Client()
 
-	bdb, err := db.Open(database)
+	bdb, err := db.Connect(database, collection)
 	if err != nil {
 		log.Fatalf("while connecting to the database: %v", err)
 	}
@@ -63,7 +63,7 @@ func main() {
 	}()
 
 	go func() {
-		server := api.NewServer(bdb, listenAddr, username, password)
+		server := api.NewServer(bdb, username, password, listenAddr)
 		if err := server.ListenAndServe(); err != nil {
 			log.Printf("%v", err)
 			done <- struct{}{}

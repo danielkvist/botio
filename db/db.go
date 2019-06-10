@@ -1,3 +1,4 @@
+// Package db exports a simple bolt.DB wrapper to manage bot commands.
 package db
 
 import (
@@ -17,14 +18,27 @@ type Bolter interface {
 	Update(col string, el string, val string) (*models.Command, error)
 }
 
+// BDB is a simple wrapper around a bolt.DB database.
 type BDB struct {
 	db *bolt.DB
 }
 
-func Open(path string) (*BDB, error) {
+func Connect(path string, col string) (*BDB, error) {
 	db, err := bolt.Open(path, 0600, &bolt.Options{Timeout: 2 * time.Second})
 	if err != nil {
 		return nil, fmt.Errorf("while opening to DB on %q: %v", path, err)
+	}
+
+	err = db.Update(func(tx *bolt.Tx) error {
+		bucket := []byte(col)
+		if _, err := tx.CreateBucketIfNotExists(bucket); err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("while initializing collection %q on database %q: %v", col, path, err)
 	}
 
 	return &BDB{db}, nil
@@ -32,12 +46,7 @@ func Open(path string) (*BDB, error) {
 
 func (bdb *BDB) Set(col string, el string, val string) (*models.Command, error) {
 	err := bdb.db.Update(func(tx *bolt.Tx) error {
-		bucket := []byte(col)
-		if _, err := tx.CreateBucketIfNotExists(bucket); err != nil {
-			return err
-		}
-
-		b := tx.Bucket(bucket)
+		b := tx.Bucket([]byte(col))
 		return b.Put([]byte(el), []byte(val))
 	})
 
