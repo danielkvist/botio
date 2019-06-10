@@ -22,8 +22,7 @@ func Get(bolter db.Bolter, col string) func(w http.ResponseWriter, r *http.Reque
 
 		result, err := bolter.Get(col, command)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("error while getting command %q from the database", command)))
+			http.Error(w, fmt.Sprintf("error while getting command %q from the database", command), http.StatusInternalServerError)
 			log.Printf("while getting command %q from collection %q: %v", command, col, err)
 			return
 		}
@@ -42,8 +41,7 @@ func GetAll(bolter db.Bolter, col string) func(w http.ResponseWriter, r *http.Re
 
 		commands, err := bolter.GetAll(col)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("error while getting all items in collection %q", col)))
+			http.Error(w, fmt.Sprintf("error while getting all items in collection %q", col), http.StatusInternalServerError)
 			log.Printf("while getting all commands from %q: %v", col, err)
 			return
 		}
@@ -61,15 +59,13 @@ func Post(bolter db.Bolter, col string) func(w http.ResponseWriter, r *http.Requ
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
 		if r.ContentLength == 0 {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("error bad request body"))
+			http.Error(w, "bad request body", http.StatusBadRequest)
 			return
 		}
 
 		body, err := ioutil.ReadAll(io.LimitReader(r.Body, 10240))
 		if err != nil {
-			w.WriteHeader(http.StatusRequestEntityTooLarge)
-			w.Write([]byte("error while reading your request body"))
+			http.Error(w, "error while reading request body", http.StatusRequestEntityTooLarge)
 			log.Printf("while reading request body: %v", err)
 			return
 		}
@@ -80,22 +76,19 @@ func Post(bolter db.Bolter, col string) func(w http.ResponseWriter, r *http.Requ
 
 		var cmd models.Command
 		if err := json.Unmarshal(body, &cmd); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("error while trying to unmarshal request body. entity not added to the database"))
+			http.Error(w, "error while trying to unmarshal request body. entity not added to the database", http.StatusInternalServerError)
 			log.Printf("while trying to unmarshal request body: %v", err)
 			return
 		}
 
 		if cmd.Cmd == "" || cmd.Response == "" {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("any field empty is not allowed"))
+			http.Error(w, "empty fields are not allowed", http.StatusBadRequest)
 			return
 		}
 
 		result, err := bolter.Set(col, cmd.Cmd, cmd.Response)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("error while trying to add command to the database"))
+			http.Error(w, "error while trying to add command to the database", http.StatusInternalServerError)
 			log.Printf("while trying to add command %q with response %q into collection %q: %v", cmd.Cmd, cmd.Response, col, err)
 			return
 		}
@@ -120,8 +113,7 @@ func Delete(bolter db.Bolter, col string) func(w http.ResponseWriter, r *http.Re
 		command := params["command"]
 
 		if err := bolter.Remove(col, command); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("error while removing command %q", command)))
+			http.Error(w, fmt.Sprintf("error while removing command %q", command), http.StatusInternalServerError)
 			log.Printf("while removing command %q from collection %q: %v", command, col, err)
 			return
 		}
