@@ -7,7 +7,8 @@ import (
 	"github.com/danielkvist/botio/db"
 )
 
-func NewServer(bolter db.Bolter, listenAddr string, username string, password string) *http.Server {
+// NewServer returns a new *http.Server with basic authentication.
+func NewServer(bolter db.Bolter, username string, password string, listenAddr string) *http.Server {
 	routes := []*Route{
 		&Route{
 			Name:        "GET Commands",
