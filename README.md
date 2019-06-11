@@ -18,8 +18,8 @@ Botio basically creates a BoltDB database if it does not exist in which all the 
 
 ## ToDo
 
-- [] Better logging.
-- [] Web Interface.
+- [ ] Better logging.
+- [ ] Web Interface.
 
 ## Installation
 
