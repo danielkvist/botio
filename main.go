@@ -63,7 +63,7 @@ func main() {
 	}()
 
 	go func() {
-		server := api.NewServer(bdb, username, password, listenAddr)
+		server := api.NewServer(bdb, collection, username, password, listenAddr)
 		if err := server.ListenAndServe(); err != nil {
 			log.Printf("%v", err)
 			done <- struct{}{}

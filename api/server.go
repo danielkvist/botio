@@ -10,43 +10,43 @@ import (
 
 // NewServer returns a new *http.Server with basic authentication and a
 // *mux.Router with all the routes set.
-func NewServer(bolter db.Bolter, username string, password string, listenAddr string) *http.Server {
+func NewServer(bolter db.Bolter, col string, username string, password string, listenAddr string) *http.Server {
 	routes := []*Route{
 		&Route{
 			Name:        "GET Commands",
 			Method:      http.MethodGet,
 			Pattern:     "/api/commands",
-			HandlerFunc: GetAll(bolter, "commands"),
+			HandlerFunc: GetAll(bolter, col),
 		},
 		&Route{
 			Name:        "GET Command",
 			Method:      http.MethodGet,
 			Pattern:     "/api/commands/{command}",
-			HandlerFunc: Get(bolter, "commands"),
+			HandlerFunc: Get(bolter, col),
 		},
 		&Route{
 			Name:        "POST Command",
 			Method:      http.MethodPost,
 			Pattern:     "/api/commands",
-			HandlerFunc: Post(bolter, "commands"),
+			HandlerFunc: Post(bolter, col),
 		},
 		&Route{
 			Name:        "PUT Command",
 			Method:      http.MethodPut,
 			Pattern:     "/api/commands",
-			HandlerFunc: Put(bolter, "commands"),
+			HandlerFunc: Put(bolter, col),
 		},
 		&Route{
 			Name:        "DELETE Command",
 			Method:      http.MethodDelete,
 			Pattern:     "/api/commands/{command}",
-			HandlerFunc: Delete(bolter, "commands"),
+			HandlerFunc: Delete(bolter, col),
 		},
 		&Route{
 			Name:        "Backup DB",
 			Method:      http.MethodGet,
 			Pattern:     "/api/backup",
-			HandlerFunc: Backup(bolter, ""),
+			HandlerFunc: Backup(bolter, col),
 		},
 	}
 
