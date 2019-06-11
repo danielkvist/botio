@@ -6,14 +6,20 @@
 
 Botio is a quick and easy way to create a simple and easy to update and maintain Telegram bot.
 
+## Example
+
+You can see an example [here](https://t.me/dkvist_bot).
+
+> P.S.: I'm looking for a job as a Junior Go Developer.
+
 ## How it works?
 
 Botio basically creates a BoltDB database if it does not exist in which all the commands and their responses for the Telegram bot will be stored. This database can be updated through a simple CRUD API that starts alongside the Telegram bot.
 
 ## ToDo
 
-- [X] Better logging.
-- [X] Web Interface.
+- [] Better logging.
+- [] Web Interface.
 
 ## Installation
 
