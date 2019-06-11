@@ -1,3 +1,4 @@
+// Package api provides a simple CRUD API to manipulate the bot database.
 package api
 
 import (
@@ -7,7 +8,8 @@ import (
 	"github.com/danielkvist/botio/db"
 )
 
-// NewServer returns a new *http.Server with basic authentication.
+// NewServer returns a new *http.Server with basic authentication and a
+// *mux.Router with all the routes set.
 func NewServer(bolter db.Bolter, username string, password string, listenAddr string) *http.Server {
 	routes := []*Route{
 		&Route{
