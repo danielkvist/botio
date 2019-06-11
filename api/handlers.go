@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/danielkvist/botio/db"
 	"github.com/danielkvist/botio/models"
@@ -119,5 +120,18 @@ func Delete(bolter db.Bolter, col string) func(w http.ResponseWriter, r *http.Re
 		}
 
 		w.WriteHeader(http.StatusOK)
+	}
+}
+
+func Backup(bolter db.Bolter, col string) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/octet-stream")
+		w.Header().Set("Content-Disposition", `attachment; filename="botio.db"`)
+
+		length, err := bolter.Backup(w)
+		w.Header().Set("Content-Length", strconv.Itoa(length))
+		if err != nil {
+			http.Error(w, fmt.Sprintf("error while triying to backup the dabatase: %v", err), http.StatusInternalServerError)
+		}
 	}
 }

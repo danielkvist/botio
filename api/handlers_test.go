@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -64,6 +65,10 @@ func (db dbt) Update(col string, el string, val string) (*models.Command, error)
 		Cmd:      el,
 		Response: val,
 	}, nil
+}
+
+func (db dbt) Backup(w io.Writer) (int, error) {
+	return 0, nil
 }
 
 func TestGet(t *testing.T) {

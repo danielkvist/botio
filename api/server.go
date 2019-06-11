@@ -40,6 +40,12 @@ func NewServer(bolter db.Bolter, username string, password string, listenAddr st
 			Pattern:     "/api/commands/{command}",
 			HandlerFunc: Delete(bolter, "commands"),
 		},
+		&Route{
+			Name:        "Backup DB",
+			Method:      http.MethodGet,
+			Pattern:     "/api/backup",
+			HandlerFunc: Backup(bolter, ""),
+		},
 	}
 
 	r := NewRouter(routes)

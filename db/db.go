@@ -3,6 +3,7 @@ package db
 
 import (
 	"fmt"
+	"io"
 	"time"
 
 	"github.com/danielkvist/botio/models"
@@ -16,6 +17,7 @@ type Bolter interface {
 	GetAll(col string) ([]*models.Command, error)
 	Remove(col string, el string) error
 	Update(col string, el string, val string) (*models.Command, error)
+	Backup(w io.Writer) (int, error)
 }
 
 // BDB is a simple wrapper around a bolt.DB database.
@@ -110,4 +112,15 @@ func (bdb *BDB) Remove(col string, el string) error {
 
 func (bdb *BDB) Update(col string, el string, val string) (*models.Command, error) {
 	return bdb.Set(col, el, val)
+}
+
+func (bdb *BDB) Backup(w io.Writer) (int, error) {
+	var length int
+	err := bdb.db.View(func(tx *bolt.Tx) error {
+		length = int(tx.Size())
+		_, err := tx.WriteTo(w)
+		return err
+	})
+
+	return length, err
 }
