@@ -45,8 +45,10 @@ func main() {
 
 			go func() {
 				cmd, err := bdb.Get(collection, req)
-				if err != nil || cmd.Response == "" {
+				if err != nil {
 					resp <- " I'm sorry. I didn't understand you. Bzz"
+					log.Printf("%v: %v", m.Chat.ID, err)
+					return
 				}
 
 				resp <- cmd.Response
