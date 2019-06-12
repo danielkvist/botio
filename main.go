@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/danielkvist/botio/api"
 	"github.com/danielkvist/botio/db"
+	"github.com/danielkvist/botio/server"
 
 	"github.com/joho/godotenv"
 	"github.com/yanzay/tbot/v2"
@@ -63,8 +63,8 @@ func main() {
 	}()
 
 	go func() {
-		server := api.NewServer(bdb, collection, username, password, listenAddr)
-		if err := server.ListenAndServe(); err != nil {
+		s := server.New(bdb, collection, username, password, listenAddr)
+		if err := s.ListenAndServe(); err != nil {
 			log.Printf("%v", err)
 			done <- struct{}{}
 		}

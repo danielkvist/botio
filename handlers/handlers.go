@@ -1,4 +1,5 @@
-package api
+// Package handlers provides a set of HTTP handlers for a CRUD API.
+package handlers
 
 import (
 	"encoding/json"

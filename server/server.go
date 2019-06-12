@@ -1,52 +1,54 @@
-// Package api provides a simple CRUD API to manipulate the bot database.
-package api
+// Package server provides utilities to create a new HTTP server
+// with basic auth.
+package server
 
 import (
 	"net/http"
 	"time"
 
 	"github.com/danielkvist/botio/db"
+	"github.com/danielkvist/botio/handlers"
 )
 
-// NewServer returns a new *http.Server with basic authentication and a
+// New returns a new *http.Server with basic authentication and a
 // *mux.Router with all the routes set.
-func NewServer(bolter db.Bolter, col string, username string, password string, listenAddr string) *http.Server {
+func New(bolter db.Bolter, col string, username string, password string, listenAddr string) *http.Server {
 	routes := []*Route{
 		&Route{
 			Name:        "GET Commands",
 			Method:      http.MethodGet,
 			Pattern:     "/api/commands",
-			HandlerFunc: GetAll(bolter, col),
+			HandlerFunc: handlers.GetAll(bolter, col),
 		},
 		&Route{
 			Name:        "GET Command",
 			Method:      http.MethodGet,
 			Pattern:     "/api/commands/{command}",
-			HandlerFunc: Get(bolter, col),
+			HandlerFunc: handlers.Get(bolter, col),
 		},
 		&Route{
 			Name:        "POST Command",
 			Method:      http.MethodPost,
 			Pattern:     "/api/commands",
-			HandlerFunc: Post(bolter, col),
+			HandlerFunc: handlers.Post(bolter, col),
 		},
 		&Route{
 			Name:        "PUT Command",
 			Method:      http.MethodPut,
 			Pattern:     "/api/commands",
-			HandlerFunc: Put(bolter, col),
+			HandlerFunc: handlers.Put(bolter, col),
 		},
 		&Route{
 			Name:        "DELETE Command",
 			Method:      http.MethodDelete,
 			Pattern:     "/api/commands/{command}",
-			HandlerFunc: Delete(bolter, col),
+			HandlerFunc: handlers.Delete(bolter, col),
 		},
 		&Route{
 			Name:        "Backup DB",
 			Method:      http.MethodGet,
 			Pattern:     "/api/backup",
-			HandlerFunc: Backup(bolter, col),
+			HandlerFunc: handlers.Backup(bolter, col),
 		},
 	}
 
