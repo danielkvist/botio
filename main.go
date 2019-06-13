@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"log"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -34,6 +36,9 @@ func main() {
 	}
 
 	done := make(chan struct{}, 2)
+	quit := make(chan struct{}, 1)
+
+	s := server.New(bdb, collection, username, password, listenAddr)
 
 	go func() {
 		bot.HandleMessage(".", func(m *tbot.Message) {
@@ -65,12 +70,28 @@ func main() {
 	}()
 
 	go func() {
-		s := server.New(bdb, collection, username, password, listenAddr)
 		if err := s.ListenAndServe(); err != nil {
 			log.Printf("%v", err)
 			done <- struct{}{}
 		}
 	}()
 
+	go graceShutdown(s, done, quit)
+
+	<-quit
+}
+
+func graceShutdown(s *http.Server, done <-chan struct{}, quit chan<- struct{}) {
 	<-done
+	log.Printf("shutting down server listening on address %q", s.Addr)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
+	defer cancel()
+
+	s.SetKeepAlivesEnabled(false)
+	if err := s.Shutdown(ctx); err != nil {
+		log.Fatalf("while trying to shutdown the server listening on address %q: %v", s.Addr, err)
+	}
+
+	quit <- struct{}{}
 }
