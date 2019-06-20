@@ -8,6 +8,6 @@ require (
 	github.com/smartystreets/goconvey v0.0.0-20190330032615-68dc04aab96a // indirect
 	github.com/yanzay/tbot v1.0.0 // indirect
 	github.com/yanzay/tbot/v2 v2.0.1
-	go.etcd.io/bbolt v1.3.2
+	go.etcd.io/bbolt v1.3.3
 	golang.org/x/sys v0.0.0-20190412213103-97732733099d // indirect
 )
