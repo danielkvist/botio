@@ -14,37 +14,37 @@ import (
 // *mux.Router with all the routes set.
 func New(bolter db.Bolter, col string, username string, password string, listenAddr string) *http.Server {
 	routes := []*Route{
-		&Route{
+		{
 			Name:        "GET Commands",
 			Method:      http.MethodGet,
 			Pattern:     "/api/commands",
 			HandlerFunc: handlers.GetAll(bolter, col),
 		},
-		&Route{
+		{
 			Name:        "GET Command",
 			Method:      http.MethodGet,
 			Pattern:     "/api/commands/{command}",
 			HandlerFunc: handlers.Get(bolter, col),
 		},
-		&Route{
+		{
 			Name:        "POST Command",
 			Method:      http.MethodPost,
 			Pattern:     "/api/commands",
 			HandlerFunc: handlers.Post(bolter, col),
 		},
-		&Route{
+		{
 			Name:        "PUT Command",
 			Method:      http.MethodPut,
 			Pattern:     "/api/commands",
 			HandlerFunc: handlers.Put(bolter, col),
 		},
-		&Route{
+		{
 			Name:        "DELETE Command",
 			Method:      http.MethodDelete,
 			Pattern:     "/api/commands/{command}",
 			HandlerFunc: handlers.Delete(bolter, col),
 		},
-		&Route{
+		{
 			Name:        "Backup DB",
 			Method:      http.MethodGet,
 			Pattern:     "/api/backup",

@@ -1,3 +1,4 @@
+// Package bot exports a wrapper to work with Telegram bots.
 package bot
 
 import (
@@ -10,6 +11,8 @@ import (
 	"github.com/yanzay/tbot/v2"
 )
 
+// Bot wraps a bot client and server along with a channel
+// to dispatch concurrently the responses.
 type Bot struct {
 	s  *tbot.Server
 	c  *tbot.Client
@@ -17,11 +20,16 @@ type Bot struct {
 	wg sync.WaitGroup
 }
 
+// Response represents a bot response with an ID
+// and a text.
 type Response struct {
 	id   string
 	text string
 }
 
+// New returns an initialized *Bot ready to respond with
+// the server, the client and the channel for the responses
+// already set up.
 func New(token string, cap int) *Bot {
 	server := tbot.New(token)
 	client := server.Client()
@@ -44,6 +52,11 @@ func New(token string, cap int) *Bot {
 	return bot
 }
 
+// HandlerMessage creates a handler to manage the specified message
+// and send a response to the channel for responses. Which eventually
+// will send the response to the user.
+//
+// Actually it only works with commands.
 func (b *Bot) HandlerMessage(msg string, bolter db.Bolter, col string) {
 	b.s.HandleMessage(msg, func(m *tbot.Message) {
 		log.Printf("%s\t%s\t%s", m.Chat.ID, m.Chat.Username, m.Text)
@@ -64,12 +77,15 @@ func (b *Bot) HandlerMessage(msg string, bolter db.Bolter, col string) {
 	})
 }
 
+// Stop waits until the channel for the responses is closed
+// and then closes the bot server.
 func (b *Bot) Stop() {
 	close(b.r)
 	b.wg.Wait()
 	b.s.Stop()
 }
 
+// Start starts the bot server.
 func (b *Bot) Start() error {
 	return b.s.Start()
 }
