@@ -5,14 +5,13 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
+	"github.com/danielkvist/botio/bot"
 	"github.com/danielkvist/botio/db"
 	"github.com/danielkvist/botio/server"
 
 	"github.com/joho/godotenv"
-	"github.com/yanzay/tbot/v2"
 )
 
 func main() {
@@ -27,9 +26,6 @@ func main() {
 	username := os.Getenv("API_USERNAME")
 	password := os.Getenv("API_PASSWORD")
 
-	bot := tbot.New(ttoken)
-	c := bot.Client()
-
 	bdb, err := db.Connect(database, collection)
 	if err != nil {
 		log.Fatalf("while connecting to the database: %v", err)
@@ -38,33 +34,15 @@ func main() {
 	done := make(chan struct{}, 2)
 	quit := make(chan struct{}, 1)
 
+	b := bot.New(ttoken, 10)
 	s := server.New(bdb, collection, username, password, listenAddr)
 
 	go func() {
-		bot.HandleMessage(".", func(m *tbot.Message) {
-			log.Printf("%v: %s", m.Chat.ID, m.Text)
+		b.HandlerMessage(".", bdb, collection)
 
-			resp := make(chan string)
-			req := strings.TrimPrefix(m.Text, "/")
-			c.SendChatAction(m.Chat.ID, tbot.ActionTyping)
-
-			go func() {
-				cmd, err := bdb.Get(collection, req)
-				if err != nil {
-					resp <- " I'm sorry. I didn't understand you. Bzz"
-					log.Printf("%v: %v", m.Chat.ID, err)
-					return
-				}
-
-				resp <- cmd.Response
-			}()
-
-			time.Sleep(1 * time.Second)
-			c.SendMessage(m.Chat.ID, <-resp)
-		})
-
-		if err := bot.Start(); err != nil {
+		if err := b.Start(); err != nil {
 			log.Printf("%v", err)
+			b.Stop()
 			done <- struct{}{}
 		}
 	}()
