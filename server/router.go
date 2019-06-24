@@ -20,11 +20,12 @@ func NewRouter(routes []*Route) *mux.Router {
 	router := mux.NewRouter().StrictSlash(true)
 
 	for _, r := range routes {
+		handler := logger(r.HandlerFunc, r.Name)
 		router.
 			Methods(r.Method).
 			Path(r.Pattern).
 			Name(r.Name).
-			Handler(r.HandlerFunc)
+			Handler(handler)
 	}
 
 	return router
