@@ -21,7 +21,7 @@ type Bolter interface {
 	Backup(w io.Writer) (int, error)
 }
 
-// BDB is a simple wrapper around a bolt ddatabase.
+// BDB is a simple wrapper around a bolt database.
 type BDB struct {
 	db *bolt.DB
 }
