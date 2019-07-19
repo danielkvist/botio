@@ -2,31 +2,31 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/danielkvist/botio/bot"
 	"github.com/danielkvist/botio/db"
 	"github.com/danielkvist/botio/server"
-
-	"github.com/joho/godotenv"
 )
 
 func main() {
-	if err := godotenv.Load(); err != nil {
-		log.Printf("while loading env variables: %v", err)
+	ttoken := flag.String("token", "", "telegram's bot token")
+	database := flag.String("db", "./data/commands.db", "where the database is supposed to be or should be")
+	listenAddr := flag.String("address", "localhost:9090", "TCP address to listen on for requests")
+	username := flag.String("username", "admin", "username for basic authentication")
+	password := flag.String("password", "toor", "password for basic authentication")
+	flag.Parse()
+
+	commands := "commands"
+
+	if *ttoken == "" {
+		log.Fatal("it's needed a valid token for a telegram's bot")
 	}
 
-	ttoken := os.Getenv("TELEGRAM_TOKEN")
-	database := os.Getenv("DATABASE")
-	collection := os.Getenv("COLLECTION")
-	listenAddr := os.Getenv("LISTEN_ADDRESS")
-	username := os.Getenv("API_USERNAME")
-	password := os.Getenv("API_PASSWORD")
-
-	bdb, err := db.Connect(database, collection)
+	bdb, err := db.Connect(*database, commands)
 	if err != nil {
 		log.Fatalf("while connecting to the database: %v", err)
 	}
@@ -34,11 +34,11 @@ func main() {
 	done := make(chan struct{}, 2)
 	quit := make(chan struct{}, 1)
 
-	b := bot.New(ttoken, 10)
-	s := server.New(bdb, collection, username, password, listenAddr)
+	b := bot.New(*ttoken, 10)
+	s := server.New(bdb, commands, *username, *password, *listenAddr)
 
 	go func() {
-		b.HandlerMessage(".", bdb, collection)
+		b.HandlerMessage(".", bdb, commands)
 
 		if err := b.Start(); err != nil {
 			log.Printf("%v", err)

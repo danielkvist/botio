@@ -6,13 +6,13 @@
 
 Botio is a quick and easy way to create a simple and easy to update and maintain Telegram bot.
 
-## Example
+## Working example
 
 You can see an example [here](https://t.me/dkvist_bot).
 
 > P.S.: I'm looking for a job as a Junior Go Developer.
 
-## How it works?
+## How it works
 
 Botio basically creates a BoltDB database if it does not exist in which all the commands and their responses for the Telegram bot will be stored. This database can be updated through a simple CRUD API that starts alongside the Telegram bot.
 
@@ -41,39 +41,30 @@ Or clone my GitHub repository:
 git clone https://github.com/danielkvist/botio.git botio
 ```
 
-## Configuration
-
-To set up Botio and get started you just need to create an ```.env``` file.
+## Flags
 
 ```text
-TELEGRAM_TOKEN=<your-telegram-token>
-DATABASE=<path-of/for-the-boltdb-database>
-COLLECTION=<name-of-the-collection-for-the-commands>
-LISTEN_ADDRESS=<address-for-your-api>
-API_USERNAME=<username-for-your-api>
-API_PASSWORD=<password-for-your-api>
+-address string
+    TCP address to listen on for requests (default "localhost:9090")
+-db string
+    where the database is supposed to be or should be (default "./data/commands.db")
+-password string
+    password for basic authentication (default "toor")
+-token string
+    telegram's bot token
+-username string
+    username for basic authentication (default "admin")
 ```
 
-For example:
-
-```text
-TELEGRAM_TOKEN=42...
-DATABASE=/data/botio.db
-COLLECTION=commands
-LISTEN_ADDRESS=:9090
-API_USERNAME=user
-API_PASSWORD=password
-```
-
-## Start
+## Example
 
 ```bash
-docker container run --name my-bot --env-file .env -v /data:/data:rw -p 9090:9090 danielkvist/botio
+docker container run --name my-bot --env-file .env -v /data:/data:rw -p 9090:9090 danielkvist/botio -token="telegram-token" -username="myuser" -pasword="42424242" -address=":9090"
 ```
 
 ## CRUD API
 
-As I said before Botio provides a simple CRUD API to manage the database from which the bot for Telegram extracts the commands and their corresponding responses.
+Botio provides a simple CRUD API to manage the database from which the bot for Telegram extracts the commands and their corresponding responses.
 
 > The following examples will use ```curl```. But you can also use Postman, for example.
 
