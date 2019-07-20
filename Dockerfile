@@ -1,9 +1,6 @@
 # Build stage
 FROM golang:1.12.7-alpine3.10 AS build
 RUN apk add --no-cache git
-RUN adduser -D -u 10000 daniel && \
-    mkdir /app/ && chown daniel /app/
-USER daniel
 WORKDIR /app/
 COPY go.mod .
 COPY go.sum .
