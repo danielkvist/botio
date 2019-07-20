@@ -15,7 +15,7 @@ import (
 func main() {
 	ttoken := flag.String("token", "", "telegram's bot token")
 	database := flag.String("db", "./data/commands.db", "where the database is supposed to be or should be")
-	listenAddr := flag.String("address", "localhost:9090", "TCP address to listen on for requests")
+	listenAddr := flag.String("address", ":9090", "TCP address to listen on for requests")
 	username := flag.String("username", "admin", "username for basic authentication")
 	password := flag.String("password", "toor", "password for basic authentication")
 	flag.Parse()

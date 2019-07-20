@@ -59,7 +59,11 @@ git clone https://github.com/danielkvist/botio.git botio
 ## Example
 
 ```bash
-docker container run --name my-bot --env-file .env -v /data:/data:rw -p 9090:9090 danielkvist/botio -token="telegram-token" -username="myuser" -pasword="42424242" -address=":9090"
+docker container run --name tbot -v /data:/data:rw -p 9090:9090 danielkvist/botio \
+    -token="telegram-token" \
+    -username="myuser" \
+    -pasword="42424242" \
+    -address=":9090"
 ```
 
 ## CRUD API
@@ -91,7 +95,7 @@ echo '{"cmd": "age", "response":"42"}' | curl -u user:password -d @- http://loca
 
 ### PUT
 
-> In a Bolt database updating is the same as reposting the same element but with a different value. 
+> In a Bolt database updating is the same as reposting the same element but with a different value.
 
 ```bash
 echo '{"cmd": "age", "response":"25"}' | curl -u user:password -d @- http://localhost:9090/api/commands
