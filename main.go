@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"log"
 	"net/http"
@@ -9,7 +8,11 @@ import (
 
 	"github.com/danielkvist/botio/bot"
 	"github.com/danielkvist/botio/db"
+	"github.com/danielkvist/botio/handlers"
 	"github.com/danielkvist/botio/server"
+
+	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
 )
 
 func main() {
@@ -35,7 +38,16 @@ func main() {
 	quit := make(chan struct{}, 1)
 
 	b := bot.New(*ttoken, 10)
-	s := server.New(bdb, commands, *username, *password, *listenAddr)
+	r := newRouter(bdb, commands)
+	s, err := server.New(
+		server.WithListenAddr(*listenAddr),
+		server.WithHandler(r),
+		server.WithGracefulShutdown(done, quit),
+		server.WithBasicAuth(*username, *password, r),
+	)
+	if err != nil {
+		log.Fatalf("while creating new server: %v", err)
+	}
 
 	go func() {
 		b.HandlerMessage(".", bdb, commands)
@@ -54,22 +66,27 @@ func main() {
 		}
 	}()
 
-	go graceShutdown(s, done, quit)
-
 	<-quit
 }
 
-func graceShutdown(s *http.Server, done <-chan struct{}, quit chan<- struct{}) {
-	<-done
-	log.Printf("shutting down server listening on address %q", s.Addr)
+func newRouter(bolter db.Bolter, col string) http.Handler {
+	r := chi.NewRouter()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
-	defer cancel()
+	// Middleware
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+	r.Use(middleware.Timeout(5 * time.Second))
+	r.Use(middleware.URLFormat)
 
-	s.SetKeepAlivesEnabled(false)
-	if err := s.Shutdown(ctx); err != nil {
-		log.Fatalf("while trying to shutdown the server listening on address %q: %v", s.Addr, err)
-	}
+	// Routes
+	r.Route("/api/commands", func(r chi.Router) {
+		r.Get("/", handlers.GetAll(bolter, col))
+		r.Get("/{command}", handlers.Get(bolter, col))
+		r.Get("/backup", handlers.Backup(bolter, col))
+		r.Post("/", handlers.Post(bolter, col))
+		r.Put("/{command}", handlers.Put(bolter, col))
+		r.Delete("/{command}", handlers.Delete(bolter, col))
+	})
 
-	quit <- struct{}{}
+	return r
 }
