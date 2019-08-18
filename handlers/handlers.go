@@ -1,4 +1,4 @@
-// Package handlers provides a set of HTTP handlers for a CRUD API.
+// Package handlers provides a set of HTTP CRUD handlers.
 package handlers
 
 import (
@@ -12,16 +12,22 @@ import (
 
 	"github.com/danielkvist/botio/db"
 	"github.com/danielkvist/botio/models"
-	"github.com/gorilla/mux"
+
+	"github.com/go-chi/chi"
 )
 
+// Get returns an http.HandlerFunc which extracts from the request params
+// a command name with which it tries to find an item in the database.
+//
+// Returns a non-2xx status code when:
+// * There's a problem getting the item from the database.
+// * There's a problem unmarshaling the item.
+// * There's a problem encoding the result to JSON.
 func Get(bolter db.Bolter, col string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
-		params := mux.Vars(r)
-		command := params["command"]
-
+		command := chi.URLParam(r, "command")
 		result, err := bolter.Get(col, command)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("error while getting command %q from the database", command), http.StatusInternalServerError)
@@ -37,6 +43,12 @@ func Get(bolter db.Bolter, col string) func(w http.ResponseWriter, r *http.Reque
 	}
 }
 
+// GetAll returns an http.HandlerFunc which extracts all the commands
+// from the commands collection of the database.
+//
+// Returns a non-2xx status code when:
+// * There's a problem while getting the commands from the database.
+// * There's a problem encoding the result to JSON.
 func GetAll(bolter db.Bolter, col string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
@@ -56,6 +68,15 @@ func GetAll(bolter db.Bolter, col string) func(w http.ResponseWriter, r *http.Re
 	}
 }
 
+// Post returns an http.HandlerFunc that tries to extract a new command
+// from the body of the request and insert it into the database.
+//
+// Returns a non-2xx status code when:
+// * The request body is too large.
+// * There's a problem closing the request body.
+// * There's a problem marshaling the new command.
+// * There's a problem adding the new command into the database.
+// * There's a problem encoding the result to JSON.
 func Post(bolter db.Bolter, col string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
@@ -103,17 +124,29 @@ func Post(bolter db.Bolter, col string) func(w http.ResponseWriter, r *http.Requ
 	}
 }
 
+// Put returns an http.HandlerFunc that tries to update an existing
+// command on the database with the received request body.
+//
+// Returns a non-2xx status code when:
+// * The request body is too large.
+// * There's a problem closing the request body.
+// * There's a problem unmarshaling the command.
+// * There's a problem while updating the command on the database.
+// * There's a problem encoding the result to JSON.
 func Put(bolter db.Bolter, col string) func(w http.ResponseWriter, r *http.Request) {
 	return Post(bolter, col)
 }
 
+// Delete returns an http.HandlerFunc which extracts from the request params
+// a command to remove from the database.
+//
+// Returns a non-2xx status code when:
+// * There's a problem while removing the command from the database.
 func Delete(bolter db.Bolter, col string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
-		params := mux.Vars(r)
-		command := params["command"]
-
+		command := chi.URLParam(r, "command")
 		if err := bolter.Remove(col, command); err != nil {
 			http.Error(w, fmt.Sprintf("error while removing command %q", command), http.StatusInternalServerError)
 			log.Printf("while removing command %q from collection %q: %v", command, col, err)
@@ -124,6 +157,10 @@ func Delete(bolter db.Bolter, col string) func(w http.ResponseWriter, r *http.Re
 	}
 }
 
+// Backup returns an http.HandlerFunc that will send to the client
+// a backup of the database.
+//
+// Returns a non-2xx status code when if there is a problem while making the backup.
 func Backup(bolter db.Bolter, col string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/octet-stream")

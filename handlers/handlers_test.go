@@ -4,72 +4,16 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/danielkvist/botio/models"
+	"github.com/danielkvist/botio/handlers/internal/tdb"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi"
 )
-
-type dbt map[string]string
-
-func (db dbt) Set(col string, el string, val string) (*models.Command, error) {
-	db[el] = val
-
-	return &models.Command{
-		Cmd:      el,
-		Response: val,
-	}, nil
-}
-
-func (db dbt) Get(col string, el string) (*models.Command, error) {
-	val, ok := db[el]
-	if !ok {
-		return nil, fmt.Errorf("element %q not found", el)
-	}
-
-	return &models.Command{
-		Cmd:      el,
-		Response: val,
-	}, nil
-}
-
-func (db dbt) GetAll(col string) ([]*models.Command, error) {
-	var commands []*models.Command
-
-	for k, v := range db {
-		tmpCommand := &models.Command{
-			Cmd:      k,
-			Response: v,
-		}
-
-		commands = append(commands, tmpCommand)
-	}
-
-	return commands, nil
-}
-
-func (db dbt) Remove(col string, el string) error {
-	delete(db, el)
-	return nil
-}
-
-func (db dbt) Update(col string, el string, val string) (*models.Command, error) {
-	db[el] = val
-
-	return &models.Command{
-		Cmd:      el,
-		Response: val,
-	}, nil
-}
-
-func (db dbt) Backup(w io.Writer) (int, error) {
-	return 0, nil
-}
 
 func TestGet(t *testing.T) {
 	tt := []struct {
@@ -81,7 +25,8 @@ func TestGet(t *testing.T) {
 		{"goodbye", "Ciao!"},
 	}
 
-	var db dbt = make(map[string]string, len(tt))
+	var db tdb.TDB
+	db = make(map[string]string, len(tt))
 	for _, tc := range tt {
 		db[tc.cmd] = tc.response
 	}
@@ -94,7 +39,7 @@ func TestGet(t *testing.T) {
 		}
 
 		rec := httptest.NewRecorder()
-		router := mux.NewRouter()
+		router := chi.NewRouter()
 		router.HandleFunc("/api/commands/{command}", Get(db, ""))
 		router.ServeHTTP(rec, req)
 
@@ -131,7 +76,8 @@ func TestGetAll(t *testing.T) {
 		{"none", ""},
 	}
 
-	var db dbt = make(map[string]string, len(tt))
+	var db tdb.TDB
+	db = make(map[string]string, len(tt))
 	for _, tc := range tt {
 		db[tc.cmd] = tc.response
 	}
@@ -143,7 +89,7 @@ func TestGetAll(t *testing.T) {
 	}
 
 	rec := httptest.NewRecorder()
-	router := mux.NewRouter()
+	router := chi.NewRouter()
 	router.HandleFunc("/api/commands", GetAll(db, ""))
 	router.ServeHTTP(rec, req)
 
@@ -174,7 +120,8 @@ func TestGetAll(t *testing.T) {
 }
 
 func TestPost(t *testing.T) {
-	var db dbt = make(map[string]string, 1)
+	var db tdb.TDB
+	db = make(map[string]string, 1)
 
 	cmd := models.Command{
 		Cmd:      "start",
@@ -189,7 +136,7 @@ func TestPost(t *testing.T) {
 	}
 
 	rec := httptest.NewRecorder()
-	router := mux.NewRouter()
+	router := chi.NewRouter()
 	router.HandleFunc("/api/commands", Post(db, ""))
 	router.ServeHTTP(rec, req)
 
@@ -208,7 +155,8 @@ func TestPost(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
-	var db dbt = make(map[string]string, 1)
+	var db tdb.TDB
+	db = make(map[string]string, 1)
 
 	cmd := models.Command{
 		Cmd:      "start",
@@ -224,7 +172,7 @@ func TestDelete(t *testing.T) {
 	}
 
 	rec := httptest.NewRecorder()
-	router := mux.NewRouter()
+	router := chi.NewRouter()
 	router.HandleFunc("/api/commands/{command}", Delete(db, ""))
 	router.ServeHTTP(rec, req)
 
