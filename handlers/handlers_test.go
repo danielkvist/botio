@@ -9,8 +9,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/danielkvist/botio/db"
 	"github.com/danielkvist/botio/models"
-	"github.com/danielkvist/botio/handlers/internal/tdb"
 
 	"github.com/go-chi/chi"
 )
@@ -25,10 +25,9 @@ func TestGet(t *testing.T) {
 		{"goodbye", "Ciao!"},
 	}
 
-	var db tdb.TDB
-	db = make(map[string]string, len(tt))
+	mdb := db.DBFactory("testing")
 	for _, tc := range tt {
-		db[tc.cmd] = tc.response
+		mdb.Set("", tc.cmd, tc.response)
 	}
 
 	for _, tc := range tt {
@@ -40,7 +39,7 @@ func TestGet(t *testing.T) {
 
 		rec := httptest.NewRecorder()
 		router := chi.NewRouter()
-		router.HandleFunc("/api/commands/{command}", Get(db, ""))
+		router.HandleFunc("/api/commands/{command}", Get(mdb, ""))
 		router.ServeHTTP(rec, req)
 
 		if rec.Code != http.StatusOK {
@@ -76,10 +75,9 @@ func TestGetAll(t *testing.T) {
 		{"none", ""},
 	}
 
-	var db tdb.TDB
-	db = make(map[string]string, len(tt))
+	mdb := db.DBFactory("testing")
 	for _, tc := range tt {
-		db[tc.cmd] = tc.response
+		mdb.Set("", tc.cmd, tc.response)
 	}
 
 	path := fmt.Sprintf("/api/commands")
@@ -90,7 +88,7 @@ func TestGetAll(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 	router := chi.NewRouter()
-	router.HandleFunc("/api/commands", GetAll(db, ""))
+	router.HandleFunc("/api/commands", GetAll(mdb, ""))
 	router.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusOK {
@@ -108,21 +106,19 @@ func TestGetAll(t *testing.T) {
 	}
 
 	for _, cmd := range commands {
-		resp, ok := db[cmd.Cmd]
-		if !ok {
+		c, err := mdb.Get("", cmd.Cmd)
+		if err != nil {
 			t.Fatalf("expected to find command %q in testing db", cmd.Cmd)
 		}
 
-		if cmd.Response != resp {
-			t.Fatalf("expected command %q to have response %q. got=%q", cmd.Cmd, cmd.Response, resp)
+		if cmd.Response != c.Response {
+			t.Fatalf("expected command %q to have response %q. got=%q", cmd.Cmd, cmd.Response, c.Response)
 		}
 	}
 }
 
 func TestPost(t *testing.T) {
-	var db tdb.TDB
-	db = make(map[string]string, 1)
-
+	mdb := db.DBFactory("testing")
 	cmd := models.Command{
 		Cmd:      "start",
 		Response: "Hi!",
@@ -137,33 +133,31 @@ func TestPost(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 	router := chi.NewRouter()
-	router.HandleFunc("/api/commands", Post(db, ""))
+	router.HandleFunc("/api/commands", Post(mdb, ""))
 	router.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("expected status of response from %q to be %v. got=%v", path, http.StatusOK, rec.Code)
 	}
 
-	resp, ok := db[cmd.Cmd]
-	if !ok {
+	c, err := mdb.Get("", cmd.Cmd)
+	if err != nil {
 		t.Fatalf("expected to find command %q in testing db as result of POST request", cmd.Cmd)
 	}
 
-	if resp != cmd.Response {
-		t.Fatalf("expected command %q to have response %q. got=%q", cmd.Cmd, cmd.Response, resp)
+	if cmd.Response != c.Response {
+		t.Fatalf("expected command %q to have response %q. got=%q", cmd.Cmd, cmd.Response, c.Response)
 	}
 }
 
 func TestDelete(t *testing.T) {
-	var db tdb.TDB
-	db = make(map[string]string, 1)
-
+	mdb := db.DBFactory("testing")
 	cmd := models.Command{
 		Cmd:      "start",
 		Response: "Hi!",
 	}
 
-	db[cmd.Cmd] = cmd.Response
+	mdb.Set("", cmd.Cmd, cmd.Response)
 
 	path := fmt.Sprintf("/api/commands/%s", cmd.Cmd)
 	req, err := http.NewRequest(http.MethodDelete, path, nil)
@@ -173,15 +167,15 @@ func TestDelete(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 	router := chi.NewRouter()
-	router.HandleFunc("/api/commands/{command}", Delete(db, ""))
+	router.HandleFunc("/api/commands/{command}", Delete(mdb, ""))
 	router.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("expected status of response from %q to be %v. got=%v", path, http.StatusOK, rec.Code)
 	}
 
-	_, ok := db[cmd.Cmd]
-	if ok {
+	_, err = mdb.Get("", cmd.Cmd)
+	if err == nil {
 		t.Fatalf("expected to not find command %q in testing db as result of DELETE request", cmd.Cmd)
 	}
 }

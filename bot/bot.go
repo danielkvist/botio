@@ -57,7 +57,7 @@ func New(token string, cap int) *Bot {
 // will send the response to the user.
 //
 // Actually it only works with commands.
-func (b *Bot) HandlerMessage(msg string, bolter db.Bolter, col string) {
+func (b *Bot) HandlerMessage(msg string, database db.DB, col string) {
 	b.s.HandleMessage(msg, func(m *tbot.Message) {
 		log.Printf("%s\t%s\t%s", m.Chat.ID, m.Chat.Username, m.Text)
 		req := strings.TrimPrefix(m.Text, "/")
@@ -65,7 +65,7 @@ func (b *Bot) HandlerMessage(msg string, bolter db.Bolter, col string) {
 			id: m.Chat.ID,
 		}
 
-		cmd, err := bolter.Get(col, req)
+		cmd, err := database.Get(col, req)
 		if err != nil {
 			response.text = "I'm sorry. I didn't understand you. Bzz"
 			b.r <- response

@@ -23,12 +23,12 @@ import (
 // * There's a problem getting the item from the database.
 // * There's a problem unmarshaling the item.
 // * There's a problem encoding the result to JSON.
-func Get(bolter db.Bolter, col string) func(w http.ResponseWriter, r *http.Request) {
+func Get(database db.DB, col string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
 		command := chi.URLParam(r, "command")
-		result, err := bolter.Get(col, command)
+		result, err := database.Get(col, command)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("error while getting command %q from the database", command), http.StatusInternalServerError)
 			log.Printf("while getting command %q from collection %q: %v", command, col, err)
@@ -49,11 +49,11 @@ func Get(bolter db.Bolter, col string) func(w http.ResponseWriter, r *http.Reque
 // Returns a non-2xx status code when:
 // * There's a problem while getting the commands from the database.
 // * There's a problem encoding the result to JSON.
-func GetAll(bolter db.Bolter, col string) func(w http.ResponseWriter, r *http.Request) {
+func GetAll(database db.DB, col string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
-		commands, err := bolter.GetAll(col)
+		commands, err := database.GetAll(col)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("error while getting all items in collection %q", col), http.StatusInternalServerError)
 			log.Printf("while getting all commands from %q: %v", col, err)
@@ -77,7 +77,7 @@ func GetAll(bolter db.Bolter, col string) func(w http.ResponseWriter, r *http.Re
 // * There's a problem marshaling the new command.
 // * There's a problem adding the new command into the database.
 // * There's a problem encoding the result to JSON.
-func Post(bolter db.Bolter, col string) func(w http.ResponseWriter, r *http.Request) {
+func Post(database db.DB, col string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
@@ -109,7 +109,7 @@ func Post(bolter db.Bolter, col string) func(w http.ResponseWriter, r *http.Requ
 			return
 		}
 
-		result, err := bolter.Set(col, cmd.Cmd, cmd.Response)
+		result, err := database.Set(col, cmd.Cmd, cmd.Response)
 		if err != nil {
 			http.Error(w, "error while trying to add command to the database", http.StatusInternalServerError)
 			log.Printf("while trying to add command %q with response %q into collection %q: %v", cmd.Cmd, cmd.Response, col, err)
@@ -133,8 +133,8 @@ func Post(bolter db.Bolter, col string) func(w http.ResponseWriter, r *http.Requ
 // * There's a problem unmarshaling the command.
 // * There's a problem while updating the command on the database.
 // * There's a problem encoding the result to JSON.
-func Put(bolter db.Bolter, col string) func(w http.ResponseWriter, r *http.Request) {
-	return Post(bolter, col)
+func Put(database db.DB, col string) func(w http.ResponseWriter, r *http.Request) {
+	return Post(database, col)
 }
 
 // Delete returns an http.HandlerFunc which extracts from the request params
@@ -142,12 +142,12 @@ func Put(bolter db.Bolter, col string) func(w http.ResponseWriter, r *http.Reque
 //
 // Returns a non-2xx status code when:
 // * There's a problem while removing the command from the database.
-func Delete(bolter db.Bolter, col string) func(w http.ResponseWriter, r *http.Request) {
+func Delete(database db.DB, col string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
 		command := chi.URLParam(r, "command")
-		if err := bolter.Remove(col, command); err != nil {
+		if err := database.Remove(col, command); err != nil {
 			http.Error(w, fmt.Sprintf("error while removing command %q", command), http.StatusInternalServerError)
 			log.Printf("while removing command %q from collection %q: %v", command, col, err)
 			return
@@ -161,12 +161,12 @@ func Delete(bolter db.Bolter, col string) func(w http.ResponseWriter, r *http.Re
 // a backup of the database.
 //
 // Returns a non-2xx status code when if there is a problem while making the backup.
-func Backup(bolter db.Bolter, col string) func(w http.ResponseWriter, r *http.Request) {
+func Backup(database db.DB, col string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/octet-stream")
 		w.Header().Set("Content-Disposition", `attachment; filename="botio.db"`)
 
-		length, err := bolter.Backup(w)
+		length, err := database.Backup(w)
 		w.Header().Set("Content-Length", strconv.Itoa(length))
 		if err != nil {
 			http.Error(w, fmt.Sprintf("error while triying to backup the dabatase: %v", err), http.StatusInternalServerError)

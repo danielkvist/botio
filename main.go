@@ -16,6 +16,7 @@ import (
 )
 
 func main() {
+	// Flags
 	ttoken := flag.String("token", "", "telegram's bot token")
 	database := flag.String("db", "./data/commands.db", "where the database is supposed to be or should be")
 	listenAddr := flag.String("address", ":9090", "TCP address to listen on for requests")
@@ -24,12 +25,15 @@ func main() {
 	flag.Parse()
 
 	commands := "commands"
+	env := "production"
 
 	if *ttoken == "" {
 		log.Fatal("it's needed a valid token for a telegram's bot")
 	}
 
-	bdb, err := db.Connect(*database, commands)
+	// Database initialization
+	bdb := db.DBFactory(env)
+	err := bdb.Open(*database, commands)
 	if err != nil {
 		log.Fatalf("while connecting to the database: %v", err)
 	}
@@ -37,6 +41,7 @@ func main() {
 	done := make(chan struct{}, 2)
 	quit := make(chan struct{}, 1)
 
+	// Telegram and Server initialization
 	b := bot.New(*ttoken, 10)
 	r := newRouter(bdb, commands)
 	s, err := server.New(
@@ -49,6 +54,7 @@ func main() {
 		log.Fatalf("while creating new server: %v", err)
 	}
 
+	// Telegram Bot
 	go func() {
 		b.HandlerMessage(".", bdb, commands)
 
@@ -59,6 +65,7 @@ func main() {
 		}
 	}()
 
+	// HTTP server
 	go func() {
 		if err := s.ListenAndServe(); err != nil {
 			log.Printf("%v", err)
@@ -69,7 +76,7 @@ func main() {
 	<-quit
 }
 
-func newRouter(bolter db.Bolter, col string) http.Handler {
+func newRouter(database db.DB, col string) http.Handler {
 	r := chi.NewRouter()
 
 	// Middleware
@@ -80,12 +87,12 @@ func newRouter(bolter db.Bolter, col string) http.Handler {
 
 	// Routes
 	r.Route("/api/commands", func(r chi.Router) {
-		r.Get("/", handlers.GetAll(bolter, col))
-		r.Get("/{command}", handlers.Get(bolter, col))
-		r.Get("/backup", handlers.Backup(bolter, col))
-		r.Post("/", handlers.Post(bolter, col))
-		r.Put("/{command}", handlers.Put(bolter, col))
-		r.Delete("/{command}", handlers.Delete(bolter, col))
+		r.Get("/", handlers.GetAll(database, col))
+		r.Get("/{command}", handlers.Get(database, col))
+		r.Get("/backup", handlers.Backup(database, col))
+		r.Post("/", handlers.Post(database, col))
+		r.Put("/{command}", handlers.Put(database, col))
+		r.Delete("/{command}", handlers.Delete(database, col))
 	})
 
 	return r
