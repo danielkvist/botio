@@ -20,12 +20,11 @@ func WithHandler(h http.Handler) Option {
 	}
 }
 
-// WithBasicAuth receives an user, a password and a http.Handler
-// and returns an Option that applies it with a basic Auth
-// to the *http.Server.
-func WithBasicAuth(user string, password string, h http.Handler) Option {
+// WithBasicAuth receives an user, a password and returns an
+// Option that applies basic Auth to the *http.Server using the *http.Server's Handler.
+func WithBasicAuth(user string, password string) Option {
 	return func(s *http.Server) {
-		s.Handler = basicAuth(user, password, h)
+		s.Handler = basicAuth(user, password, s.Handler)
 	}
 }
 

@@ -8,6 +8,7 @@ require (
 	github.com/gorilla/mux v1.7.3
 	github.com/smartystreets/assertions v1.0.1 // indirect
 	github.com/smartystreets/goconvey v0.0.0-20190710185942-9d28bd7c0945 // indirect
+	github.com/spf13/cobra v0.0.5
 	github.com/yanzay/tbot v1.0.0 // indirect
 	github.com/yanzay/tbot/v2 v2.0.1
 	go.etcd.io/bbolt v1.3.3
