@@ -10,6 +10,7 @@ import (
 	bolt "go.etcd.io/bbolt"
 )
 
+// Bolt wraps a bolt.DB database and satifies the DB interface.
 type Bolt struct {
 	db *bolt.DB
 }

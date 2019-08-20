@@ -1,3 +1,4 @@
+// Package db exports a DB interface to manage different databases easily.
 package db
 
 import (
@@ -6,6 +7,7 @@ import (
 	"github.com/danielkvist/botio/models"
 )
 
+// DB represents a database with basic CRUD methods.
 type DB interface {
 	Open(path, col string) error
 	Set(col, el, val string) (*models.Command, error)
@@ -16,7 +18,9 @@ type DB interface {
 	Backup(w io.Writer) (int, error)
 }
 
-func DBFactory(env string) DB {
+// Factory returns a database that satisfies the DB interface
+// depending on the received environment.
+func Factory(env string) DB {
 	switch env {
 	case "production":
 		return &Bolt{}

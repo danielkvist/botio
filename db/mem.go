@@ -7,6 +7,7 @@ import (
 	"github.com/danielkvist/botio/models"
 )
 
+// Mem is a simple in-memory map for testing that satisfies the DB interface.
 type Mem map[string]string
 
 func (m Mem) Open(path, col string) error {
