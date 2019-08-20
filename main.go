@@ -17,6 +17,7 @@ func main() {
 	}
 
 	root.AddCommand(cmd.ServerCmd)
+	root.AddCommand(cmd.TelegramBotCmd)
 
 	if err := root.Execute(); err != nil {
 		log.Fatalf("%v", err)
