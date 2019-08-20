@@ -26,7 +26,7 @@ func Get(url, username, password string) (*models.Command, error) {
 
 	resp, err := c.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("while making request for %q: %v", url, err)
+		return nil, fmt.Errorf("while making a request for %q: %v", url, err)
 	}
 	defer resp.Body.Close()
 
@@ -41,4 +41,35 @@ func Get(url, username, password string) (*models.Command, error) {
 	}
 
 	return &cmd, nil
+}
+
+// GetAll receives an URL to which make a request using the received username
+// and password for basic authentication with the objective
+// of get all botio's commands and return them.
+// If something goes wrong while making the request it returns a non-nil error.
+func GetAll(url, username, password string) ([]*models.Command, error) {
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("while creating a new request for %q: %v", url, err)
+	}
+	req.SetBasicAuth(username, password)
+
+	c := &http.Client{}
+	resp, err := c.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("while making a request for %q: %v", url, err)
+	}
+	defer resp.Body.Close()
+
+	d, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("while reading the response body from %q: %v", url, err)
+	}
+
+	commands := []*models.Command{}
+	if err := json.Unmarshal(d, &commands); err != nil {
+		return nil, fmt.Errorf("while unmarshaling the response body from %q: %v", url, err)
+	}
+
+	return commands, nil
 }

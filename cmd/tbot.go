@@ -12,7 +12,7 @@ import (
 func init() {
 	TelegramBotCmd.Flags().String("password", "toor", "password for basic auth")
 	TelegramBotCmd.Flags().String("token", "", "Telegram's token")
-	TelegramBotCmd.Flags().String("url", "", "URL where the botio's server is listening for requests")
+	TelegramBotCmd.Flags().String("url", "", "URL where the Botio's server is listening for requests")
 	TelegramBotCmd.Flags().String("user", "admin", "username for basic auth")
 }
 
@@ -33,7 +33,7 @@ var TelegramBotCmd = &cobra.Command{
 
 		// Check URL
 		if url == "" {
-			log.Fatalf("server URL cannot be an empty string")
+			log.Fatal("server URL cannot be an empty string")
 		}
 
 		if !strings.HasPrefix(url, "http://") {
