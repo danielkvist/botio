@@ -4,112 +4,393 @@
 [![Docker Pulls](https://img.shields.io/docker/pulls/danielkvist/botio.svg?maxAge=604800)](https://hub.docker.com/r/danielkvist/botio/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
 
-Botio is a quick and easy way to create a simple and easy to update and maintain Telegram bot.
+Botio is a CLI to create and manage easily simple bots for differents platforms.
 
-## Working example
+> For the moment it only supports Telegram but I'm working to add support for more platforms soon.
 
-You can see an example [here](https://t.me/dkvist_bot).
+## Example
 
-> P.S.: I'm looking for a job as a Junior Go Developer.
+First, we create a server from which we're going to manage the commands to our bot:
 
-## How it works
+```bash
+botio server --db ./data/botio.db --col commands --addr localhost:9090 --user myuser --password mypassword
+```
 
-Botio basically creates a BoltDB database if it does not exist in which all the commands and their responses for the Telegram bot will be stored. This database can be updated through a simple CRUD API that starts alongside the Telegram bot.
+We add a command:
 
-## ToDo
+```bash
+botio add --command start --response Hello --url localhost:9090 --user myuser --password mypassword
+```
 
-- [ ] Better logging.
-- [ ] Web Interface.
+We can check that the command has been created successfully with ```print```:
 
-## Installation
+```bash
+botio print --command start --url localhost:9090 --user myuser --password mypassword
+```
 
-I recommend to use Docker:
+Or see a list of all our commands with ```list```:
+
+```bash
+botio list --url localhost:9090 --user myuser --password mypassword
+```
+
+Now, we can start our Telegram's bot:
+
+```bash
+botio tbot --token <telegram-token> --url localhost:9090 --user myuser --password mypassword
+```
+
+> If you have doubts about how to get a Telegram token for your bot you can check this [link](https://core.telegram.org/bots#botfather).
+
+To check all the available commands use the ```help``` flag:
+
+```bash
+botio help
+```
+
+And that's it, now all that's left is to add or edit commands according to our needs.
+
+## Install
+
+### Go
+
+```bash
+go install github.com/danielkvist/botio
+```
+
+### Docker
 
 ```bash
 docker image pull danielkvist/botio
 ```
 
-But you can also use ```go install```:
-
-```bash
-go get github.com/danielkvist/botio
-```
-
-Or clone my GitHub repository:
-
-```bash
-git clone https://github.com/danielkvist/botio.git botio
-```
-
-## Flags
+## CLI
 
 ```text
--address string
-    TCP address to listen on for requests (default "localhost:9090")
--db string
-    where the database is supposed to be or should be (default "./data/commands.db")
--password string
-    password for basic authentication (default "toor")
--token string
-    telegram's bot token
--username string
-    username for basic authentication (default "admin")
+$ botio help
+Simple CLI tool to create and manage easily bots for different platforms.
+
+Usage:
+  botio [command]
+
+Examples:
+botio server --db ./data/commands.db --col commands --addr localhost:9090 --user myuser --password mypassword
+botio tbot --token <telegram-token> --url localhost:9090 --user myuser --password mypassword
+botio print --command start --url localhost:9090 --user myuser --password mypassword
+
+Available Commands:
+  add         Adds a new command with a response to the botio's server
+  delete      Deletes the specified botio's command from the botio's server
+  help        Help about any command
+  list        Prints a list with all the botio's commands
+  print       Prints the specified botio's command with his response
+  server      Starts a botio's server to manage the botio's commands with simple HTTP methods.
+  tbot        Initializes a Telegram's bot that extracts the commands from the botio's server.
+  update      Updates an existing command (or adds it if not exists) with a response on the botio's server
+
+Flags:
+  -h, --help   help for botio
+
+Use "botio [command] --help" for more information about a command.
 ```
 
-## Example
+### server
+
+```text
+$ botio server --help
+Starts a botio's server to manage the botio's commands with simple HTTP methods.
+
+Usage:
+  botio server [flags]
+
+Examples:
+botio server --db ./data/botio.db --col commands --addr localhost:9090 --user mysuer --password mypassword
+
+Flags:
+      --addr string       address where the server should listen for requests (default "localhost:9090")
+      --col string        collection used to store the commands (default "commands")
+      --db string         path to the database (default "./botio/botio.db")
+  -h, --help              help for server
+      --password string   password for basic auth (default "toor")
+      --user string       username for basic auth (default "admin")
+```
+
+Example:
 
 ```bash
-docker container run --name tbot -v /data:/data:rw -p 9090:9090 danielkvist/botio \
-    -token="telegram-token" \
-    -username="myuser" \
-    -pasword="42424242" \
-    -address=":9090"
+botio server --db ./data/botio.db --col commands --addr localhost:9090 --user myuser --password mypassword
 ```
 
-## CRUD API
+> The database used is based on BoltDB. You can read more about it [here](https://github.com/etcd-io/bbolt).
 
-Botio provides a simple CRUD API to manage the database from which the bot for Telegram extracts the commands and their corresponding responses.
+### tbot
 
-> The following examples will use ```curl```. But you can also use Postman, for example.
+```text
+$ botio tbot --help
+Initializes a Telegram's bot that extracts the commands from the botio's server.
+
+Usage:
+  botio tbot [flags]
+
+Examples:
+botio tbot --token <telegram-token> --url localhost:9090 --user myuser --password mypassword
+
+Flags:
+  -h, --help              help for tbot
+      --password string   password for basic auth (default "toor")
+      --token string      Telegram's token
+      --url string        URL where the botio's server is listening for requests
+      --user string       username for basic auth (default "admin")
+```
+
+Example:
+
+```bash
+botio tbot --token <telegram-token> --url localhost:9090 --user myuser --password mypassword
+```
+
+### add
+
+```text
+$ botio add --help
+Adds a new command with a response to the botio's server
+
+Usage:
+  botio add [flags]
+
+Examples:
+botio add --command start --response Hello --url localhost:9090 --user myuser --password mypassword
+
+Flags:
+      --command string    command to add
+  -h, --help              help for add
+      --password string   password for basic auth (default "toor")
+      --response string   response of the command to add
+      --url string        URL where the botio's server is listening
+      --user string       username for basic auth (default "admin")
+```
+
+Example:
+
+```bash
+bodio add --command start --response Hello --url localhost:9090 --user myuser --password mypassword
+```
+
+### print
+
+```text
+$ botio print
+Prints the specified botio's command with his response
+
+Usage:
+  botio print [flags]
+
+Examples:
+botio print --command start --url localhost:9090 --user myuser --password mypassword
+
+Flags:
+      --command string    command to search for
+  -h, --help              help for print
+      --password string   password for basic auth (default "toor")
+      --url string        URL where the botio's server is listening
+      --user string       username for basic auth (default "admin")
+```
+
+Example:
+
+```bash
+botio print --command start --url localhost:9090 --user myuser --password mypassword
+```
+
+### list
+
+```text
+$ botio list --help
+Prints a list with all the botio's commands
+
+Usage:
+  botio list [flags]
+
+Examples:
+botio list --url localhost:9090 --user myuser --password mypassword
+
+Flags:
+  -h, --help              help for list
+      --password string   password for basic auth (default "toor")
+      --url string        URL where the botio's server is listening
+      --user string       username for basic auth (default "admin")
+```
+
+Example:
+
+```bash
+botio list --url localhost:9090 --user myuser --password mypassword
+```
+
+### update
+
+```text
+$ botio update --help
+Updates an existing command (or adds it if not exists) with a response on the botio's server
+
+Usage:
+  botio update [flags]
+
+Examples:
+botio update --command start --response Hi --url localhost:9090 --user myuser --password mypassword
+
+Flags:
+      --command string    command to add
+  -h, --help              help for update
+      --password string   password for basic auth (default "toor")
+      --response string   response of the command to add
+      --url string        URL where the botio's server is listening
+      --user string       username for basic auth (default "admin")
+```
+
+Example:
+
+```text
+botio update --command start --response Hi --url localhost:9090 --user myuser --password mypassword
+```
+
+### delete
+
+```text
+$ botio delete --help
+Deletes the specified botio's command from the botio's server
+
+Usage:
+  botio delete [flags]
+
+Examples:
+botio delete --command start --url localhost:9090 --user myuser --password mypassword
+
+Flags:
+      --command string    command to delete
+  -h, --help              help for delete
+      --password string   password for basic auth (default "toor")
+      --url string        URL where the botio's server is listening
+      --user string       username for basic auth (default "admin")
+```
+
+Example:
+
+```bash
+botio delete --command start --url localhost:9090 --user myuser --password mypassword
+```
+
+## API Endpoints
 
 ### GET
 
-```bash
-curl -u user:password -X GET http://localhost:9090/api/commands/start
-# Response: {"cmd":"start","response":"Hi!"}
+#### GET Commands
+
+```text
+http://<url>:<port>/api/commands
 ```
 
-### GET All
+Example:
+
+```text
+http://localhost:9090/api/commands
+```
 
 ```bash
-curl -u user:password -X GET http://localhost:9090/api/commands
-# Response: [{"cmd":"start","response":"Hi!"},{"cmd":"goodbye","response":"I see you later!"},...]
+curl -u myuser:mypassword -X GET http://localhost:9090/api/commands
+```
+
+#### GET Command
+
+```text
+http://<url>:<port>/api/commands/<command>
+```
+
+Example:
+
+```text
+http://localhost:9090/api/commands/start
+```
+
+```bash
+curl -u myuser:mypassword -X GET http://localhost:9090/api/commands/start
 ```
 
 ### POST
 
-```bash
-echo '{"cmd": "age", "response":"42"}' | curl -u user:password -d @- http://localhost:9090/api/commands
-# Response: {"cmd":"age","response":"42"}
+```text
+http://<url>:<port>/api/commands
 ```
 
-### PUT
+Example:
 
-> In a Bolt database updating is the same as reposting the same element but with a different value.
+```text
+http://localhost:9090/api/commands
+```
 
 ```bash
-echo '{"cmd": "age", "response":"25"}' | curl -u user:password -d @- http://localhost:9090/api/commands
-# Response: {"cmd": "age","response":"25"}
+echo '{"cmd": "age", "response":"42"}' | curl -u myuser:mypassword -d @- http://localhost:9090/api/commands
+```
+
+### UPDATE
+
+```text
+http://<url>:<port>/api/commands/<command>
+```
+
+Example:
+
+```text
+http://localhost:9090/api/commands/start
+```
+
+```bash
+echo '{"cmd": "age", "response":"25"}' | curl -u myuser:mypassword -d @- http://localhost:9090/api/commands/start
 ```
 
 ### DELETE
 
+```text
+http://<url>:<port>/api/commands/<command>
+```
+
+Example:
+
+```text
+http://localhost:9090/api/commands/start
+```
+
 ```bash
-curl -u user:password -X DELETE http://localhost:9090/api/commands/start
+curl -u myuser:mypassword -X DELETE http://localhost:9090/api/commands/start
 ```
 
 ### Backup
 
-```bash
-curl -u user:password -X GET http://localhost:9090/api/backup > backup.db
+> Backup is an special endpoint that will send to the client a backup of the database.
+
+```text
+http://<url>:<port>/api/backup
 ```
+
+Example:
+
+```text
+http://localhost:9090/api/backup
+```
+
+```bash
+curl -u myuser:mypassword -X GET http://localhost:9090/api/backup > backup.db
+```
+
+## ToDO
+
+- [ ] Better logging
+- [ ] Server with HTTPS
+- [ ] Docker Compose
+- [ ] Web Interface
+- [ ] Alternative databases like PostgreSQL
+- [ ] Alternative authentication options
+- [ ] Support for Facebook Messenger bots
+- [ ] Support for Discord bots
+- [ ] Support for Slack bots
+- [ ] Support for Skype bots

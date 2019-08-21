@@ -26,7 +26,7 @@ func init() {
 var ServerCmd = &cobra.Command{
 	Use:     "server",
 	Short:   "Starts a botio's server to manage the botio's commands with simple HTTP methods.",
-	Example: "botio server --db ./data/botio.db --col commands --addr localhost:9090 --user mysuer --password mypassword",
+	Example: "botio server --db ./data/botio.db --col commands --addr localhost:9090 --user myuser --password mypassword",
 	Run: func(cmd *cobra.Command, args []string) {
 		// Flags
 		collection, _ := cmd.Flags().GetString("col")
@@ -83,10 +83,13 @@ func newRouter(database db.DB, col string) http.Handler {
 	r.Route("/api/commands", func(r chi.Router) {
 		r.Get("/", handlers.GetAll(database, col))
 		r.Get("/{command}", handlers.Get(database, col))
-		r.Get("/backup", handlers.Backup(database, col))
 		r.Post("/", handlers.Post(database, col))
 		r.Put("/{command}", handlers.Put(database, col))
 		r.Delete("/{command}", handlers.Delete(database, col))
+	})
+
+	r.Route("/api/backup", func(r chi.Router) {
+		r.Get("/", handlers.Backup(database, col))
 	})
 
 	return r
