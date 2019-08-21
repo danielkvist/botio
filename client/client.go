@@ -75,6 +75,7 @@ func GetAll(url, username, password string) ([]*models.Command, error) {
 	return commands, nil
 }
 
+// TODO:
 func Post(url, username, password, command, response string) (*models.Command, error) {
 	cmd := models.Command{
 		Cmd:      command,
@@ -105,10 +106,29 @@ func Post(url, username, password, command, response string) (*models.Command, e
 	return &cmd, nil
 }
 
+// TODO:
 func Put(url, username, password, response string) (*models.Command, error) {
 	return nil, nil
 }
 
-func Delete(url, username, password string) (*models.Command, error) {
-	return nil, nil
+// TODO:
+func Delete(url, username, password string) error {
+	req, err := http.NewRequest(http.MethodDelete, url, nil)
+	if err != nil {
+		return fmt.Errorf("while creating a new request for %q: %v", url, err)
+	}
+	req.SetBasicAuth(username, password)
+
+	c := &http.Client{}
+	resp, err := c.Do(req)
+	if err != nil {
+		return fmt.Errorf("while making a request for %q: %v", url, err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("something went wrong while making DELETE request to %v", url)
+	}
+
+	return nil
 }
