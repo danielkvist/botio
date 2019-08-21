@@ -25,7 +25,7 @@ func TestGet(t *testing.T) {
 		{"goodbye", "Ciao!"},
 	}
 
-	mdb := db.DBFactory("testing")
+	mdb := db.Factory("testing")
 	for _, tc := range tt {
 		mdb.Set("", tc.cmd, tc.response)
 	}
@@ -75,7 +75,7 @@ func TestGetAll(t *testing.T) {
 		{"none", ""},
 	}
 
-	mdb := db.DBFactory("testing")
+	mdb := db.Factory("testing")
 	for _, tc := range tt {
 		mdb.Set("", tc.cmd, tc.response)
 	}
@@ -118,7 +118,7 @@ func TestGetAll(t *testing.T) {
 }
 
 func TestPost(t *testing.T) {
-	mdb := db.DBFactory("testing")
+	mdb := db.Factory("testing")
 	cmd := models.Command{
 		Cmd:      "start",
 		Response: "Hi!",
@@ -151,7 +151,7 @@ func TestPost(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
-	mdb := db.DBFactory("testing")
+	mdb := db.Factory("testing")
 	cmd := models.Command{
 		Cmd:      "start",
 		Response: "Hi!",
