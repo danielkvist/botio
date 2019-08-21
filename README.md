@@ -382,7 +382,7 @@ http://localhost:9090/api/backup
 curl -u myuser:mypassword -X GET http://localhost:9090/api/backup > backup.db
 ```
 
-## ToDO
+## ToDo
 
 - [ ] Better logging
 - [ ] Server with HTTPS
