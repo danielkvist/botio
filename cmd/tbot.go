@@ -17,7 +17,7 @@ func init() {
 
 var TelegramBotCmd = &cobra.Command{
 	Use:   "tbot",
-	Short: "tbot initializes a Telegram's bot that extracts the commands from the botio's server.",
+	Short: "Initializes a Telegram's bot that extracts the commands from the botio's server.",
 	Run: func(cmd *cobra.Command, args []string) {
 		// Flags
 		password, _ := cmd.Flags().GetString("password")

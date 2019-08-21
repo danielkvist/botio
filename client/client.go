@@ -3,6 +3,7 @@
 package client
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -72,4 +73,42 @@ func GetAll(url, username, password string) ([]*models.Command, error) {
 	}
 
 	return commands, nil
+}
+
+func Post(url, username, password, command, response string) (*models.Command, error) {
+	cmd := models.Command{
+		Cmd:      command,
+		Response: response,
+	}
+	cmdData, err := json.Marshal(cmd)
+	if err != nil {
+		return nil, fmt.Errorf("while marshaling command %q: %v", command, err)
+	}
+
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(cmdData))
+	if err != nil {
+		return nil, fmt.Errorf("while making a request for %q: %v", url, err)
+	}
+	req.SetBasicAuth(username, password)
+
+	c := &http.Client{}
+	resp, err := c.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("while making a request for %q: %v", url, err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("something went wrong while making POST request to %v to create %q command", url, command)
+	}
+
+	return &cmd, nil
+}
+
+func Put(url, username, password, response string) (*models.Command, error) {
+	return nil, nil
+}
+
+func Delete(url, username, password string) (*models.Command, error) {
+	return nil, nil
 }

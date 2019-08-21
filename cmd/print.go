@@ -11,13 +11,13 @@ import (
 func init() {
 	PrintCmd.Flags().String("command", "", "command to search for")
 	PrintCmd.Flags().String("password", "toor", "password for basic auth")
-	PrintCmd.Flags().String("url", "", "URL where the Botio's server is listening")
+	PrintCmd.Flags().String("url", "", "URL where the botio's server is listening")
 	PrintCmd.Flags().String("user", "admin", "username for basic auth")
 }
 
 var PrintCmd = &cobra.Command{
 	Use:   "print",
-	Short: "print prints the specified botio's command with his response",
+	Short: "Prints the specified botio's command with his response",
 	Run: func(cmd *cobra.Command, args []string) {
 		// Flags
 		command, _ := cmd.Flags().GetString("command")

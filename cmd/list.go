@@ -16,7 +16,7 @@ func init() {
 
 var ListCmd = &cobra.Command{
 	Use:   "list",
-	Short: "list prints a list with all the botio's commands",
+	Short: "Prints a list with all the botio's commands",
 	Run: func(cmd *cobra.Command, args []string) {
 		// Flags
 		password, _ := cmd.Flags().GetString("password")
