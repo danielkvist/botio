@@ -1,5 +1,4 @@
-// Package client exports simple methods to get the commands
-// from the server.
+// Package client exports very basic functions to get commands with HTTP methods.
 package client
 
 import (
@@ -75,7 +74,10 @@ func GetAll(url, username, password string) ([]*models.Command, error) {
 	return commands, nil
 }
 
-// TODO:
+// Post receives an URL to which make an HTTP POST request using the received username
+// and password for basic authentication and the received command and response
+// as the body.
+// If something goes wrong while making the request it returns a non-nil error.
 func Post(url, username, password, command, response string) (*models.Command, error) {
 	cmd := models.Command{
 		Cmd:      command,
@@ -106,12 +108,15 @@ func Post(url, username, password, command, response string) (*models.Command, e
 	return &cmd, nil
 }
 
-// TODO:
-func Put(url, username, password, response string) (*models.Command, error) {
-	return nil, nil
+// Put realizes a POST request using the Post function due to how
+// BoltDB databases manages updates.
+func Put(url, username, password, command, response string) (*models.Command, error) {
+	return Post(url, username, password, command, response)
 }
 
-// TODO:
+// Delete receives an URL to which make an HTTP DELETE request using the received username
+// and password for basic authentication with the objective of remove a command.
+// If something goes wrong while making the request it returns a non-nil error.
 func Delete(url, username, password string) error {
 	req, err := http.NewRequest(http.MethodDelete, url, nil)
 	if err != nil {

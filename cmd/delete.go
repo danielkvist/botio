@@ -15,9 +15,11 @@ func init() {
 	DeleteCmd.Flags().String("user", "admin", "username for basic auth")
 }
 
+// DeleteCmd is a cobra.Command to delete commands from the botio's commands server.
 var DeleteCmd = &cobra.Command{
-	Use:   "delete",
-	Short: "Deletes the specified botio's command from the botio's server",
+	Use:     "delete",
+	Short:   "Deletes the specified botio's command from the botio's server",
+	Example: "botio delete --command start --url localhost:9090 --user myuser --password mypassword",
 	Run: func(cmd *cobra.Command, args []string) {
 		// Flags
 		command, _ := cmd.Flags().GetString("command")

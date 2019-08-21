@@ -17,9 +17,11 @@ func init() {
 
 }
 
+// AddCmd is a cobra.Command to add commands to the botio's commands server.
 var AddCmd = &cobra.Command{
-	Use:   "add",
-	Short: "Adds a new command with a response to the botio's server",
+	Use:     "add",
+	Short:   "Adds a new command with a response to the botio's server",
+	Example: "botio add --command start --response Hello --url localhost:9090 --user myuser --password mypassword",
 	Run: func(cmd *cobra.Command, args []string) {
 		// Flags
 		command, _ := cmd.Flags().GetString("command")

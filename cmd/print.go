@@ -15,9 +15,11 @@ func init() {
 	PrintCmd.Flags().String("user", "admin", "username for basic auth")
 }
 
+// PrintCmd is a cobra.Command to print a specified command from the botio's commands server.
 var PrintCmd = &cobra.Command{
-	Use:   "print",
-	Short: "Prints the specified botio's command with his response",
+	Use:     "print",
+	Short:   "Prints the specified botio's command with his response",
+	Example: "botio print --command start --url localhost:9090 --user myuser --password mypassword",
 	Run: func(cmd *cobra.Command, args []string) {
 		// Flags
 		command, _ := cmd.Flags().GetString("command")

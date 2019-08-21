@@ -15,9 +15,11 @@ func init() {
 	TelegramBotCmd.Flags().String("user", "admin", "username for basic auth")
 }
 
+// TelegramBotCmd is a cobra.Command to manage the botio's Telegram Bot client and server.
 var TelegramBotCmd = &cobra.Command{
-	Use:   "tbot",
-	Short: "Initializes a Telegram's bot that extracts the commands from the botio's server.",
+	Use:     "tbot",
+	Short:   "Initializes a Telegram's bot that extracts the commands from the botio's server.",
+	Example: "botio tbot --token <telegram-token> --url localhost:9090 --user myuser --password mypassword",
 	Run: func(cmd *cobra.Command, args []string) {
 		// Flags
 		password, _ := cmd.Flags().GetString("password")

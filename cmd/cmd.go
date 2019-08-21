@@ -1,3 +1,4 @@
+// Package cmd exports commands for a cobra CLI.
 package cmd
 
 import (

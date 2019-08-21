@@ -22,9 +22,11 @@ func init() {
 	ServerCmd.Flags().String("user", "admin", "username for basic auth")
 }
 
+// ServerCmd is a cobra.Command to manage the botio's commands server.
 var ServerCmd = &cobra.Command{
-	Use:   "server",
-	Short: "Starts a botio's server to manage the botio's commands with simple HTTP methods.",
+	Use:     "server",
+	Short:   "Starts a botio's server to manage the botio's commands with simple HTTP methods.",
+	Example: "botio server --db ./data/botio.db --col commands --addr localhost:9090 --user mysuer --password mypassword",
 	Run: func(cmd *cobra.Command, args []string) {
 		// Flags
 		collection, _ := cmd.Flags().GetString("col")
