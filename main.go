@@ -17,6 +17,7 @@ func main() {
 
 	root.AddCommand(cmd.ServerCmd)
 	root.AddCommand(cmd.TelegramBotCmd)
+	root.AddCommand(cmd.PrintCmd)
 	root.AddCommand(cmd.ListCmd)
 
 	if err := root.Execute(); err != nil {

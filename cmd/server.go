@@ -24,7 +24,7 @@ func init() {
 
 var ServerCmd = &cobra.Command{
 	Use:   "server",
-	Short: "Server initializes a Botio's server to manage the Botio's commands with simple HTTP methods.",
+	Short: "server initializes a botio's server to manage the Botio's commands with simple HTTP methods.",
 	Run: func(cmd *cobra.Command, args []string) {
 		// Flags
 		collection, _ := cmd.Flags().GetString("col")

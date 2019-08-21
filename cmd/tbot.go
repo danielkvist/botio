@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"log"
-	"strings"
 
 	"github.com/danielkvist/botio/tbot"
 
@@ -12,13 +11,13 @@ import (
 func init() {
 	TelegramBotCmd.Flags().String("password", "toor", "password for basic auth")
 	TelegramBotCmd.Flags().String("token", "", "Telegram's token")
-	TelegramBotCmd.Flags().String("url", "", "URL where the Botio's server is listening for requests")
+	TelegramBotCmd.Flags().String("url", "", "URL where the botio's server is listening for requests")
 	TelegramBotCmd.Flags().String("user", "admin", "username for basic auth")
 }
 
 var TelegramBotCmd = &cobra.Command{
 	Use:   "tbot",
-	Short: "tbot initializes a Telegram's bot that extracts the commands from the Botio's server.",
+	Short: "tbot initializes a Telegram's bot that extracts the commands from the botio's server.",
 	Run: func(cmd *cobra.Command, args []string) {
 		// Flags
 		password, _ := cmd.Flags().GetString("password")
@@ -32,12 +31,9 @@ var TelegramBotCmd = &cobra.Command{
 		}
 
 		// Check URL
-		if url == "" {
-			log.Fatal("server URL cannot be an empty string")
-		}
-
-		if !strings.HasPrefix(url, "http://") {
-			url = "http://" + url
+		url, err := checkURL(url)
+		if err != nil {
+			log.Fatalf("%v", err)
 		}
 
 		// Bot initialization

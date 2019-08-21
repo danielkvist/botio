@@ -44,11 +44,12 @@ require (
 	github.com/yanzay/tbot v1.0.0 // indirect
 	github.com/yanzay/tbot/v2 v2.0.2
 	go.etcd.io/bbolt v1.3.3
-	golang.org/x/crypto v0.0.0-20190701094942-4def268fd1a4 // indirect
+	golang.org/x/crypto v0.0.0-20190820162420-60c769a6c586 // indirect
 	golang.org/x/mobile v0.0.0-20190814143026-e8b3e6111d02 // indirect
 	golang.org/x/net v0.0.0-20190813141303-74dc4d7220e7 // indirect
 	golang.org/x/sys v0.0.0-20190813064441-fde4db37ae7a // indirect
-	golang.org/x/tools v0.0.0-20190820033707-85edb9ef3283 // indirect
+	golang.org/x/tools v0.0.0-20190820205717-547ecf7b1ef1 // indirect
+	google.golang.org/api v0.9.0 // indirect
 	google.golang.org/genproto v0.0.0-20190819201941-24fa4b261c55 // indirect
 	google.golang.org/grpc v1.23.0 // indirect
 	honnef.co/go/tools v0.0.1-2019.2.2 // indirect

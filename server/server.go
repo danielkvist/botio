@@ -117,7 +117,7 @@ func New(options ...Option) (*http.Server, error) {
 	case s.Handler == nil:
 		return nil, fmt.Errorf("server.Handler equals to nil")
 	case s.Addr == "":
-		return nil, fmt.Errorf("server.Addr is empty")
+		return nil, fmt.Errorf("server.Addr is an empty string")
 	default:
 		return s, nil
 	}
