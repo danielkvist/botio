@@ -36,7 +36,7 @@ var PrintCmd = &cobra.Command{
 		// GET command
 		c, err := client.Get(url+"/"+command, user, password)
 		if err != nil {
-			log.Fatalf("while getting command from %q: %v", url, err)
+			log.Fatalf("%v", err)
 		}
 
 		printCommands(c)

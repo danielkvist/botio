@@ -35,7 +35,7 @@ var ListCmd = &cobra.Command{
 		// GET commands
 		commands, err := client.GetAll(url, user, password)
 		if err != nil {
-			log.Fatalf("while getting all the commands from %q: %v", url, err)
+			log.Fatalf("%v", err)
 		}
 
 		printCommands(commands...)

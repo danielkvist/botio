@@ -30,6 +30,10 @@ func Get(url, username, password string) (*models.Command, error) {
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("while making a GET request for %q a %v status code was expected. got %q", url, http.StatusOK, resp.Status)
+	}
+
 	d, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("while reading the response body from %q: %v", url, err)
@@ -60,6 +64,10 @@ func GetAll(url, username, password string) ([]*models.Command, error) {
 		return nil, fmt.Errorf("while making a request for %q: %v", url, err)
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("while making a GET request for %q a %v status code was expected. got %q", url, http.StatusOK, resp.Status)
+	}
 
 	d, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -102,7 +110,7 @@ func Post(url, username, password, command, response string) (*models.Command, e
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("something went wrong while making POST request to %v to create %q command", url, command)
+		return nil, fmt.Errorf("while making a POST request for %q a %v status code was expected. got %q", url, http.StatusOK, resp.Status)
 	}
 
 	return &cmd, nil
@@ -132,7 +140,7 @@ func Delete(url, username, password string) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("something went wrong while making DELETE request to %v", url)
+		return fmt.Errorf("while making a DELETE request for %q a %v status code was expected. got %q", url, http.StatusOK, resp.Status)
 	}
 
 	return nil

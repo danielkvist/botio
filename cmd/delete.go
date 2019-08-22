@@ -40,7 +40,7 @@ var DeleteCmd = &cobra.Command{
 
 		// DELETE command
 		if err := client.Delete(url+"/"+command, user, password); err != nil {
-			log.Fatalf("while deleting command %q from %q: %v", command, url, err)
+			log.Fatalf("%v", err)
 		}
 
 		fmt.Printf("command %q deleted successfully\n", command)

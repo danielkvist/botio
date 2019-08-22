@@ -1,8 +1,7 @@
-// Package models exports a very simple Command struct.
+// Package models exports a command struct for bot's commands.
 package models
 
-// Command represents a bot command (Cmd)
-// and its response (Response).
+// Command represents a bot command and his response
 type Command struct {
 	Cmd      string `json:"cmd"`
 	Response string `json:"response"`

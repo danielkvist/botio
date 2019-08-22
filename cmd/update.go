@@ -44,7 +44,7 @@ var UpdateCmd = &cobra.Command{
 		// PUT command
 		c, err := client.Put(url, user, password, command, response)
 		if err != nil {
-			log.Fatalf("while posting command %q to %q: %v", command, url, err)
+			log.Fatalf("%v", err)
 		}
 
 		printCommands(c)
