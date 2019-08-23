@@ -7,6 +7,8 @@ import (
 	"log"
 	"net/http"
 	"time"
+
+	jwt "github.com/dgrijalva/jwt-go"
 )
 
 // Option defines an option for a new *http.Server.
@@ -33,12 +35,45 @@ func basicAuth(username string, password string, h http.Handler) http.Handler {
 		user, pass, _ := r.BasicAuth()
 
 		if username != user || pass != password {
-			w.Header().Set("WWW-Authenticate", `Basic realm="Restricted`)
+			w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 
 		h.ServeHTTP(w, r)
+	})
+}
+
+// WithJWTAuth receives a signing key and returns an Option that applies JWT
+// tokens authentication to the *http.Server usin ghe *http.Server's Handler.
+func WithJWTAuth(key string) Option {
+	return func(s *http.Server) {
+		s.Handler = jwtHandler(key, s.Handler)
+	}
+}
+
+func jwtHandler(key string, h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header["Token"] == nil {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		token, err := jwt.Parse(r.Header["Token"][0], func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("while parsing a JWT token there was an error")
+			}
+
+			return []byte(key), nil
+		})
+
+		if err != nil {
+			http.Error(w, "error while parsing JWT token", http.StatusInternalServerError)
+		}
+
+		if token.Valid {
+			h.ServeHTTP(w, r)
+		}
 	})
 }
 

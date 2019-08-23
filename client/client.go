@@ -9,21 +9,24 @@ import (
 	"net/http"
 
 	"github.com/danielkvist/botio/models"
+
+	jwt "github.com/dgrijalva/jwt-go"
 )
 
-// Get receives an URL to which make a request using the received username
-// and password for basic authentication with the objective
-// of get a botio's command and return it.
-// If something goes wrong while making the request it returns a non-nil error.
-func Get(url, username, password string) (*models.Command, error) {
+func Get(url, key string) (*models.Command, error) {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("while creating a new request for %q: %v", url, err)
 	}
-	req.SetBasicAuth(username, password)
+
+	token, err := genJWT(key)
+	if err != nil {
+		return nil, fmt.Errorf("while generating JWT token for authentication for %q: %v", url, err)
+	}
+
+	req.Header.Set("Token", token)
 
 	c := &http.Client{}
-
 	resp, err := c.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("while making a request for %q: %v", url, err)
@@ -47,16 +50,18 @@ func Get(url, username, password string) (*models.Command, error) {
 	return &cmd, nil
 }
 
-// GetAll receives an URL to which make a request using the received username
-// and password for basic authentication with the objective
-// of get all botio's commands and return them.
-// If something goes wrong while making the request it returns a non-nil error.
-func GetAll(url, username, password string) ([]*models.Command, error) {
+func GetAll(url, key string) ([]*models.Command, error) {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("while creating a new request for %q: %v", url, err)
 	}
-	req.SetBasicAuth(username, password)
+
+	token, err := genJWT(key)
+	if err != nil {
+		return nil, fmt.Errorf("while generating JWT token for authentication for %q: %v", url, err)
+	}
+
+	req.Header.Set("Token", token)
 
 	c := &http.Client{}
 	resp, err := c.Do(req)
@@ -82,11 +87,7 @@ func GetAll(url, username, password string) ([]*models.Command, error) {
 	return commands, nil
 }
 
-// Post receives an URL to which make an HTTP POST request using the received username
-// and password for basic authentication and the received command and response
-// as the body.
-// If something goes wrong while making the request it returns a non-nil error.
-func Post(url, username, password, command, response string) (*models.Command, error) {
+func Post(url, key, command, response string) (*models.Command, error) {
 	cmd := models.Command{
 		Cmd:      command,
 		Response: response,
@@ -100,7 +101,13 @@ func Post(url, username, password, command, response string) (*models.Command, e
 	if err != nil {
 		return nil, fmt.Errorf("while making a request for %q: %v", url, err)
 	}
-	req.SetBasicAuth(username, password)
+
+	token, err := genJWT(key)
+	if err != nil {
+		return nil, fmt.Errorf("while generating JWT token for authentication for %q: %v", url, err)
+	}
+
+	req.Header.Set("Token", token)
 
 	c := &http.Client{}
 	resp, err := c.Do(req)
@@ -116,21 +123,22 @@ func Post(url, username, password, command, response string) (*models.Command, e
 	return &cmd, nil
 }
 
-// Put realizes a POST request using the Post function due to how
-// BoltDB databases manages updates.
-func Put(url, username, password, command, response string) (*models.Command, error) {
-	return Post(url, username, password, command, response)
+func Put(url, key, command, response string) (*models.Command, error) {
+	return Post(url, key, command, response)
 }
 
-// Delete receives an URL to which make an HTTP DELETE request using the received username
-// and password for basic authentication with the objective of remove a command.
-// If something goes wrong while making the request it returns a non-nil error.
-func Delete(url, username, password string) error {
+func Delete(url, key string) error {
 	req, err := http.NewRequest(http.MethodDelete, url, nil)
 	if err != nil {
 		return fmt.Errorf("while creating a new request for %q: %v", url, err)
 	}
-	req.SetBasicAuth(username, password)
+
+	token, err := genJWT(key)
+	if err != nil {
+		return fmt.Errorf("while generating JWT token for authentication for %q: %v", url, err)
+	}
+
+	req.Header.Set("Token", token)
 
 	c := &http.Client{}
 	resp, err := c.Do(req)
@@ -144,4 +152,15 @@ func Delete(url, username, password string) error {
 	}
 
 	return nil
+}
+
+func genJWT(key string) (string, error) {
+	token := jwt.New(jwt.SigningMethodHS256)
+
+	tkStr, err := token.SignedString([]byte(key))
+	if err != nil {
+		return "", fmt.Errorf("while generating the authentication JWT token: %v", err)
+	}
+
+	return tkStr, nil
 }

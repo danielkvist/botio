@@ -18,22 +18,20 @@ func init() {
 	ServerCmd.Flags().String("col", "commands", "collection used to store the commands")
 	ServerCmd.Flags().String("db", "./botio/botio.db", "path to the database")
 	ServerCmd.Flags().String("addr", "localhost:9090", "address where the server should listen for requests")
-	ServerCmd.Flags().String("password", "toor", "password for basic auth")
-	ServerCmd.Flags().String("user", "admin", "username for basic auth")
+	ServerCmd.Flags().String("key", "", "authentication key")
 }
 
 // ServerCmd is a cobra.Command to manage the botio's commands server.
 var ServerCmd = &cobra.Command{
 	Use:     "server",
 	Short:   "Starts a botio's server to manage the botio's commands with simple HTTP methods.",
-	Example: "botio server --db ./data/botio.db --col commands --addr localhost:9090 --user myuser --password mypassword",
+	Example: "botio server --db ./data/botio.db --col commands --addr localhost:9090 --key mysupersecretkey",
 	Run: func(cmd *cobra.Command, args []string) {
 		// Flags
 		collection, _ := cmd.Flags().GetString("col")
 		database, _ := cmd.Flags().GetString("db")
 		listenAddr, _ := cmd.Flags().GetString("addr")
-		password, _ := cmd.Flags().GetString("password")
-		username, _ := cmd.Flags().GetString("user")
+		key, _ := cmd.Flags().GetString("key")
 
 		// Database initialization
 		env := "production"
@@ -52,7 +50,7 @@ var ServerCmd = &cobra.Command{
 		s, err := server.New(
 			server.WithListenAddr(listenAddr),
 			server.WithHandler(r),
-			server.WithBasicAuth(username, password),
+			server.WithJWTAuth(key),
 			server.WithGracefulShutdown(done, quit),
 		)
 		if err != nil {

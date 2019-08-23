@@ -9,9 +9,8 @@ import (
 )
 
 func init() {
-	ListCmd.Flags().String("password", "toor", "password for basic auth")
-	ListCmd.Flags().String("url", "", "URL where the botio's server is listening")
-	ListCmd.Flags().String("user", "admin", "username for basic auth")
+	ListCmd.Flags().String("key", "", "authentication key")
+	ListCmd.Flags().String("url", "", "url where the botio's server is listening")
 }
 
 // ListCmd is a cobra.Command to print all the commands available on the
@@ -19,12 +18,11 @@ func init() {
 var ListCmd = &cobra.Command{
 	Use:     "list",
 	Short:   "Prints a list with all the botio's commands",
-	Example: "botio list --url localhost:9090 --user myuser --password mypassword",
+	Example: "botio list --url localhost:9090 --key mysupersecretkey",
 	Run: func(cmd *cobra.Command, args []string) {
 		// Flags
-		password, _ := cmd.Flags().GetString("password")
+		key, _ := cmd.Flags().GetString("key")
 		url, _ := cmd.Flags().GetString("url")
-		user, _ := cmd.Flags().GetString("user")
 
 		// Check URL
 		url, err := checkURL(url)
@@ -33,7 +31,7 @@ var ListCmd = &cobra.Command{
 		}
 
 		// GET commands
-		commands, err := client.GetAll(url, user, password)
+		commands, err := client.GetAll(url, key)
 		if err != nil {
 			log.Fatalf("%v", err)
 		}

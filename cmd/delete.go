@@ -10,22 +10,20 @@ import (
 
 func init() {
 	DeleteCmd.Flags().String("command", "", "command to delete")
-	DeleteCmd.Flags().String("password", "toor", "password for basic auth")
-	DeleteCmd.Flags().String("url", "", "URL where the botio's server is listening")
-	DeleteCmd.Flags().String("user", "admin", "username for basic auth")
+	DeleteCmd.Flags().String("key", "", "authentication key")
+	DeleteCmd.Flags().String("url", "", "url where the botio's server is listening")
 }
 
 // DeleteCmd is a cobra.Command to delete commands from the botio's commands server.
 var DeleteCmd = &cobra.Command{
 	Use:     "delete",
 	Short:   "Deletes the specified botio's command from the botio's server",
-	Example: "botio delete --command start --url localhost:9090 --user myuser --password mypassword",
+	Example: "botio delete --command start --url localhost:9090 --key mysupersecretkey",
 	Run: func(cmd *cobra.Command, args []string) {
 		// Flags
 		command, _ := cmd.Flags().GetString("command")
-		password, _ := cmd.Flags().GetString("password")
+		key, _ := cmd.Flags().GetString("key")
 		url, _ := cmd.Flags().GetString("url")
-		user, _ := cmd.Flags().GetString("user")
 
 		// Check command
 		if command == "" {
@@ -39,7 +37,7 @@ var DeleteCmd = &cobra.Command{
 		}
 
 		// DELETE command
-		if err := client.Delete(url+"/"+command, user, password); err != nil {
+		if err := client.Delete(url+"/"+command, key); err != nil {
 			log.Fatalf("%v", err)
 		}
 

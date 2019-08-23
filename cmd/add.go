@@ -10,10 +10,9 @@ import (
 
 func init() {
 	AddCmd.Flags().String("command", "", "command to add")
-	AddCmd.Flags().String("password", "toor", "password for basic auth")
+	AddCmd.Flags().String("key", "", "authentication key")
 	AddCmd.Flags().String("response", "", "response of the command to add")
-	AddCmd.Flags().String("url", "", "URL where the botio's server is listening")
-	AddCmd.Flags().String("user", "admin", "username for basic auth")
+	AddCmd.Flags().String("url", "", "url where the botio's server is listening")
 
 }
 
@@ -21,14 +20,13 @@ func init() {
 var AddCmd = &cobra.Command{
 	Use:     "add",
 	Short:   "Adds a new command with a response to the botio's server",
-	Example: "botio add --command start --response Hello --url localhost:9090 --user myuser --password mypassword",
+	Example: "botio add --command start --response Hello --url localhost:9090 --key mysupersecretkey",
 	Run: func(cmd *cobra.Command, args []string) {
 		// Flags
 		command, _ := cmd.Flags().GetString("command")
-		password, _ := cmd.Flags().GetString("password")
+		key, _ := cmd.Flags().GetString("key")
 		response, _ := cmd.Flags().GetString("response")
 		url, _ := cmd.Flags().GetString("url")
-		user, _ := cmd.Flags().GetString("user")
 
 		// Check command and response
 		if command == "" || response == "" {
@@ -42,7 +40,7 @@ var AddCmd = &cobra.Command{
 		}
 
 		// POST command
-		c, err := client.Post(url, user, password, command, response)
+		c, err := client.Post(url, key, command, response)
 		if err != nil {
 			log.Fatalf("%v", err)
 		}

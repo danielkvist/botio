@@ -4,7 +4,7 @@
 [![Docker Pulls](https://img.shields.io/docker/pulls/danielkvist/botio.svg?maxAge=604800)](https://hub.docker.com/r/danielkvist/botio/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
 
-Botio is a CLI to create and manage easily simple bots for differents platforms.
+Botio is an opinionated CLI to create and manage easily simple bots for differents platforms.
 
 > For the moment it only supports Telegram but I'm working to add support for more platforms soon.
 
@@ -13,31 +13,31 @@ Botio is a CLI to create and manage easily simple bots for differents platforms.
 First, we create a server from which we're going to manage the commands to our bot:
 
 ```bash
-botio server --db ./data/botio.db --col commands --addr localhost:9090 --user myuser --password mypassword
+botio server --db ./data/botio.db --col commands --addr localhost:9090 --key mysupersecretkey
 ```
 
 We add a command:
 
 ```bash
-botio add --command start --response Hello --url localhost:9090 --user myuser --password mypassword
+botio add --command start --response Hello --url localhost:9090 --key mysupersecretkey
 ```
 
 We can check that the command has been created successfully with ```print```:
 
 ```bash
-botio print --command start --url localhost:9090 --user myuser --password mypassword
+botio print --command start --url localhost:9090 --key mysupersecretkey
 ```
 
 Or see a list of all our commands with ```list```:
 
 ```bash
-botio list --url localhost:9090 --user myuser --password mypassword
+botio list --url localhost:9090 --key mysupersecretkey
 ```
 
 Now, we can start our Telegram's bot:
 
 ```bash
-botio tbot --token <telegram-token> --url localhost:9090 --user myuser --password mypassword
+botio tbot --token <telegram-token> --url localhost:9090 --key mysupersecretkey
 ```
 
 > If you have doubts about how to get a Telegram token for your bot you can check this [link](https://core.telegram.org/bots#botfather).
@@ -74,9 +74,9 @@ Usage:
   botio [command]
 
 Examples:
-botio server --db ./data/commands.db --col commands --addr localhost:9090 --user myuser --password mypassword
-botio tbot --token <telegram-token> --url localhost:9090 --user myuser --password mypassword
-botio print --command start --url localhost:9090 --user myuser --password mypassword
+botio server --db ./data/commands.db --col commands --addr localhost:9090 --key mysupersecretkey
+botio tbot --token <telegram-token> --url localhost:9090 --key mysupersecretkey
+botio print --command start --url localhost:9090 --key mysupersecretkey
 
 Available Commands:
   add         Adds a new command with a response to the botio's server
@@ -104,21 +104,20 @@ Usage:
   botio server [flags]
 
 Examples:
-botio server --db ./data/botio.db --col commands --addr localhost:9090 --user mysuer --password mypassword
+botio server --db ./data/botio.db --col commands --addr localhost:9090 --key mysupersecretkey
 
 Flags:
-      --addr string       address where the server should listen for requests (default "localhost:9090")
-      --col string        collection used to store the commands (default "commands")
-      --db string         path to the database (default "./botio/botio.db")
-  -h, --help              help for server
-      --password string   password for basic auth (default "toor")
-      --user string       username for basic auth (default "admin")
+      --addr string   Address where the server should listen for requests (default "localhost:9090")
+      --col string    collection used to store the commands (default "Commands")
+      --db string     Path to the database (default "./botio/botio.db")
+  -h, --help          help for server
+      --key string    Authentication key
 ```
 
 Example:
 
 ```bash
-botio server --db ./data/botio.db --col commands --addr localhost:9090 --user myuser --password mypassword
+botio server --db ./data/botio.db --col commands --addr localhost:9090 --key mysupersecretkey
 ```
 
 > The database used is based on BoltDB. You can read more about it [here](https://github.com/etcd-io/bbolt).
@@ -133,20 +132,19 @@ Usage:
   botio tbot [flags]
 
 Examples:
-botio tbot --token <telegram-token> --url localhost:9090 --user myuser --password mypassword
+botio tbot --token <telegram-token> --url localhost:9090 --key mysupersecretkey
 
 Flags:
-  -h, --help              help for tbot
-      --password string   password for basic auth (default "toor")
-      --token string      Telegram's token
-      --url string        URL where the botio's server is listening for requests
-      --user string       username for basic auth (default "admin")
+  -h, --help           help for tbot
+      --key string     authentication key for the botio's server
+      --token string   telegram's token
+      --url string     url where the botio's server is listening for requests
 ```
 
 Example:
 
 ```bash
-botio tbot --token <telegram-token> --url localhost:9090 --user myuser --password mypassword
+botio tbot --token <telegram-token> --url localhost:9090 --key mysupersecretkey
 ```
 
 ### add
@@ -159,21 +157,20 @@ Usage:
   botio add [flags]
 
 Examples:
-botio add --command start --response Hello --url localhost:9090 --user myuser --password mypassword
+botio add --command start --response Hello --url localhost:9090 --password mypassword
 
 Flags:
       --command string    command to add
   -h, --help              help for add
-      --password string   password for basic auth (default "toor")
+      --key string        authentication key
       --response string   response of the command to add
-      --url string        URL where the botio's server is listening
-      --user string       username for basic auth (default "admin")
+      --url string        url where the botio's server is listening
 ```
 
 Example:
 
 ```bash
-bodio add --command start --response Hello --url localhost:9090 --user myuser --password mypassword
+bodio add --command start --response Hello --url localhost:9090 --key mysupersecretpassword
 ```
 
 ### print
@@ -186,20 +183,19 @@ Usage:
   botio print [flags]
 
 Examples:
-botio print --command start --url localhost:9090 --user myuser --password mypassword
+botio print --command start --url localhost:9090 --key mysupersecretkey
 
 Flags:
-      --command string    command to search for
-  -h, --help              help for print
-      --password string   password for basic auth (default "toor")
-      --url string        URL where the botio's server is listening
-      --user string       username for basic auth (default "admin")
+      --command string   command to search for
+  -h, --help             help for print
+      --key string       authentication key
+      --url string       url where the botio's server is listening
 ```
 
 Example:
 
 ```bash
-botio print --command start --url localhost:9090 --user myuser --password mypassword
+botio print --command start --url localhost:9090 --key mysupersecretkey
 ```
 
 ### list
@@ -212,19 +208,18 @@ Usage:
   botio list [flags]
 
 Examples:
-botio list --url localhost:9090 --user myuser --password mypassword
+botio list --url localhost:9090 --key mysupersecretkey
 
 Flags:
-  -h, --help              help for list
-      --password string   password for basic auth (default "toor")
-      --url string        URL where the botio's server is listening
-      --user string       username for basic auth (default "admin")
+  -h, --help         help for list
+      --key string   authentication key
+      --url string   url where the botio's server is listening
 ```
 
 Example:
 
 ```bash
-botio list --url localhost:9090 --user myuser --password mypassword
+botio list --url localhost:9090 --key mysupersecretkey
 ```
 
 ### update
@@ -237,21 +232,20 @@ Usage:
   botio update [flags]
 
 Examples:
-botio update --command start --response Hi --url localhost:9090 --user myuser --password mypassword
+botio update --command start --response Hi --url localhost:9090 --key mysupersecretkey
 
 Flags:
       --command string    command to add
   -h, --help              help for update
-      --password string   password for basic auth (default "toor")
+      --key string        authentication key
       --response string   response of the command to add
-      --url string        URL where the botio's server is listening
-      --user string       username for basic auth (default "admin")
+      --url string        url where the botio's server is listening
 ```
 
 Example:
 
 ```text
-botio update --command start --response Hi --url localhost:9090 --user myuser --password mypassword
+botio update --command start --response Hi --url localhost:9090 --key mysupersecretkey
 ```
 
 ### delete
@@ -264,20 +258,19 @@ Usage:
   botio delete [flags]
 
 Examples:
-botio delete --command start --url localhost:9090 --user myuser --password mypassword
+botio delete --command start --url localhost:9090 --key mysupersecretkey
 
 Flags:
-      --command string    command to delete
-  -h, --help              help for delete
-      --password string   password for basic auth (default "toor")
-      --url string        URL where the botio's server is listening
-      --user string       username for basic auth (default "admin")
+      --command string   command to delete
+  -h, --help             help for delete
+      --key string       authentication key
+      --url string       url where the botio's server is listening
 ```
 
 Example:
 
 ```bash
-botio delete --command start --url localhost:9090 --user myuser --password mypassword
+botio delete --command start --url localhost:9090 --key mysupersecretkey
 ```
 
 ## API Endpoints
@@ -290,14 +283,8 @@ botio delete --command start --url localhost:9090 --user myuser --password mypas
 http://<url>:<port>/api/commands
 ```
 
-Example:
-
 ```text
 http://localhost:9090/api/commands
-```
-
-```bash
-curl -u myuser:mypassword -X GET http://localhost:9090/api/commands
 ```
 
 #### GET Command
@@ -306,14 +293,8 @@ curl -u myuser:mypassword -X GET http://localhost:9090/api/commands
 http://<url>:<port>/api/commands/<command>
 ```
 
-Example:
-
 ```text
 http://localhost:9090/api/commands/start
-```
-
-```bash
-curl -u myuser:mypassword -X GET http://localhost:9090/api/commands/start
 ```
 
 ### POST
@@ -322,14 +303,8 @@ curl -u myuser:mypassword -X GET http://localhost:9090/api/commands/start
 http://<url>:<port>/api/commands
 ```
 
-Example:
-
 ```text
 http://localhost:9090/api/commands
-```
-
-```bash
-echo '{"cmd": "age", "response":"42"}' | curl -u myuser:mypassword -d @- http://localhost:9090/api/commands
 ```
 
 ### UPDATE
@@ -338,14 +313,8 @@ echo '{"cmd": "age", "response":"42"}' | curl -u myuser:mypassword -d @- http://
 http://<url>:<port>/api/commands/<command>
 ```
 
-Example:
-
 ```text
 http://localhost:9090/api/commands/start
-```
-
-```bash
-echo '{"cmd": "age", "response":"25"}' | curl -u myuser:mypassword -d @- http://localhost:9090/api/commands/start
 ```
 
 ### DELETE
@@ -354,14 +323,8 @@ echo '{"cmd": "age", "response":"25"}' | curl -u myuser:mypassword -d @- http://
 http://<url>:<port>/api/commands/<command>
 ```
 
-Example:
-
 ```text
 http://localhost:9090/api/commands/start
-```
-
-```bash
-curl -u myuser:mypassword -X DELETE http://localhost:9090/api/commands/start
 ```
 
 ### Backup
@@ -372,14 +335,8 @@ curl -u myuser:mypassword -X DELETE http://localhost:9090/api/commands/start
 http://<url>:<port>/api/backup
 ```
 
-Example:
-
 ```text
 http://localhost:9090/api/backup
-```
-
-```bash
-curl -u myuser:mypassword -X GET http://localhost:9090/api/backup > backup.db
 ```
 
 ## ToDo
@@ -389,7 +346,6 @@ curl -u myuser:mypassword -X GET http://localhost:9090/api/backup > backup.db
 - [ ] Docker Compose
 - [ ] Web Interface
 - [ ] Alternative databases like PostgreSQL
-- [ ] Alternative authentication options
 - [ ] Support for Facebook Messenger bots
 - [ ] Support for Discord bots
 - [ ] Support for Slack bots

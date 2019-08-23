@@ -56,7 +56,7 @@ func New(token string, cap int) *Bot {
 // Listen handles all the messages received from the Bot tbot's Server
 // and tries to get the asked command from the received server's URL using
 // an user and a password to authenticate.
-func (b *Bot) Listen(url, user, password string) {
+func (b *Bot) Listen(url, key string) {
 	b.s.HandleMessage(".", func(m *tbot.Message) {
 		log.Printf("%s\t%s\t%s", m.Chat.ID, m.Chat.Username, m.Text)
 		msg := strings.TrimPrefix(m.Text, "/")
@@ -64,7 +64,7 @@ func (b *Bot) Listen(url, user, password string) {
 			id: m.Chat.ID,
 		}
 
-		cmd, err := client.Get(url+"/"+msg, user, password)
+		cmd, err := client.Get(url+"/"+msg, key)
 		if err != nil {
 			resp.text = "I'm sorry. I didn't understand you. Bzz"
 			b.r <- resp

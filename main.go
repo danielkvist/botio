@@ -11,9 +11,9 @@ import (
 
 func main() {
 	examples := []string{
-		"botio server --db ./data/commands.db --col commands --addr localhost:9090 --user myuser --password mypassword",
-		"botio tbot --token <telegram-token> --url localhost:9090 --user myuser --password mypassword",
-		"botio print --command start --url localhost:9090 --user myuser --password mypassword",
+		"botio server --db ./data/commands.db --col commands --addr localhost:9090 --key mysupersecretkey",
+		"botio tbot --token <telegram-token> --url localhost:9090 --key mysupersecretkey",
+		"botio print --command start --url localhost:9090 --key mysupersecretkey",
 	}
 
 	root := &cobra.Command{
