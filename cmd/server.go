@@ -17,21 +17,31 @@ import (
 func init() {
 	ServerCmd.Flags().String("col", "commands", "collection used to store the commands")
 	ServerCmd.Flags().String("db", "./botio/botio.db", "path to the database")
-	ServerCmd.Flags().String("addr", "localhost:9090", "address where the server should listen for requests")
-	ServerCmd.Flags().String("key", "", "authentication key")
+	ServerCmd.Flags().String("addr", ":9090", "address where the server should listen for requests")
+	ServerCmd.Flags().String("key", "", "authentication key for JWT")
+	ServerCmd.Flags().String("sslcert", "", "ssl certification")
+	ServerCmd.Flags().String("sslkey", "", "ssl key")
 }
 
 // ServerCmd is a cobra.Command to manage the botio's commands server.
 var ServerCmd = &cobra.Command{
 	Use:     "server",
 	Short:   "Starts a botio's server to manage the botio's commands with simple HTTP methods.",
-	Example: "botio server --db ./data/botio.db --col commands --addr localhost:9090 --key mysupersecretkey",
+	Example: "botio server --db ./data/botio.db --col commands --addr :9090 --key mysupersecretkey",
 	Run: func(cmd *cobra.Command, args []string) {
 		// Flags
-		collection, _ := cmd.Flags().GetString("col")
-		database, _ := cmd.Flags().GetString("db")
-		listenAddr, _ := cmd.Flags().GetString("addr")
-		key, _ := cmd.Flags().GetString("key")
+		collection := checkFlag(cmd, "col", false)
+		database := checkFlag(cmd, "db", false)
+		listenAddr := checkFlag(cmd, "addr", false)
+		key := checkFlag(cmd, "key", false)
+		sslCert := checkFlag(cmd, "sslcert", true)
+		sslKey := checkFlag(cmd, "sslkey", true)
+
+		// TLS
+		var tls bool
+		if sslCert != "" && sslKey != "" {
+			tls = true
+		}
 
 		// Database initialization
 		env := "production"
@@ -46,24 +56,23 @@ var ServerCmd = &cobra.Command{
 		quit := make(chan struct{}, 1)
 
 		r := newRouter(bdb, collection)
-
-		s, err := server.New(
+		serverOptions := []server.Option{
 			server.WithListenAddr(listenAddr),
 			server.WithHandler(r),
 			server.WithJWTAuth(key),
 			server.WithGracefulShutdown(done, quit),
-		)
+		}
+
+		if tls {
+			serverOptions = append(serverOptions, server.WithTLS())
+		}
+
+		s, err := server.New(serverOptions...)
 		if err != nil {
 			log.Fatalf("while creating a new server: %v", err)
 		}
 
-		go func() {
-			if err := s.ListenAndServe(); err != nil {
-				log.Printf("%v", err)
-				done <- struct{}{}
-			}
-		}()
-
+		go listenAndServe(s, tls, sslCert, sslKey, done)
 		<-quit
 	},
 }
@@ -91,4 +100,19 @@ func newRouter(database db.DB, col string) http.Handler {
 	})
 
 	return r
+}
+
+func listenAndServe(s *http.Server, tls bool, sslCert, sslKey string, done chan<- struct{}) {
+	var err error
+
+	if tls {
+		err = s.ListenAndServeTLS(sslCert, sslKey)
+	} else {
+		err = s.ListenAndServe()
+	}
+
+	if err != nil {
+		log.Printf("%v", err)
+		done <- struct{}{}
+	}
 }

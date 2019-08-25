@@ -13,31 +13,31 @@ Botio is an opinionated CLI to create and manage easily simple bots for differen
 First, we create a server from which we're going to manage the commands to our bot:
 
 ```bash
-botio server --db ./data/botio.db --col commands --addr localhost:9090 --key mysupersecretkey
+botio server --db ./data/botio.db --col commands --addr :9090 --key mysupersecretkey
 ```
 
 We add a command:
 
 ```bash
-botio add --command start --response Hello --url localhost:9090 --key mysupersecretkey
+botio add --command start --response Hello --url :9090 --key mysupersecretkey
 ```
 
 We can check that the command has been created successfully with ```print```:
 
 ```bash
-botio print --command start --url localhost:9090 --key mysupersecretkey
+botio print --command start --url :9090 --key mysupersecretkey
 ```
 
 Or see a list of all our commands with ```list```:
 
 ```bash
-botio list --url localhost:9090 --key mysupersecretkey
+botio list --url :9090 --key mysupersecretkey
 ```
 
 Now, we can start our Telegram's bot:
 
 ```bash
-botio tbot --token <telegram-token> --url localhost:9090 --key mysupersecretkey
+botio tbot --token <telegram-token> --url :9090 --key mysupersecretkey
 ```
 
 > If you have doubts about how to get a Telegram token for your bot you can check this [link](https://core.telegram.org/bots#botfather).
@@ -74,9 +74,9 @@ Usage:
   botio [command]
 
 Examples:
-botio server --db ./data/commands.db --col commands --addr localhost:9090 --key mysupersecretkey
-botio tbot --token <telegram-token> --url localhost:9090 --key mysupersecretkey
-botio print --command start --url localhost:9090 --key mysupersecretkey
+botio server --db ./data/commands.db --col commands --addr :9090 --key mysupersecretkey
+botio tbot --token <telegram-token> --url :9090 --key mysupersecretkey
+botio print --command start --url :9090 --key mysupersecretkey
 
 Available Commands:
   add         Adds a new command with a response to the botio's server
@@ -104,20 +104,20 @@ Usage:
   botio server [flags]
 
 Examples:
-botio server --db ./data/botio.db --col commands --addr localhost:9090 --key mysupersecretkey
+botio server --db ./data/botio.db --col commands --addr :9090 --key mysupersecretkey
 
 Flags:
-      --addr string   Address where the server should listen for requests (default "localhost:9090")
+      --addr string   Address where the server should listen for requests (default ":9090")
       --col string    collection used to store the commands (default "Commands")
       --db string     Path to the database (default "./botio/botio.db")
   -h, --help          help for server
-      --key string    Authentication key
+      --key string    authentication key for JWT
 ```
 
 Example:
 
 ```bash
-botio server --db ./data/botio.db --col commands --addr localhost:9090 --key mysupersecretkey
+botio server --db ./data/botio.db --col commands --addr :9090 --key mysupersecretkey
 ```
 
 > The database used is based on BoltDB. You can read more about it [here](https://github.com/etcd-io/bbolt).
@@ -132,11 +132,11 @@ Usage:
   botio tbot [flags]
 
 Examples:
-botio tbot --token <telegram-token> --url localhost:9090 --key mysupersecretkey
+botio tbot --token <telegram-token> --url :9090 --key mysupersecretkey
 
 Flags:
   -h, --help           help for tbot
-      --key string     authentication key for the botio's server
+      --key string     authentication key for JWT
       --token string   telegram's token
       --url string     url where the botio's server is listening for requests
 ```
@@ -144,7 +144,7 @@ Flags:
 Example:
 
 ```bash
-botio tbot --token <telegram-token> --url localhost:9090 --key mysupersecretkey
+botio tbot --token <telegram-token> --url :9090 --key mysupersecretkey
 ```
 
 ### add
@@ -157,12 +157,12 @@ Usage:
   botio add [flags]
 
 Examples:
-botio add --command start --response Hello --url localhost:9090 --password mypassword
+botio add --command start --response Hello --url :9090 --password mypassword
 
 Flags:
       --command string    command to add
   -h, --help              help for add
-      --key string        authentication key
+      --key string        authentication key for JWT
       --response string   response of the command to add
       --url string        url where the botio's server is listening
 ```
@@ -170,7 +170,7 @@ Flags:
 Example:
 
 ```bash
-bodio add --command start --response Hello --url localhost:9090 --key mysupersecretpassword
+bodio add --command start --response Hello --url :9090 --key mysupersecretpassword
 ```
 
 ### print
@@ -183,19 +183,19 @@ Usage:
   botio print [flags]
 
 Examples:
-botio print --command start --url localhost:9090 --key mysupersecretkey
+botio print --command start --url :9090 --key mysupersecretkey
 
 Flags:
       --command string   command to search for
   -h, --help             help for print
-      --key string       authentication key
+      --key string       authentication key for JWT
       --url string       url where the botio's server is listening
 ```
 
 Example:
 
 ```bash
-botio print --command start --url localhost:9090 --key mysupersecretkey
+botio print --command start --url :9090 --key mysupersecretkey
 ```
 
 ### list
@@ -208,18 +208,18 @@ Usage:
   botio list [flags]
 
 Examples:
-botio list --url localhost:9090 --key mysupersecretkey
+botio list --url :9090 --key mysupersecretkey
 
 Flags:
   -h, --help         help for list
-      --key string   authentication key
+      --key string   authentication key for JWT
       --url string   url where the botio's server is listening
 ```
 
 Example:
 
 ```bash
-botio list --url localhost:9090 --key mysupersecretkey
+botio list --url :9090 --key mysupersecretkey
 ```
 
 ### update
@@ -232,12 +232,12 @@ Usage:
   botio update [flags]
 
 Examples:
-botio update --command start --response Hi --url localhost:9090 --key mysupersecretkey
+botio update --command start --response Hi --url :9090 --key mysupersecretkey
 
 Flags:
       --command string    command to add
   -h, --help              help for update
-      --key string        authentication key
+      --key string        authentication key for JWT
       --response string   response of the command to add
       --url string        url where the botio's server is listening
 ```
@@ -245,7 +245,7 @@ Flags:
 Example:
 
 ```text
-botio update --command start --response Hi --url localhost:9090 --key mysupersecretkey
+botio update --command start --response Hi --url :9090 --key mysupersecretkey
 ```
 
 ### delete
@@ -258,19 +258,19 @@ Usage:
   botio delete [flags]
 
 Examples:
-botio delete --command start --url localhost:9090 --key mysupersecretkey
+botio delete --command start --url :9090 --key mysupersecretkey
 
 Flags:
       --command string   command to delete
   -h, --help             help for delete
-      --key string       authentication key
+      --key string       authentication key for JWT
       --url string       url where the botio's server is listening
 ```
 
 Example:
 
 ```bash
-botio delete --command start --url localhost:9090 --key mysupersecretkey
+botio delete --command start --url :9090 --key mysupersecretkey
 ```
 
 ## API Endpoints

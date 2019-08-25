@@ -10,20 +10,20 @@ import (
 
 func init() {
 	PrintCmd.Flags().String("command", "", "command to search for")
-	PrintCmd.Flags().String("key", "", "authentication key")
-	PrintCmd.Flags().String("url", "", "url where the botio's server is listening")
+	PrintCmd.Flags().String("key", "", "authentication key for JWT")
+	PrintCmd.Flags().String("url", "", "botio's server URL")
 }
 
 // PrintCmd is a cobra.Command to print a specified command from the botio's commands server.
 var PrintCmd = &cobra.Command{
 	Use:     "print",
 	Short:   "Prints the specified botio's command with his response",
-	Example: "botio print --command start --url localhost:9090 --key mysupersecretkey",
+	Example: "botio print --command start --url :9090 --key mysupersecretkey",
 	Run: func(cmd *cobra.Command, args []string) {
 		// Flags
-		command, _ := cmd.Flags().GetString("command")
-		key, _ := cmd.Flags().GetString("key")
-		url, _ := cmd.Flags().GetString("url")
+		command := checkFlag(cmd, "command", false)
+		key := checkFlag(cmd, "key", false)
+		url := checkFlag(cmd, "url", false)
 
 		// Check URL
 		url, err := checkURL(url)

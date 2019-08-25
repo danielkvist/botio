@@ -10,20 +10,20 @@ import (
 
 func init() {
 	DeleteCmd.Flags().String("command", "", "command to delete")
-	DeleteCmd.Flags().String("key", "", "authentication key")
-	DeleteCmd.Flags().String("url", "", "url where the botio's server is listening")
+	DeleteCmd.Flags().String("key", "", "authentication key for JWT")
+	DeleteCmd.Flags().String("url", "", "botio's server URL")
 }
 
 // DeleteCmd is a cobra.Command to delete commands from the botio's commands server.
 var DeleteCmd = &cobra.Command{
 	Use:     "delete",
 	Short:   "Deletes the specified botio's command from the botio's server",
-	Example: "botio delete --command start --url localhost:9090 --key mysupersecretkey",
+	Example: "botio delete --command start --url :9090 --key mysupersecretkey",
 	Run: func(cmd *cobra.Command, args []string) {
 		// Flags
-		command, _ := cmd.Flags().GetString("command")
-		key, _ := cmd.Flags().GetString("key")
-		url, _ := cmd.Flags().GetString("url")
+		command := checkFlag(cmd, "command", false)
+		key := checkFlag(cmd, "key", false)
+		url := checkFlag(cmd, "url", false)
 
 		// Check command
 		if command == "" {

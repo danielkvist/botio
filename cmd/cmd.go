@@ -3,12 +3,28 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strings"
 	"text/tabwriter"
 
 	"github.com/danielkvist/botio/models"
+
+	"github.com/spf13/cobra"
 )
+
+func checkFlag(cmd *cobra.Command, flag string, allowEmpty bool) string {
+	v, err := cmd.Flags().GetString(flag)
+	if err != nil {
+		log.Fatalf("while parsing the value assigned to the flag %q: %v", flag, err)
+	}
+
+	if v == "" && !allowEmpty {
+		log.Fatalf("%q flag cannot be an empty string", flag)
+	}
+
+	return v
+}
 
 func checkURL(url string) (string, error) {
 	if url == "" {

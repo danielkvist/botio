@@ -9,21 +9,21 @@ import (
 )
 
 func init() {
-	TelegramBotCmd.Flags().String("key", "", "authentication key for the botio's server")
+	TelegramBotCmd.Flags().String("key", "", "authentication key for JWT")
 	TelegramBotCmd.Flags().String("token", "", "telegram's token")
-	TelegramBotCmd.Flags().String("url", "", "url where the botio's server is listening for requests")
+	TelegramBotCmd.Flags().String("url", "", "botio's server URL")
 }
 
 // TelegramBotCmd is a cobra.Command to manage the botio's Telegram Bot client and server.
 var TelegramBotCmd = &cobra.Command{
 	Use:     "tbot",
 	Short:   "Initializes a Telegram's bot that extracts the commands from the botio's server.",
-	Example: "botio tbot --token <telegram-token> --url localhost:9090 --key mysupersecretkey",
+	Example: "botio tbot --token <telegram-token> --url :9090 --key mysupersecretkey",
 	Run: func(cmd *cobra.Command, args []string) {
 		// Flags
-		key, _ := cmd.Flags().GetString("key")
-		token, _ := cmd.Flags().GetString("token")
-		url, _ := cmd.Flags().GetString("url")
+		key := checkFlag(cmd, "key", false)
+		token := checkFlag(cmd, "token", false)
+		url := checkFlag(cmd, "url", false)
 
 		// Check Telegram's token
 		if token == "" {

@@ -3,6 +3,7 @@ package server
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"log"
 	"net/http"
@@ -83,6 +84,24 @@ func gracefulShutdown(s *http.Server, done <-chan struct{}, quit chan<- struct{}
 	}
 
 	quit <- struct{}{}
+}
+
+// WithTLS returns an Option that changes the TLS configuration of the *http.Server.
+func WithTLS() Option {
+	tlsConf := &tls.Config{
+		PreferServerCipherSuites: true,
+		MinVersion:               tls.VersionTLS12,
+		CipherSuites: []uint16{
+			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+		},
+	}
+
+	return func(s *http.Server) {
+		s.TLSConfig = tlsConf
+	}
 }
 
 // New can receive zero or multiple Option and returns a new *http.Server
