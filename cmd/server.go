@@ -17,7 +17,8 @@ import (
 func init() {
 	ServerCmd.Flags().String("col", "commands", "collection used to store the commands")
 	ServerCmd.Flags().String("db", "./botio/botio.db", "path to the database")
-	ServerCmd.Flags().String("addr", ":9090", "address where the server should listen for requests")
+	ServerCmd.Flags().String("http", ":80", "port for HTTP connections")
+	ServerCmd.Flags().String("https", ":443", "port for HTTPS connections")
 	ServerCmd.Flags().String("key", "", "authentication key for JWT")
 	ServerCmd.Flags().String("sslcert", "", "ssl certification")
 	ServerCmd.Flags().String("sslkey", "", "ssl key")
@@ -27,12 +28,13 @@ func init() {
 var ServerCmd = &cobra.Command{
 	Use:     "server",
 	Short:   "Starts a botio's server to manage the botio's commands with simple HTTP methods.",
-	Example: "botio server --db ./data/botio.db --col commands --addr :9090 --key mysupersecretkey",
+	Example: "botio server --db ./data/botio.db --col commands --http :9090 --key mysupersecretkey",
 	Run: func(cmd *cobra.Command, args []string) {
 		// Flags
 		collection := checkFlag(cmd, "col", false)
 		database := checkFlag(cmd, "db", false)
-		listenAddr := checkFlag(cmd, "addr", false)
+		httpPort := checkFlag(cmd, "http", false)
+		httpsPort := checkFlag(cmd, "https", false)
 		key := checkFlag(cmd, "key", false)
 		sslCert := checkFlag(cmd, "sslcert", true)
 		sslKey := checkFlag(cmd, "sslkey", true)
@@ -57,13 +59,14 @@ var ServerCmd = &cobra.Command{
 
 		r := newRouter(bdb, collection)
 		serverOptions := []server.Option{
-			server.WithListenAddr(listenAddr),
+			server.WithListenAddr(httpPort),
 			server.WithHandler(r),
 			server.WithJWTAuth(key),
 			server.WithGracefulShutdown(done, quit),
 		}
 
 		if tls {
+			serverOptions = append(serverOptions, server.WithListenAddr(httpsPort))
 			serverOptions = append(serverOptions, server.WithTLS())
 		}
 
@@ -104,7 +107,6 @@ func newRouter(database db.DB, col string) http.Handler {
 
 func listenAndServe(s *http.Server, tls bool, sslCert, sslKey string, done chan<- struct{}) {
 	var err error
-
 	if tls {
 		err = s.ListenAndServeTLS(sslCert, sslKey)
 	} else {

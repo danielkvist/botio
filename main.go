@@ -11,7 +11,7 @@ import (
 
 func main() {
 	examples := []string{
-		"botio server --db ./data/commands.db --col commands --addr :9090 --key mysupersecretkey",
+		"botio server --db ./data/commands.db --col commands --http :9090 --key mysupersecretkey",
 		"botio tbot --token <telegram-token> --url :9090 --key mysupersecretkey",
 		"botio print --command start --url :9090 --key mysupersecretkey",
 	}

@@ -13,7 +13,7 @@ Botio is an opinionated CLI to create and manage easily simple bots for differen
 First, we create a server from which we're going to manage the commands to our bot:
 
 ```bash
-botio server --db ./data/botio.db --col commands --addr :9090 --key mysupersecretkey
+botio server --db ./data/botio.db --col commands --http :9090 --key mysupersecretkey
 ```
 
 We add a command:
@@ -74,7 +74,7 @@ Usage:
   botio [command]
 
 Examples:
-botio server --db ./data/commands.db --col commands --addr :9090 --key mysupersecretkey
+botio server --db ./data/commands.db --col commands --http :9090 --key mysupersecretkey
 botio tbot --token <telegram-token> --url :9090 --key mysupersecretkey
 botio print --command start --url :9090 --key mysupersecretkey
 
@@ -104,20 +104,23 @@ Usage:
   botio server [flags]
 
 Examples:
-botio server --db ./data/botio.db --col commands --addr :9090 --key mysupersecretkey
+botio server --db ./data/botio.db --col commands --http :9090 --key mysupersecretkey
 
 Flags:
-      --addr string   Address where the server should listen for requests (default ":9090")
-      --col string    collection used to store the commands (default "Commands")
-      --db string     Path to the database (default "./botio/botio.db")
-  -h, --help          help for server
-      --key string    authentication key for JWT
+      --col string       collection used to store the commands (default "commands")
+      --db string        path to the database (default "./botio/botio.db")
+  -h, --help             help for server
+      --http string      port for HTTP connections (default ":80")
+      --https string     port for HTTPS connections (default ":443")
+      --key string       authentication key for JWT
+      --sslcert string   ssl certification
+      --sslkey string    ssl key
 ```
 
 Example:
 
 ```bash
-botio server --db ./data/botio.db --col commands --addr :9090 --key mysupersecretkey
+botio server --db ./data/botio.db --col commands --http :9090 --key mysupersecretkey
 ```
 
 > The database used is based on BoltDB. You can read more about it [here](https://github.com/etcd-io/bbolt).
@@ -342,7 +345,6 @@ http://localhost:9090/api/backup
 ## ToDo
 
 - [ ] Better logging
-- [ ] Server with HTTPS
 - [ ] Docker Compose
 - [ ] Web Interface
 - [ ] Alternative databases like PostgreSQL
