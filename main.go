@@ -12,7 +12,7 @@ import (
 func main() {
 	examples := []string{
 		"botio server --db ./data/commands.db --col commands --http :9090 --key mysupersecretkey",
-		"botio tbot --token <telegram-token> --url :9090 --key mysupersecretkey",
+		"botio telegram --token <telegram-token> --url :9090 --key mysupersecretkey",
 		"botio print --command start --url :9090 --key mysupersecretkey",
 	}
 
@@ -23,8 +23,14 @@ func main() {
 		SilenceUsage: true,
 	}
 
+	// Server
 	root.AddCommand(cmd.ServerCmd)
+
+	// Bots
 	root.AddCommand(cmd.TelegramBotCmd)
+	root.AddCommand(cmd.DiscordBotCmd)
+
+	// Client
 	root.AddCommand(cmd.AddCmd)
 	root.AddCommand(cmd.PrintCmd)
 	root.AddCommand(cmd.ListCmd)

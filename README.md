@@ -6,7 +6,10 @@
 
 Botio is an opinionated CLI to create and manage easily simple bots for differents platforms.
 
-> For the moment it only supports Telegram but I'm working to add support for more platforms soon.
+## Platforms supported
+
+- Telegram.
+- Discord.
 
 ## Example
 
@@ -37,7 +40,7 @@ botio list --url :9090 --key mysupersecretkey
 Now, we can start our Telegram's bot:
 
 ```bash
-botio tbot --token <telegram-token> --url :9090 --key mysupersecretkey
+botio telegram --token <telegram-token> --url :9090 --key mysupersecretkey
 ```
 
 > If you have doubts about how to get a Telegram token for your bot you can check this [link](https://core.telegram.org/bots#botfather).
@@ -75,17 +78,18 @@ Usage:
 
 Examples:
 botio server --db ./data/commands.db --col commands --http :9090 --key mysupersecretkey
-botio tbot --token <telegram-token> --url :9090 --key mysupersecretkey
+botio telegram --token <telegram-token> --url :9090 --key mysupersecretkey
 botio print --command start --url :9090 --key mysupersecretkey
 
 Available Commands:
   add         Adds a new command with a response to the botio's server
   delete      Deletes the specified botio's command from the botio's server
+  discord     Initializes a Discord bot that extracts the commands from the botio's server
   help        Help about any command
   list        Prints a list with all the botio's commands
   print       Prints the specified botio's command with his response
   server      Starts a botio's server to manage the botio's commands with simple HTTP methods.
-  tbot        Initializes a Telegram's bot that extracts the commands from the botio's server.
+  telegram    Initializes a Telegram bot that extracts the commands from the botio's server.
   update      Updates an existing command (or adds it if not exists) with a response on the botio's server
 
 Flags:
@@ -125,29 +129,54 @@ botio server --db ./data/botio.db --col commands --http :9090 --key mysupersecre
 
 > The database used is based on BoltDB. You can read more about it [here](https://github.com/etcd-io/bbolt).
 
-### tbot
+### telegram
 
 ```text
-$ botio tbot --help
-Initializes a Telegram's bot that extracts the commands from the botio's server.
+$ botio telegram --help
+Initializes a Telegram bot that extracts the commands from the botio's server.
 
 Usage:
-  botio tbot [flags]
+  botio telegram [flags]
 
 Examples:
-botio tbot --token <telegram-token> --url :9090 --key mysupersecretkey
+botio telegram --token <telegram-token> --url :9090 --key mysupersecretkey
 
 Flags:
-  -h, --help           help for tbot
+  -h, --help           help for telegram
       --key string     authentication key for JWT
       --token string   telegram's token
-      --url string     url where the botio's server is listening for requests
+      --url string     botio's server URL
 ```
 
 Example:
 
 ```bash
-botio tbot --token <telegram-token> --url :9090 --key mysupersecretkey
+botio telegram --token <telegram-token> --url :9090 --key mysupersecretkey
+```
+
+### discord
+
+```text
+$ botio discord --help
+Initializes a Discord bot that extracts the commands from the botio's server
+
+Usage:
+  botio discord [flags]
+
+Examples:
+botio discord --token <discord-token> --url :9090 --key mysupersecretkey
+
+Flags:
+  -h, --help           help for discord
+      --key string     authentication key for JWT
+      --token string   discord's token
+      --url string     botio's server URL
+```
+
+Example:
+
+```bash
+botio discord --token <discord-token> --url :9090 --key mysupersecretkey
 ```
 
 ### add
@@ -349,6 +378,5 @@ http://localhost:9090/api/backup
 - [ ] Web Interface
 - [ ] Alternative databases like PostgreSQL
 - [ ] Support for Facebook Messenger bots
-- [ ] Support for Discord bots
 - [ ] Support for Slack bots
 - [ ] Support for Skype bots

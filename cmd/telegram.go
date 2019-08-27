@@ -3,8 +3,7 @@ package cmd
 import (
 	"log"
 
-	"github.com/danielkvist/botio/tbot"
-
+	"github.com/danielkvist/botio/bot"
 	"github.com/spf13/cobra"
 )
 
@@ -14,21 +13,16 @@ func init() {
 	TelegramBotCmd.Flags().String("url", "", "botio's server URL")
 }
 
-// TelegramBotCmd is a cobra.Command to manage the botio's Telegram Bot client and server.
+// TelegramBotCmd is a cobra.Command to manage a Telegram bot.
 var TelegramBotCmd = &cobra.Command{
-	Use:     "tbot",
-	Short:   "Initializes a Telegram's bot that extracts the commands from the botio's server.",
-	Example: "botio tbot --token <telegram-token> --url :9090 --key mysupersecretkey",
+	Use:     "telegram",
+	Short:   "Initializes a Telegram bot that extracts the commands from the botio's server.",
+	Example: "botio telegram --token <telegram-token> --url :9090 --key mysupersecretkey",
 	Run: func(cmd *cobra.Command, args []string) {
 		// Flags
 		key := checkFlag(cmd, "key", false)
 		token := checkFlag(cmd, "token", false)
 		url := checkFlag(cmd, "url", false)
-
-		// Check Telegram's token
-		if token == "" {
-			log.Fatalf("token for Telegram bot cannot be an empty string")
-		}
 
 		// Check URL
 		url, err := checkURL(url)
@@ -37,7 +31,8 @@ var TelegramBotCmd = &cobra.Command{
 		}
 
 		// Bot initialization
-		b := tbot.New(token, 10)
+		b := bot.Factory("telegram")
+		b.Connect(token, 10)
 		b.Listen(url, key)
 		defer b.Stop()
 
