@@ -8,35 +8,39 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func init() {
-	PrintCmd.Flags().String("command", "", "command to search for")
-	PrintCmd.Flags().String("key", "", "authentication key for JWT")
-	PrintCmd.Flags().String("url", "", "botio's server URL")
-}
+// Print returns a *cobra.Command.
+func Print() *cobra.Command {
+	var command string
+	var key string
+	var url string
 
-// PrintCmd is a cobra.Command to print a specified command from the botio's commands server.
-var PrintCmd = &cobra.Command{
-	Use:     "print",
-	Short:   "Prints the specified botio's command with his response",
-	Example: "botio print --command start --url :9090 --key mysupersecretkey",
-	Run: func(cmd *cobra.Command, args []string) {
-		// Flags
-		command := checkFlag(cmd, "command", false)
-		key := checkFlag(cmd, "key", false)
-		url := checkFlag(cmd, "url", false)
+	print := &cobra.Command{
+		Use:     "print",
+		Short:   "Prints the specified command and his response",
+		Example: "botio print --command start --url :9090 --key mysupersecretkey",
+		Run: func(cmd *cobra.Command, args []string) {
+			c := checkFlag("command", command, false)
+			k := checkFlag("key", key, false)
+			u := checkFlag("url", url, false)
 
-		// Check URL
-		url, err := checkURL(url)
-		if err != nil {
-			log.Fatalf("%v", err)
-		}
+			u, err := checkURL(u)
+			if err != nil {
+				log.Fatalf("%v", err)
+			}
 
-		// GET command
-		c, err := client.Get(url+"/"+command, key)
-		if err != nil {
-			log.Fatalf("%v", err)
-		}
+			command, err := client.Get(u+"/"+c, k)
+			if err != nil {
+				log.Fatalf("%v", err)
+			}
 
-		printCommands(c)
-	},
+			printCommands(command)
+		},
+		Args: cobra.ExactArgs(3),
+	}
+
+	print.Flags().StringVarP(&command, "command", "c", "", "command to print")
+	print.Flags().StringVarP(&key, "key", "k", "", "authentication key")
+	print.Flags().StringVarP(&url, "url", "u", "", "botio's server URL")
+
+	return print
 }

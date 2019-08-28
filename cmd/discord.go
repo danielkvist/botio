@@ -8,37 +8,41 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func init() {
-	DiscordBotCmd.Flags().String("key", "", "authentication key for JWT")
-	DiscordBotCmd.Flags().String("token", "", "discord's token")
-	DiscordBotCmd.Flags().String("url", "", "botio's server URL")
-}
+// Discord returns a *cobra.Command.
+func Discord() *cobra.Command {
+	var key string
+	var token string
+	var url string
 
-// DiscordBotCmd is a cobra.Command to manage a Discord bot.
-var DiscordBotCmd = &cobra.Command{
-	Use:     "discord",
-	Short:   "Initializes a Discord bot that extracts the commands from the botio's server",
-	Example: "botio discord --token <discord-token> --url :9090 --key mysupersecretkey",
-	Run: func(cmd *cobra.Command, args []string) {
-		// Flags
-		key := checkFlag(cmd, "key", false)
-		token := checkFlag(cmd, "token", false)
-		url := checkFlag(cmd, "url", false)
+	d := &cobra.Command{
+		Use:     "discord",
+		Short:   "Initializes a Discord bot",
+		Example: "botio discord --token <discord-token> --url :9090 --key mysupersecretkey",
+		Run: func(cmd *cobra.Command, args []string) {
+			k := checkFlag("key", key, false)
+			t := checkFlag("token", token, false)
+			u := checkFlag("url", url, false)
 
-		// Check URL
-		url, err := checkURL(url)
-		if err != nil {
-			log.Fatalf("%v", err)
-		}
+			u, err := checkURL(u)
+			if err != nil {
+				log.Fatalf("%v", err)
+			}
 
-		// Bot initialization
-		b := bot.Factory("discord")
-		b.Connect(token, 10)
-		b.Listen(url, key)
-		defer b.Stop()
+			b := bot.Factory("discord")
+			b.Connect(t, 10)
+			b.Listen(u, k)
+			defer b.Stop()
 
-		if err := b.Start(); err != nil {
-			log.Fatalf("%v", err)
-		}
-	},
+			if err := b.Start(); err != nil {
+				log.Fatalf("%v", err)
+			}
+		},
+		Args: cobra.ExactArgs(3),
+	}
+
+	d.Flags().StringVarP(&key, "key", "k", "", "authentication key")
+	d.Flags().StringVarP(&token, "token", "t", "", "discord's token")
+	d.Flags().StringVarP(&url, "url", "u", "", "botio's server URL")
+
+	return d
 }

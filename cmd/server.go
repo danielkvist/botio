@@ -14,70 +14,76 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func init() {
-	ServerCmd.Flags().String("col", "commands", "collection used to store the commands")
-	ServerCmd.Flags().String("db", "./botio/botio.db", "path to the database")
-	ServerCmd.Flags().String("http", ":80", "port for HTTP connections")
-	ServerCmd.Flags().String("https", ":443", "port for HTTPS connections")
-	ServerCmd.Flags().String("key", "", "authentication key for JWT")
-	ServerCmd.Flags().String("sslcert", "", "ssl certification")
-	ServerCmd.Flags().String("sslkey", "", "ssl key")
-}
+// Server returns a *cobra.Command
+func Server() *cobra.Command {
+	var collection string
+	var database string
+	var http string
+	var https string
+	var key string
+	var sslcert string
+	var sslkey string
 
-// ServerCmd is a cobra.Command to manage the botio's commands server.
-var ServerCmd = &cobra.Command{
-	Use:     "server",
-	Short:   "Starts a botio's server to manage the botio's commands with simple HTTP methods.",
-	Example: "botio server --db ./data/botio.db --col commands --http :9090 --key mysupersecretkey",
-	Run: func(cmd *cobra.Command, args []string) {
-		// Flags
-		collection := checkFlag(cmd, "col", false)
-		database := checkFlag(cmd, "db", false)
-		httpPort := checkFlag(cmd, "http", false)
-		httpsPort := checkFlag(cmd, "https", false)
-		key := checkFlag(cmd, "key", false)
-		sslCert := checkFlag(cmd, "sslcert", true)
-		sslKey := checkFlag(cmd, "sslkey", true)
+	s := &cobra.Command{
+		Use:     "server",
+		Short:   "Starts a server to manage the commands with simple HTTP methods.",
+		Example: "botio server --database ./data/botio.db --collection commands --http :9090 --key mysupersecretkey",
+		Run: func(cmd *cobra.Command, args []string) {
+			c := checkFlag("collection", collection, false)
+			d := checkFlag("database", database, false)
+			portHTTP := checkFlag("http", http, false)
+			portHTTPS := checkFlag("https", https, false)
+			k := checkFlag("key", key, false)
+			sslCert := checkFlag("sslcert", sslcert, true)
+			sslKey := checkFlag("sslkey", sslkey, true)
 
-		// TLS
-		var tls bool
-		if sslCert != "" && sslKey != "" {
-			tls = true
-		}
+			var tls bool
+			if sslCert != "" && sslKey != "" {
+				tls = true
+			}
 
-		// Database initialization
-		env := "production"
-		bdb := db.Factory(env)
-		err := bdb.Open(database, collection)
-		if err != nil {
-			log.Fatalf("while opening a connection with database: %v", err)
-		}
+			env := "production"
+			bdb := db.Factory(env)
+			err := bdb.Open(d, c)
+			if err != nil {
+				log.Fatalf("while opening a connection with database: %v", err)
+			}
 
-		// Server initialization
-		done := make(chan struct{}, 1)
-		quit := make(chan struct{}, 1)
+			done := make(chan struct{}, 1)
+			quit := make(chan struct{}, 1)
 
-		r := newRouter(bdb, collection)
-		serverOptions := []server.Option{
-			server.WithListenAddr(httpPort),
-			server.WithHandler(r),
-			server.WithJWTAuth(key),
-			server.WithGracefulShutdown(done, quit),
-		}
+			r := newRouter(bdb, collection)
+			serverOptions := []server.Option{
+				server.WithListenAddr(portHTTP),
+				server.WithHandler(r),
+				server.WithJWTAuth(k),
+				server.WithGracefulShutdown(done, quit),
+			}
 
-		if tls {
-			serverOptions = append(serverOptions, server.WithListenAddr(httpsPort))
-			serverOptions = append(serverOptions, server.WithTLS())
-		}
+			if tls {
+				serverOptions = append(serverOptions, server.WithListenAddr(portHTTPS))
+				serverOptions = append(serverOptions, server.WithTLS())
+			}
 
-		s, err := server.New(serverOptions...)
-		if err != nil {
-			log.Fatalf("while creating a new server: %v", err)
-		}
+			s, err := server.New(serverOptions...)
+			if err != nil {
+				log.Fatalf("while creating a new server: %v", err)
+			}
 
-		go listenAndServe(s, tls, sslCert, sslKey, done)
-		<-quit
-	},
+			go listenAndServe(s, tls, sslCert, sslKey, done)
+			<-quit
+		},
+	}
+
+	s.Flags().StringVarP(&collection, "collection", "c", "commands", "collection used to store commands")
+	s.Flags().StringVarP(&database, "database", "d", "./commands.db", "database path")
+	s.Flags().StringVar(&http, "http", ":80", "port for HTTP connections")
+	s.Flags().StringVar(&https, "https", ":443", "port for HTTPS connections")
+	s.Flags().StringVarP(&key, "key", "k", "", "authentication key")
+	s.Flags().StringVar(&sslcert, "sslcert", "", "ssl certification file")
+	s.Flags().StringVar(&sslkey, "sslkey", "", "ssl key file")
+
+	return s
 }
 
 func newRouter(database db.DB, col string) http.Handler {

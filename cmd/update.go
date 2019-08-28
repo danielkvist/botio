@@ -8,42 +8,42 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func init() {
-	UpdateCmd.Flags().String("command", "", "command to add")
-	UpdateCmd.Flags().String("key", "", "authentication key")
-	UpdateCmd.Flags().String("response", "", "response of the command to add")
-	UpdateCmd.Flags().String("url", "", "botio's server URL")
-}
+// Update returns a *cobra.Command.
+func Update() *cobra.Command {
+	var command string
+	var key string
+	var response string
+	var url string
 
-// UpdateCmd is a cobra.Command to update commands on the botio's commands server.
-var UpdateCmd = &cobra.Command{
-	Use:     "update",
-	Short:   "Updates an existing command (or adds it if not exists) with a response on the botio's server",
-	Example: "botio update --command start --response Hi --url :9090 --key mysupersecretkey",
-	Run: func(cmd *cobra.Command, args []string) {
-		// Flags
-		command := checkFlag(cmd, "command", false)
-		key := checkFlag(cmd, "key", false)
-		response := checkFlag(cmd, "response", false)
-		url := checkFlag(cmd, "url", false)
+	update := &cobra.Command{
+		Use:     "update",
+		Short:   "Updates an existing command (or adds it if not exists)",
+		Example: "botio update --command start --response Hi --url :9090 --key mysupersecretkey",
+		Run: func(cmd *cobra.Command, args []string) {
+			command := checkFlag("command", command, false)
+			key := checkFlag("key", key, false)
+			response := checkFlag("response", response, false)
+			url := checkFlag("url", url, false)
 
-		// Check command and response
-		if command == "" || response == "" {
-			log.Fatal("either command or response cannot be an empty string")
-		}
+			url, err := checkURL(url)
+			if err != nil {
+				log.Fatalf("%v", err)
+			}
 
-		// Check URL
-		url, err := checkURL(url)
-		if err != nil {
-			log.Fatalf("%v", err)
-		}
+			c, err := client.Put(url, key, command, response)
+			if err != nil {
+				log.Fatalf("%v", err)
+			}
 
-		// PUT command
-		c, err := client.Put(url, key, command, response)
-		if err != nil {
-			log.Fatalf("%v", err)
-		}
+			printCommands(c)
+		},
+		Args: cobra.ExactArgs(4),
+	}
 
-		printCommands(c)
-	},
+	update.Flags().StringVarP(&command, "command", "c", "", "command to update")
+	update.Flags().StringVarP(&key, "key", "k", "", "authentication key")
+	update.Flags().StringVarP(&response, "response", "r", "", "command's new response")
+	update.Flags().StringVarP(&url, "url", "u", "", "botio's server url")
+
+	return update
 }

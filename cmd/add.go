@@ -8,42 +8,42 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func init() {
-	AddCmd.Flags().String("command", "", "command to add")
-	AddCmd.Flags().String("key", "", "authentication key for JWT")
-	AddCmd.Flags().String("response", "", "response of the command to add")
-	AddCmd.Flags().String("url", "", "botio's server URL")
-}
+// Add returns a *cobra.Command.
+func Add() *cobra.Command {
+	var command string
+	var key string
+	var response string
+	var url string
 
-// AddCmd is a cobra.Command to add commands to the botio's commands server.
-var AddCmd = &cobra.Command{
-	Use:     "add",
-	Short:   "Adds a new command with a response to the botio's server",
-	Example: "botio add --command start --response Hello --url :9090 --key mysupersecretkey",
-	Run: func(cmd *cobra.Command, args []string) {
-		// Flags
-		command := checkFlag(cmd, "command", false)
-		key := checkFlag(cmd, "key", false)
-		response := checkFlag(cmd, "response", false)
-		url := checkFlag(cmd, "url", false)
+	add := &cobra.Command{
+		Use:     "add",
+		Short:   "Adds a new command",
+		Example: "botio add --command start --response Hello --url :9090 --key mysupersecretkey",
+		Run: func(cmd *cobra.Command, args []string) {
+			c := checkFlag("command", command, false)
+			k := checkFlag("key", key, false)
+			r := checkFlag("response", response, false)
+			u := checkFlag("url", url, false)
 
-		// Check command and response
-		if command == "" || response == "" {
-			log.Fatal("either command or response cannot be an empty string")
-		}
+			u, err := checkURL(u)
+			if err != nil {
+				log.Fatalf("%v", err)
+			}
 
-		// Check URL
-		url, err := checkURL(url)
-		if err != nil {
-			log.Fatalf("%v", err)
-		}
+			command, err := client.Post(u, k, c, r)
+			if err != nil {
+				log.Fatalf("%v", err)
+			}
 
-		// POST command
-		c, err := client.Post(url, key, command, response)
-		if err != nil {
-			log.Fatalf("%v", err)
-		}
+			printCommands(command)
+		},
+		Args: cobra.ExactArgs(4),
+	}
 
-		printCommands(c)
-	},
+	add.Flags().StringVarP(&command, "command", "c", "", "command to add")
+	add.Flags().StringVarP(&key, "key", "k", "", "authentication key")
+	add.Flags().StringVarP(&response, "response", "r", "", "command's response")
+	add.Flags().StringVarP(&url, "url", "u", "", "botio's server url")
+
+	return add
 }

@@ -1,4 +1,4 @@
-// Package cmd exports commands for a cobra CLI.
+// Package cmd exports a function to create easily a CLI based on cobra.
 package cmd
 
 import (
@@ -13,17 +13,36 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func checkFlag(cmd *cobra.Command, flag string, allowEmpty bool) string {
-	v, err := cmd.Flags().GetString(flag)
-	if err != nil {
-		log.Fatalf("while parsing the value assigned to the flag %q: %v", flag, err)
+// Root creates a root *cobra.Command and then adds to it
+// the received *cobra.Commands, then it executes the root command
+// returning an error if any.
+func Root(commands ...*cobra.Command) error {
+	examples := []string{
+		"botio server --database ./data/commands.db --collection commands --http :9090 --key mysupersecretkey",
+		"botio telegram --token <telegram-token> --url :9090 --key mysupersecretkey",
+		"botio print --command start --url :9090 --key mysupersecretkey",
 	}
 
-	if v == "" && !allowEmpty {
+	root := &cobra.Command{
+		Use:          "botio",
+		Short:        "Botio is a simple and opinionated CLI to create and manage easily bots for differents platforms.",
+		Example:      strings.Join(examples, "\n"),
+		SilenceUsage: true,
+	}
+
+	for _, cmd := range commands {
+		root.AddCommand(cmd)
+	}
+
+	return root.Execute()
+}
+
+func checkFlag(flag string, value string, allowEmpty bool) string {
+	if value == "" && !allowEmpty {
 		log.Fatalf("%q flag cannot be an empty string", flag)
 	}
 
-	return v
+	return value
 }
 
 func checkURL(url string) (string, error) {

@@ -4,7 +4,7 @@
 [![Docker Pulls](https://img.shields.io/docker/pulls/danielkvist/botio.svg?maxAge=604800)](https://hub.docker.com/r/danielkvist/botio/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
 
-Botio is an opinionated CLI to create and manage easily simple bots for differents platforms.
+Botio is a simple and opinionated CLI to create and manage easily bots for differents platforms."
 
 ## Platforms supported
 
@@ -71,26 +71,26 @@ docker image pull danielkvist/botio
 
 ```text
 $ botio help
-Simple CLI tool to create and manage easily bots for different platforms.
+Botio is a simple and opinionated CLI to create and manage easily bots for differents platforms.
 
 Usage:
   botio [command]
 
 Examples:
-botio server --db ./data/commands.db --col commands --http :9090 --key mysupersecretkey
+botio server --database ./data/commands.db --collection commands --http :9090 --key mysupersecretkey
 botio telegram --token <telegram-token> --url :9090 --key mysupersecretkey
 botio print --command start --url :9090 --key mysupersecretkey
 
 Available Commands:
-  add         Adds a new command with a response to the botio's server
-  delete      Deletes the specified botio's command from the botio's server
-  discord     Initializes a Discord bot that extracts the commands from the botio's server
+  add         Adds a new command
+  delete      Deletes the specified command
+  discord     Initializes a Discord bot
   help        Help about any command
-  list        Prints a list with all the botio's commands
-  print       Prints the specified botio's command with his response
-  server      Starts a botio's server to manage the botio's commands with simple HTTP methods.
-  telegram    Initializes a Telegram bot that extracts the commands from the botio's server.
-  update      Updates an existing command (or adds it if not exists) with a response on the botio's server
+  list        Prints a list with all the commands
+  print       Prints the specified command and his response
+  server      Starts a server to manage the commands with simple HTTP methods.
+  telegram    Initializes a Telegram bot
+  update      Updates an existing command (or adds it if not exists)
 
 Flags:
   -h, --help   help for botio
@@ -102,29 +102,29 @@ Use "botio [command] --help" for more information about a command.
 
 ```text
 $ botio server --help
-Starts a botio's server to manage the botio's commands with simple HTTP methods.
+Starts a server to manage the commands with simple HTTP methods.
 
 Usage:
   botio server [flags]
 
 Examples:
-botio server --db ./data/botio.db --col commands --http :9090 --key mysupersecretkey
+botio server --database ./data/botio.db --collection commands --http :9090 --key mysupersecretkey
 
 Flags:
-      --col string       collection used to store the commands (default "commands")
-      --db string        path to the database (default "./botio/botio.db")
-  -h, --help             help for server
-      --http string      port for HTTP connections (default ":80")
-      --https string     port for HTTPS connections (default ":443")
-      --key string       authentication key for JWT
-      --sslcert string   ssl certification
-      --sslkey string    ssl key
+  -c, --collection string   collection used to store commands (default "commands")
+  -d, --database string     database path (default "./commands.db")
+  -h, --help                help for server
+      --http string         port for HTTP connections (default ":80")
+      --https string        port for HTTPS connections (default ":443")
+  -k, --key string          authentication key
+      --sslcert string      ssl certification file
+      --sslkey string       ssl key file
 ```
 
 Example:
 
 ```bash
-botio server --db ./data/botio.db --col commands --http :9090 --key mysupersecretkey
+botio server --database ./data/botio.db --collection commands --http :9090 --key mysupersecretkey
 ```
 
 > The database used is based on BoltDB. You can read more about it [here](https://github.com/etcd-io/bbolt).
@@ -133,7 +133,7 @@ botio server --db ./data/botio.db --col commands --http :9090 --key mysupersecre
 
 ```text
 $ botio telegram --help
-Initializes a Telegram bot that extracts the commands from the botio's server.
+Initializes a Telegram bot
 
 Usage:
   botio telegram [flags]
@@ -143,9 +143,9 @@ botio telegram --token <telegram-token> --url :9090 --key mysupersecretkey
 
 Flags:
   -h, --help           help for telegram
-      --key string     authentication key for JWT
-      --token string   telegram's token
-      --url string     botio's server URL
+  -k, --key string     authentication key
+  -t, --token string   telegram's token
+  -u, --url string     botio's server URL
 ```
 
 Example:
@@ -158,7 +158,7 @@ botio telegram --token <telegram-token> --url :9090 --key mysupersecretkey
 
 ```text
 $ botio discord --help
-Initializes a Discord bot that extracts the commands from the botio's server
+Initializes a Discord bot
 
 Usage:
   botio discord [flags]
@@ -168,9 +168,9 @@ botio discord --token <discord-token> --url :9090 --key mysupersecretkey
 
 Flags:
   -h, --help           help for discord
-      --key string     authentication key for JWT
-      --token string   discord's token
-      --url string     botio's server URL
+  -k, --key string     authentication key
+  -t, --token string   discord's token
+  -u, --url string     botio's server URL
 ```
 
 Example:
@@ -183,20 +183,20 @@ botio discord --token <discord-token> --url :9090 --key mysupersecretkey
 
 ```text
 $ botio add --help
-Adds a new command with a response to the botio's server
+Adds a new command
 
 Usage:
   botio add [flags]
 
 Examples:
-botio add --command start --response Hello --url :9090 --password mypassword
+botio add --command start --response Hello --url :9090 --key mysupersecretkey
 
 Flags:
-      --command string    command to add
+  -c, --command string    command to add
   -h, --help              help for add
-      --key string        authentication key for JWT
-      --response string   response of the command to add
-      --url string        url where the botio's server is listening
+  -k, --key string        authentication key
+  -r, --response string   command's response
+  -u, --url string        botio's server url
 ```
 
 Example:
@@ -208,8 +208,8 @@ bodio add --command start --response Hello --url :9090 --key mysupersecretpasswo
 ### print
 
 ```text
-$ botio print
-Prints the specified botio's command with his response
+$ botio print --help
+Prints the specified command and his response
 
 Usage:
   botio print [flags]
@@ -218,10 +218,10 @@ Examples:
 botio print --command start --url :9090 --key mysupersecretkey
 
 Flags:
-      --command string   command to search for
+  -c, --command string   command to print
   -h, --help             help for print
-      --key string       authentication key for JWT
-      --url string       url where the botio's server is listening
+  -k, --key string       authentication key
+  -u, --url string       botio's server URL
 ```
 
 Example:
@@ -234,7 +234,7 @@ botio print --command start --url :9090 --key mysupersecretkey
 
 ```text
 $ botio list --help
-Prints a list with all the botio's commands
+Prints a list with all the commands
 
 Usage:
   botio list [flags]
@@ -244,8 +244,8 @@ botio list --url :9090 --key mysupersecretkey
 
 Flags:
   -h, --help         help for list
-      --key string   authentication key for JWT
-      --url string   url where the botio's server is listening
+  -k, --key string   authentication key
+  -u, --url string   botio's server URL
 ```
 
 Example:
@@ -258,7 +258,7 @@ botio list --url :9090 --key mysupersecretkey
 
 ```text
 $ botio update --help
-Updates an existing command (or adds it if not exists) with a response on the botio's server
+Updates an existing command (or adds it if not exists)
 
 Usage:
   botio update [flags]
@@ -267,11 +267,11 @@ Examples:
 botio update --command start --response Hi --url :9090 --key mysupersecretkey
 
 Flags:
-      --command string    command to add
+  -c, --command string    command to update
   -h, --help              help for update
-      --key string        authentication key for JWT
-      --response string   response of the command to add
-      --url string        url where the botio's server is listening
+  -k, --key string        authentication key
+  -r, --response string   command's new response
+  -u, --url string        botio's server url
 ```
 
 Example:
@@ -284,7 +284,7 @@ botio update --command start --response Hi --url :9090 --key mysupersecretkey
 
 ```text
 $ botio delete --help
-Deletes the specified botio's command from the botio's server
+Deletes the specified command
 
 Usage:
   botio delete [flags]
@@ -293,10 +293,10 @@ Examples:
 botio delete --command start --url :9090 --key mysupersecretkey
 
 Flags:
-      --command string   command to delete
+  -c, --command string   command to delete
   -h, --help             help for delete
-      --key string       authentication key for JWT
-      --url string       url where the botio's server is listening
+  -k, --key string       authentication key
+  -u, --url string       botio's server url
 ```
 
 Example:
