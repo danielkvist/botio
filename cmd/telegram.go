@@ -36,7 +36,6 @@ func Telegram() *cobra.Command {
 				log.Fatalf("%v", err)
 			}
 		},
-		Args: cobra.ExactArgs(3),
 	}
 
 	t.Flags().StringVarP(&key, "key", "k", "", "authentication key")

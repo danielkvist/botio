@@ -33,7 +33,6 @@ func List() *cobra.Command {
 
 			printCommands(commands...)
 		},
-		Args: cobra.ExactArgs(2),
 	}
 
 	list.Flags().StringVarP(&key, "key", "k", "", "authentication key")

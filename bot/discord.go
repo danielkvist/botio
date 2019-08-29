@@ -4,9 +4,12 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
+
+	"github.com/danielkvist/botio/client"
+	"github.com/danielkvist/botio/logger"
 
 	dg "github.com/bwmarrin/discordgo"
-	"github.com/danielkvist/botio/client"
 )
 
 // Discord is a wrapper for a bwmawwin/discordgo session
@@ -38,8 +41,8 @@ func (d *Discord) Connect(token string, cap int) error {
 
 	d.id = id.ID
 	d.s = s
-	d.c = c
 	d.r = responses
+	d.c = c
 
 	d.wg.Add(1)
 	go func() {
@@ -57,7 +60,9 @@ func (d *Discord) Connect(token string, cap int) error {
 // and submit it to the responses channel, which eventually
 // should send the response back to the client.
 func (d *Discord) Listen(url, key string) error {
+	l := logger.New()
 	d.s.AddHandler(func(s *dg.Session, m *dg.MessageCreate) {
+		start := time.Now()
 		if m.Author.Bot {
 			return
 		}
@@ -74,13 +79,15 @@ func (d *Discord) Listen(url, key string) error {
 			return
 		}
 
-		cmd, err := client.Get(url+"/"+msg[1], key)
+		cmd, err := client.Get(url+"/"+strings.ToLower(msg[1]), key)
 		if err != nil {
 			return
 		}
 
 		resp.text = cmd.Response
 		d.r <- resp
+
+		l.Info(fmt.Sprintf("platform=%s id=%v msg=%q response=%q in=%v", "discord", m.ChannelID, msg[1], resp.text, time.Since(start)))
 		return
 	})
 	return nil

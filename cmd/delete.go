@@ -34,7 +34,6 @@ func Delete() *cobra.Command {
 
 			fmt.Printf("command %q deleted successfully\n", c)
 		},
-		Args: cobra.ExactArgs(3),
 	}
 
 	delete.Flags().StringVarP(&command, "command", "c", "", "command to delete")

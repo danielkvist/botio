@@ -37,7 +37,6 @@ func Update() *cobra.Command {
 
 			printCommands(c)
 		},
-		Args: cobra.ExactArgs(4),
 	}
 
 	update.Flags().StringVarP(&command, "command", "c", "", "command to update")

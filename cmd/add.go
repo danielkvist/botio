@@ -37,7 +37,6 @@ func Add() *cobra.Command {
 
 			printCommands(command)
 		},
-		Args: cobra.ExactArgs(4),
 	}
 
 	add.Flags().StringVarP(&command, "command", "c", "", "command to add")

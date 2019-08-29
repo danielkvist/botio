@@ -37,7 +37,6 @@ func Discord() *cobra.Command {
 				log.Fatalf("%v", err)
 			}
 		},
-		Args: cobra.ExactArgs(3),
 	}
 
 	d.Flags().StringVarP(&key, "key", "k", "", "authentication key")

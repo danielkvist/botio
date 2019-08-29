@@ -1,11 +1,13 @@
 package bot
 
 import (
-	"log"
+	"fmt"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/danielkvist/botio/client"
+	"github.com/danielkvist/botio/logger"
 
 	"github.com/yanzay/tbot/v2"
 )
@@ -48,9 +50,9 @@ func (t *Telegram) Connect(token string, cap int) error {
 // and submit it to the responses channel, which eventually should send
 // the response back to the client.
 func (t *Telegram) Listen(url, key string) error {
+	l := logger.New()
 	t.s.HandleMessage(".", func(m *tbot.Message) {
-		// FIXME:
-		log.Printf("%s\t%s\t%s", m.Chat.ID, m.Chat.Username, m.Text)
+		start := time.Now()
 		msg := strings.TrimPrefix(m.Text, "/")
 		resp := &Response{
 			id: m.Chat.ID,
@@ -65,6 +67,8 @@ func (t *Telegram) Listen(url, key string) error {
 
 		resp.text = cmd.Response
 		t.r <- resp
+
+		l.Info(fmt.Sprintf("platform=%s id=%v msg=%q response=%q in=%v", "telegram", m.Chat.ID, msg, resp.text, time.Since(start)))
 		return
 	})
 

@@ -35,7 +35,6 @@ func Print() *cobra.Command {
 
 			printCommands(command)
 		},
-		Args: cobra.ExactArgs(3),
 	}
 
 	print.Flags().StringVarP(&command, "command", "c", "", "command to print")
