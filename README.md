@@ -4,7 +4,7 @@
 [![Docker Pulls](https://img.shields.io/docker/pulls/danielkvist/botio.svg?maxAge=604800)](https://hub.docker.com/r/danielkvist/botio/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
 
-Botio is a simple and opinionated CLI to create and manage easily bots for differents platforms."
+Botio is a simple and opinionated CLI to create and manage easily bots for differents platforms.
 
 ## Platforms supported
 

@@ -3,14 +3,11 @@ package cmd
 import (
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/danielkvist/botio/db"
-	"github.com/danielkvist/botio/handlers"
+	"github.com/danielkvist/botio/routes"
 	"github.com/danielkvist/botio/server"
 
-	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
 	"github.com/spf13/cobra"
 )
 
@@ -52,7 +49,7 @@ func Server() *cobra.Command {
 			done := make(chan struct{}, 1)
 			quit := make(chan struct{}, 1)
 
-			r := newRouter(bdb, collection)
+			r := routes.Routes(bdb, collection)
 			serverOptions := []server.Option{
 				server.WithListenAddr(portHTTP),
 				server.WithHandler(r),
@@ -84,31 +81,6 @@ func Server() *cobra.Command {
 	s.Flags().StringVar(&sslkey, "sslkey", "", "ssl key file")
 
 	return s
-}
-
-func newRouter(database db.DB, col string) http.Handler {
-	r := chi.NewRouter()
-
-	// Middleware
-	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
-	r.Use(middleware.Timeout(5 * time.Second))
-	r.Use(middleware.URLFormat)
-
-	// Routes
-	r.Route("/api/commands", func(r chi.Router) {
-		r.Get("/", handlers.GetAll(database, col))
-		r.Get("/{command}", handlers.Get(database, col))
-		r.Post("/", handlers.Post(database, col))
-		r.Put("/{command}", handlers.Put(database, col))
-		r.Delete("/{command}", handlers.Delete(database, col))
-	})
-
-	r.Route("/api/backup", func(r chi.Router) {
-		r.Get("/", handlers.Backup(database, col))
-	})
-
-	return r
 }
 
 func listenAndServe(s *http.Server, tls bool, sslCert, sslKey string, done chan<- struct{}) {
