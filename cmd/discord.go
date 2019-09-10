@@ -19,18 +19,14 @@ func Discord() *cobra.Command {
 		Short:   "Initializes a Discord bot",
 		Example: "botio discord --token <discord-token> --url :9090 --key mysupersecretkey",
 		Run: func(cmd *cobra.Command, args []string) {
-			k := checkFlag("key", key, false)
-			t := checkFlag("token", token, false)
-			u := checkFlag("url", url, false)
-
-			u, err := checkURL(u)
+			u, err := checkURL(url)
 			if err != nil {
 				log.Fatalf("%v", err)
 			}
 
-			b := bot.Factory("discord")
-			b.Connect(t, 10)
-			b.Listen(u, k)
+			b := bot.Create("discord")
+			b.Connect(token, 10)
+			b.Listen(u, key)
 			defer b.Stop()
 
 			if err := b.Start(); err != nil {

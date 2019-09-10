@@ -20,17 +20,12 @@ func Update() *cobra.Command {
 		Short:   "Updates an existing command (or adds it if not exists)",
 		Example: "botio update --command start --response Hi --url :9090 --key mysupersecretkey",
 		Run: func(cmd *cobra.Command, args []string) {
-			command := checkFlag("command", command, false)
-			key := checkFlag("key", key, false)
-			response := checkFlag("response", response, false)
-			url := checkFlag("url", url, false)
-
-			url, err := checkURL(url)
+			u, err := checkURL(url)
 			if err != nil {
 				log.Fatalf("%v", err)
 			}
 
-			c, err := client.Put(url, key, command, response)
+			c, err := client.Put(u, key, command, response)
 			if err != nil {
 				log.Fatalf("%v", err)
 			}

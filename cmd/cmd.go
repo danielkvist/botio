@@ -3,7 +3,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strings"
 	"text/tabwriter"
@@ -35,14 +34,6 @@ func Root(commands ...*cobra.Command) error {
 	}
 
 	return root.Execute()
-}
-
-func checkFlag(flag string, value string, allowEmpty bool) string {
-	if value == "" && !allowEmpty {
-		log.Fatalf("%q flag cannot be an empty string", flag)
-	}
-
-	return value
 }
 
 func checkURL(url string) (string, error) {

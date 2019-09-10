@@ -19,20 +19,16 @@ func Delete() *cobra.Command {
 		Short:   "Deletes the specified command",
 		Example: "botio delete --command start --url :9090 --key mysupersecretkey",
 		Run: func(cmd *cobra.Command, args []string) {
-			c := checkFlag("command", command, false)
-			k := checkFlag("key", key, false)
-			u := checkFlag("url", url, false)
-
-			u, err := checkURL(u)
+			u, err := checkURL(url)
 			if err != nil {
 				log.Fatalf("%v", err)
 			}
 
-			if err := client.Delete(u+"/"+c, k); err != nil {
+			if err := client.Delete(u+"/"+command, key); err != nil {
 				log.Fatalf("%v", err)
 			}
 
-			fmt.Printf("command %q deleted successfully\n", c)
+			fmt.Printf("command %q deleted successfully\n", command)
 		},
 	}
 

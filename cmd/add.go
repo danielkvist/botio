@@ -20,22 +20,17 @@ func Add() *cobra.Command {
 		Short:   "Adds a new command",
 		Example: "botio add --command start --response Hello --url :9090 --key mysupersecretkey",
 		Run: func(cmd *cobra.Command, args []string) {
-			c := checkFlag("command", command, false)
-			k := checkFlag("key", key, false)
-			r := checkFlag("response", response, false)
-			u := checkFlag("url", url, false)
-
-			u, err := checkURL(u)
+			u, err := checkURL(url)
 			if err != nil {
 				log.Fatalf("%v", err)
 			}
 
-			command, err := client.Post(u, k, c, r)
+			c, err := client.Post(u, key, command, response)
 			if err != nil {
 				log.Fatalf("%v", err)
 			}
 
-			printCommands(command)
+			printCommands(c)
 		},
 	}
 

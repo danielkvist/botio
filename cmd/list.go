@@ -18,15 +18,12 @@ func List() *cobra.Command {
 		Short:   "Prints a list with all the commands",
 		Example: "botio list --url :9090 --key mysupersecretkey",
 		Run: func(cmd *cobra.Command, args []string) {
-			key := checkFlag("key", key, false)
-			url := checkFlag("url", url, false)
-
-			url, err := checkURL(url)
+			u, err := checkURL(url)
 			if err != nil {
 				log.Fatalf("%v", err)
 			}
 
-			commands, err := client.GetAll(url, key)
+			commands, err := client.GetAll(u, key)
 			if err != nil {
 				log.Fatalf("%v", err)
 			}

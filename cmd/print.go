@@ -19,21 +19,17 @@ func Print() *cobra.Command {
 		Short:   "Prints the specified command and his response",
 		Example: "botio print --command start --url :9090 --key mysupersecretkey",
 		Run: func(cmd *cobra.Command, args []string) {
-			c := checkFlag("command", command, false)
-			k := checkFlag("key", key, false)
-			u := checkFlag("url", url, false)
-
-			u, err := checkURL(u)
+			u, err := checkURL(url)
 			if err != nil {
 				log.Fatalf("%v", err)
 			}
 
-			command, err := client.Get(u+"/"+c, k)
+			c, err := client.Get(u+"/"+command, key)
 			if err != nil {
 				log.Fatalf("%v", err)
 			}
 
-			printCommands(command)
+			printCommands(c)
 		},
 	}
 
