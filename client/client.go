@@ -9,8 +9,9 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/danielkvist/botio/jwt"
 	"github.com/danielkvist/botio/models"
+
+	"github.com/dgrijalva/jwt-go"
 )
 
 // Get receives an URL and a key to perform an HTTP GET request
@@ -163,7 +164,7 @@ func Delete(url, key string) error {
 }
 
 func reqWithTokenHeader(r *http.Request, key string) error {
-	token, err := jwt.Generate(key)
+	token, err := generate(key)
 	if err != nil {
 		return fmt.Errorf("while generating JWT token for authentication: %v", err)
 	}
@@ -171,4 +172,16 @@ func reqWithTokenHeader(r *http.Request, key string) error {
 	r.Header.Set("Token", token)
 
 	return nil
+}
+
+func generate(key string) (string, error) {
+	token := jwt.New(jwt.SigningMethodHS256)
+
+	tkStr, err := token.SignedString([]byte(key))
+	if err != nil {
+		return "", fmt.Errorf("while generating the authentication JWT token: %v", err)
+	}
+
+	return tkStr, nil
+
 }
