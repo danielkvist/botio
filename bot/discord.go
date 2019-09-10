@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/danielkvist/botio/client"
 	"github.com/danielkvist/botio/logger"
@@ -19,6 +18,7 @@ type Discord struct {
 	s  *dg.Session
 	r  chan *Response
 	c  chan struct{}
+	l  *logger.Logger
 	wg sync.WaitGroup
 }
 
@@ -43,6 +43,7 @@ func (d *Discord) Connect(token string, cap int) error {
 	d.s = s
 	d.r = responses
 	d.c = c
+	d.l = logger.New()
 
 	d.wg.Add(1)
 	go func() {
@@ -60,9 +61,7 @@ func (d *Discord) Connect(token string, cap int) error {
 // and submit it to the responses channel, which eventually
 // should send the response back to the client.
 func (d *Discord) Listen(url, key string) error {
-	l := logger.New()
 	d.s.AddHandler(func(s *dg.Session, m *dg.MessageCreate) {
-		start := time.Now()
 		if m.Author.Bot {
 			return
 		}
@@ -81,13 +80,14 @@ func (d *Discord) Listen(url, key string) error {
 
 		cmd, err := client.Get(url+"/"+strings.ToLower(msg[1]), key)
 		if err != nil {
+			// FIXME:
 			return
 		}
 
 		resp.text = cmd.Response
 		d.r <- resp
 
-		l.Info(fmt.Sprintf("platform=%s id=%v msg=%q response=%q in=%v", "discord", m.ChannelID, msg[1], resp.text, time.Since(start)))
+		d.l.LogMsg("discord", m.ChannelID, msg[1], resp.text)
 		return
 	})
 	return nil
@@ -110,6 +110,7 @@ func (d *Discord) Stop() error {
 	close(d.c)
 	d.wg.Wait()
 	if err := d.s.Close(); err != nil {
+		// FIXME:
 		return fmt.Errorf("while closing a connection: %v", err)
 	}
 

@@ -1,10 +1,8 @@
 package bot
 
 import (
-	"fmt"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/danielkvist/botio/client"
 	"github.com/danielkvist/botio/logger"
@@ -18,6 +16,7 @@ type Telegram struct {
 	s  *tbot.Server
 	c  *tbot.Client
 	r  chan *Response
+	l  *logger.Logger
 	wg sync.WaitGroup
 }
 
@@ -33,6 +32,7 @@ func (t *Telegram) Connect(token string, cap int) error {
 	t.s = s
 	t.c = c
 	t.r = responses
+	t.l = logger.New()
 
 	t.wg.Add(1)
 	go func() {
@@ -50,9 +50,7 @@ func (t *Telegram) Connect(token string, cap int) error {
 // and submit it to the responses channel, which eventually should send
 // the response back to the client.
 func (t *Telegram) Listen(url, key string) error {
-	l := logger.New()
 	t.s.HandleMessage(".", func(m *tbot.Message) {
-		start := time.Now()
 		msg := strings.TrimPrefix(m.Text, "/")
 		resp := &Response{
 			id: m.Chat.ID,
@@ -60,6 +58,7 @@ func (t *Telegram) Listen(url, key string) error {
 
 		cmd, err := client.Get(url+"/"+msg, key)
 		if err != nil {
+			// FIXME:
 			resp.text = "I'm sorry. I didn't understand you. Bzz"
 			t.r <- resp
 			return
@@ -68,7 +67,7 @@ func (t *Telegram) Listen(url, key string) error {
 		resp.text = cmd.Response
 		t.r <- resp
 
-		l.Info(fmt.Sprintf("platform=%s id=%v msg=%q response=%q in=%v", "telegram", m.Chat.ID, msg, resp.text, time.Since(start)))
+		t.l.LogMsg("telegram", m.Chat.ID, msg, resp.text)
 		return
 	})
 
