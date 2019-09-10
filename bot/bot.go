@@ -16,9 +16,9 @@ type Response struct {
 	text string
 }
 
-// Factory returns a bot that satisfies the Bot interface
+// Create returns a bot that satisfies the Bot interface
 // depending on the received platform.
-func Factory(platform string) Bot {
+func Create(platform string) Bot {
 	switch platform {
 	case "telegram":
 		return &Telegram{}

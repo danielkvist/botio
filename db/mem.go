@@ -14,7 +14,7 @@ func (m Mem) Open(path, col string) error {
 	return nil
 }
 
-func (m Mem) Set(col, el, val string) (*models.Command, error) {
+func (m Mem) Set(el, val string) (*models.Command, error) {
 	m[el] = val
 
 	return &models.Command{
@@ -23,7 +23,7 @@ func (m Mem) Set(col, el, val string) (*models.Command, error) {
 	}, nil
 }
 
-func (m Mem) Get(col, el string) (*models.Command, error) {
+func (m Mem) Get(el string) (*models.Command, error) {
 	val, ok := m[el]
 	if !ok {
 		return nil, fmt.Errorf("element %q not found", el)
@@ -35,7 +35,7 @@ func (m Mem) Get(col, el string) (*models.Command, error) {
 	}, nil
 }
 
-func (m Mem) GetAll(col string) ([]*models.Command, error) {
+func (m Mem) GetAll() ([]*models.Command, error) {
 	var commands []*models.Command
 
 	for k, v := range m {
@@ -50,12 +50,12 @@ func (m Mem) GetAll(col string) ([]*models.Command, error) {
 	return commands, nil
 }
 
-func (m Mem) Remove(col, el string) error {
+func (m Mem) Remove(el string) error {
 	delete(m, el)
 	return nil
 }
 
-func (m Mem) Update(col, el, val string) (*models.Command, error) {
+func (m Mem) Update(el, val string) (*models.Command, error) {
 	m[el] = val
 
 	return &models.Command{

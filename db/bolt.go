@@ -12,7 +12,8 @@ import (
 
 // Bolt wraps a bolt.DB database and satifies the DB interface.
 type Bolt struct {
-	db *bolt.DB
+	db  *bolt.DB
+	col string
 }
 
 func (bdb *Bolt) Open(path, col string) error {
@@ -34,13 +35,14 @@ func (bdb *Bolt) Open(path, col string) error {
 		return fmt.Errorf("while initializing collection %q on database %q: %v", col, path, err)
 	}
 
+	bdb.col = col
 	bdb.db = db
 	return nil
 }
 
-func (bdb *Bolt) Set(col, el, val string) (*models.Command, error) {
+func (bdb *Bolt) Set(el, val string) (*models.Command, error) {
 	err := bdb.db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(col))
+		b := tx.Bucket([]byte(bdb.col))
 		return b.Put([]byte(el), []byte(val))
 	})
 
@@ -56,10 +58,10 @@ func (bdb *Bolt) Set(col, el, val string) (*models.Command, error) {
 	return command, nil
 }
 
-func (bdb *Bolt) Get(col, el string) (*models.Command, error) {
+func (bdb *Bolt) Get(el string) (*models.Command, error) {
 	var val []byte
 	err := bdb.db.View(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte(col))
+		bucket := tx.Bucket([]byte(bdb.col))
 		val = bucket.Get([]byte(el))
 
 		if len(val) == 0 {
@@ -81,10 +83,10 @@ func (bdb *Bolt) Get(col, el string) (*models.Command, error) {
 	return command, nil
 }
 
-func (bdb *Bolt) GetAll(col string) ([]*models.Command, error) {
+func (bdb *Bolt) GetAll() ([]*models.Command, error) {
 	var commands []*models.Command
 	err := bdb.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(col))
+		b := tx.Bucket([]byte(bdb.col))
 		c := b.Cursor()
 
 		for k, v := c.First(); k != nil; k, v = c.Next() {
@@ -100,15 +102,15 @@ func (bdb *Bolt) GetAll(col string) ([]*models.Command, error) {
 	return commands, err
 }
 
-func (bdb *Bolt) Remove(col, el string) error {
+func (bdb *Bolt) Remove(el string) error {
 	return bdb.db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(col))
+		b := tx.Bucket([]byte(bdb.col))
 		return b.Delete([]byte(el))
 	})
 }
 
-func (bdb *Bolt) Update(col, el, val string) (*models.Command, error) {
-	return bdb.Set(col, el, val)
+func (bdb *Bolt) Update(el, val string) (*models.Command, error) {
+	return bdb.Set(el, val)
 }
 
 func (bdb *Bolt) Backup(w io.Writer) (int, error) {

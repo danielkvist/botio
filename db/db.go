@@ -10,19 +10,19 @@ import (
 // DB represents a database with basic CRUD methods.
 type DB interface {
 	Open(path, col string) error
-	Set(col, el, val string) (*models.Command, error)
-	Get(col, el string) (*models.Command, error)
-	GetAll(col string) ([]*models.Command, error)
-	Remove(col, el string) error
-	Update(col, el string, val string) (*models.Command, error)
+	Set(el, val string) (*models.Command, error)
+	Get(el string) (*models.Command, error)
+	GetAll() ([]*models.Command, error)
+	Remove(el string) error
+	Update(el string, val string) (*models.Command, error)
 	Backup(w io.Writer) (int, error)
 }
 
-// Factory returns a database that satisfies the DB interface
+// Create returns a database that satisfies the DB interface
 // depending on the received environment.
-func Factory(env string) DB {
+func Create(env string) DB {
 	switch env {
-	case "production":
+	case "local":
 		return &Bolt{}
 	case "testing":
 		var m Mem
