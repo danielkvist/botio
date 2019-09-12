@@ -9,7 +9,7 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o botio main.go
 
 # Final stage
-FROM alpine:3.10.3
+FROM alpine:3.10.2
 LABEL maintainer="danielkvist@protonmail.com"
 RUN apk add --no-cache ca-certificates
 COPY --from=build /app/botio /app/botio
