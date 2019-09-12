@@ -19,7 +19,7 @@ type Bolt struct {
 func (bdb *Bolt) Open(path, col string) error {
 	db, err := bolt.Open(path, 0600, &bolt.Options{Timeout: 2 * time.Second})
 	if err != nil {
-		return fmt.Errorf("while opening to DB on %q: %v", path, err)
+		return fmt.Errorf("while opening DB on %q: %v", path, err)
 	}
 
 	err = db.Update(func(tx *bolt.Tx) error {
