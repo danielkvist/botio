@@ -93,6 +93,10 @@ func GetAll(url, key string) ([]*models.Command, error) {
 // and the key for authentication using JWT.
 // If something goes wrong it returns a non-nil error.
 func Post(url, key, command, response string) (*models.Command, error) {
+	if command == "" || response == "" {
+		return nil, fmt.Errorf("empty fields are not allowed")
+	}
+
 	cmd := models.Command{
 		Cmd:      command,
 		Response: response,
