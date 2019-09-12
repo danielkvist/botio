@@ -127,6 +127,7 @@ func (s *Server) encodedResp(w http.ResponseWriter, r *http.Request, data interf
 
 	if err := json.NewEncoder(w).Encode(data); err != nil {
 		s.errResp(w, r, "error while encoding data for response", err, http.StatusInternalServerError)
+		return
 	}
 
 	s.logger.LogRequest(w, r, http.StatusOK, nil)
