@@ -8,13 +8,12 @@ import (
 
 func main() {
 	if err := cmd.Root(
+		cmd.Bot(),
 		cmd.Add(),
 		cmd.Delete(),
-		cmd.Discord(),
 		cmd.List(),
 		cmd.Print(),
 		cmd.Server(),
-		cmd.Telegram(),
 		cmd.Update(),
 	); err != nil {
 		log.Fatalf("%v", err)

@@ -2,6 +2,8 @@
 // for differents platforms easily.
 package bot
 
+import "fmt"
+
 // Bot is an interface to manage bots for differentes platforms.
 type Bot interface {
 	Connect(token string, cap int) error
@@ -17,14 +19,15 @@ type Response struct {
 }
 
 // Create returns a bot that satisfies the Bot interface
-// depending on the received platform.
-func Create(platform string) Bot {
+// depending on the received platform. If the platform is not supported
+// it returns an error.
+func Create(platform string) (Bot, error) {
 	switch platform {
 	case "telegram":
-		return &Telegram{}
+		return &Telegram{}, nil
 	case "discord":
-		return &Discord{}
+		return &Discord{}, nil
 	default:
-		return nil
+		return nil, fmt.Errorf("platform %q not supported", platform)
 	}
 }
