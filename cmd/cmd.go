@@ -19,7 +19,7 @@ func Root(commands ...*cobra.Command) error {
 	examples := []string{
 		"botio server --database ./data/commands.db --collection commands --http :9090 --key mysupersecretkey",
 		"botio bot --platform telegram --token <telegram-token> --url :9090 --key mysupersecretkey",
-		"botio print --command start --url :9090 --key mysupersecretkey",
+		"botio client print --command start --url :9090 --key mysupersecretkey",
 	}
 
 	root := &cobra.Command{

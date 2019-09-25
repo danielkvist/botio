@@ -9,12 +9,8 @@ import (
 func main() {
 	if err := cmd.Root(
 		cmd.Bot(),
-		cmd.Add(),
-		cmd.Delete(),
-		cmd.List(),
-		cmd.Print(),
 		cmd.Server(),
-		cmd.Update(),
+		cmd.Client(),
 	); err != nil {
 		log.Fatalf("%v", err)
 	}

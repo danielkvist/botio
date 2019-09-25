@@ -23,7 +23,7 @@ func Server() *cobra.Command {
 
 	s := &cobra.Command{
 		Use:     "server",
-		Short:   "Starts a server to manage the commands with simple HTTP methods.",
+		Short:   "Starts a server to manage the commands with simple HTTP methods",
 		Example: "botio server --database ./data/botio.db --collection commands --http :9090 --key mysupersecretkey",
 		Run: func(cmd *cobra.Command, args []string) {
 			var tls bool

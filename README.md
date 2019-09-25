@@ -23,19 +23,19 @@ botio server --db ./data/botio.db --col commands --http :9090 --key mysupersecre
 We add a command:
 
 ```bash
-botio add --command start --response Hello --url :9090 --key mysupersecretkey
+botio client add --command start --response Hello --url :9090 --key mysupersecretkey
 ```
 
-We can check that the command has been created successfully with ```print```:
+We can check that the command has been created successfully with `print`:
 
 ```bash
-botio print --command start --url :9090 --key mysupersecretkey
+botio client print --command start --url :9090 --key mysupersecretkey
 ```
 
-Or see a list of all our commands with ```list```:
+Or see a list of all our commands with `list`:
 
 ```bash
-botio list --url :9090 --key mysupersecretkey
+botio client list --url :9090 --key mysupersecretkey
 ```
 
 Now, we can start a Telegram's bot:
@@ -44,9 +44,7 @@ Now, we can start a Telegram's bot:
 botio bot --platform telegram --token <telegram-token> --url :9090 --key mysupersecretkey
 ```
 
-> If you have doubts about how to get a Telegram token for your bot you can check this [link](https://core.telegram.org/bots#botfather).
-
-To check all the available commands use the ```help``` flag:
+To check all the available commands use the `help` flag:
 
 ```bash
 botio help
@@ -80,17 +78,13 @@ Usage:
 Examples:
 botio server --database ./data/commands.db --collection commands --http :9090 --key mysupersecretkey
 botio bot --platform telegram --token <telegram-token> --url :9090 --key mysupersecretkey
-botio print --command start --url :9090 --key mysupersecretkey
+botio client print --command start --url :9090 --key mysupersecretkey
 
 Available Commands:
-  add         Adds a new command
   bot         Initializes a bot for a supported platform (telegram and discord for the moment)
-  delete      Deletes the specified command
+  client      Client contains some subcommands to manage your bot's commands
   help        Help about any command
-  list        Prints a list with all the commands
-  print       Prints the specified command and his response
-  server      Starts a server to manage the commands with simple HTTP methods.
-  update      Updates an existing command (or adds it if not exists)
+  server      Starts a server to manage the commands with simple HTTP methods
 
 Flags:
   -h, --help   help for botio
@@ -102,7 +96,7 @@ Use "botio [command] --help" for more information about a command.
 
 ```text
 $ botio server --help
-Starts a server to manage the commands with simple HTTP methods.
+Starts a server to manage the commands with simple HTTP methods
 
 Usage:
   botio server [flags]
@@ -118,7 +112,7 @@ Flags:
       --https string        port for HTTPS connections (default ":443")
   -k, --key string          authentication key
       --sslcert string      ssl certification file
-      --sslkey string       ssl key file
+      --sslkey string       ssl certification key file
 ```
 
 Example:
@@ -155,17 +149,40 @@ Example:
 botio bot --platform telegram --token <telegram-token> --url :9090 --key mysupersecretkey
 ```
 
-### add
+### client
 
 ```text
-$ botio add --help
+$ botio client --help
+Client contains some subcommands to manage your bot's commands
+
+Usage:
+  botio client
+  botio client [command]
+
+Available Commands:
+  add         Adds a new command
+  delete      Deletes the specified command
+  list        Prints a list with all the commands
+  print       Prints the specified command and his response
+  update      Updates an existing command (or adds it if not exists)
+
+Flags:
+  -h, --help   help for client
+
+Use "botio client [command] --help" for more information about a command.
+```
+
+#### add
+
+```text
+$ botio client add --help
 Adds a new command
 
 Usage:
-  botio add [flags]
+  botio client add [flags]
 
 Examples:
-botio add --command start --response Hello --url :9090 --key mysupersecretkey
+botio client add --command start --response Hello --url :9090 --key mysupersecretkey
 
 Flags:
   -c, --command string    command to add
@@ -178,20 +195,20 @@ Flags:
 Example:
 
 ```bash
-bodio add --command start --response Hello --url :9090 --key mysupersecretpassword
+bodio client add --command start --response Hello --url :9090 --key mysupersecretpassword
 ```
 
-### print
+#### print
 
 ```text
-$ botio print --help
+$ botio client print --help
 Prints the specified command and his response
 
 Usage:
-  botio print [flags]
+  botio client print [flags]
 
 Examples:
-botio print --command start --url :9090 --key mysupersecretkey
+botio client print --command start --url :9090 --key mysupersecretkey
 
 Flags:
   -c, --command string   command to print
@@ -203,20 +220,20 @@ Flags:
 Example:
 
 ```bash
-botio print --command start --url :9090 --key mysupersecretkey
+botio client print --command start --url :9090 --key mysupersecretkey
 ```
 
 ### list
 
 ```text
-$ botio list --help
+$ botio client list --help
 Prints a list with all the commands
 
 Usage:
-  botio list [flags]
+  botio client list [flags]
 
 Examples:
-botio list --url :9090 --key mysupersecretkey
+botio client list --url :9090 --key mysupersecretkey
 
 Flags:
   -h, --help         help for list
@@ -227,20 +244,20 @@ Flags:
 Example:
 
 ```bash
-botio list --url :9090 --key mysupersecretkey
+botio client list --url :9090 --key mysupersecretkey
 ```
 
 ### update
 
 ```text
-$ botio update --help
+$ botio client update --help
 Updates an existing command (or adds it if not exists)
 
 Usage:
-  botio update [flags]
+  botio client update [flags]
 
 Examples:
-botio update --command start --response Hi --url :9090 --key mysupersecretkey
+botio client update --command start --response Hi --url :9090 --key mysupersecretkey
 
 Flags:
   -c, --command string    command to update
@@ -253,17 +270,17 @@ Flags:
 Example:
 
 ```text
-botio update --command start --response Hi --url :9090 --key mysupersecretkey
+botio client update --command start --response Hi --url :9090 --key mysupersecretkey
 ```
 
 ### delete
 
 ```text
-$ botio delete --help
+$ botio client delete --help
 Deletes the specified command
 
 Usage:
-  botio delete [flags]
+  botio client delete [flags]
 
 Examples:
 botio delete --command start --url :9090 --key mysupersecretkey
@@ -278,7 +295,7 @@ Flags:
 Example:
 
 ```bash
-botio delete --command start --url :9090 --key mysupersecretkey
+botio client delete --command start --url :9090 --key mysupersecretkey
 ```
 
 ## API Endpoints
