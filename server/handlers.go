@@ -6,7 +6,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 
 	"github.com/danielkvist/botio/models"
 
@@ -72,7 +71,7 @@ func (s *Server) handlePost() func(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		result, err := s.db.Set(cmd.Cmd, cmd.Response)
+		result, err := s.db.Add(cmd.Cmd, cmd.Response)
 		if err != nil {
 			s.errResp(w, r, "error while adding command to the database", err, http.StatusInternalServerError)
 			return
@@ -97,19 +96,6 @@ func (s *Server) handleDelete() func(w http.ResponseWriter, r *http.Request) {
 		}
 
 		s.encodedResp(w, r, nil)
-	}
-}
-
-func (s *Server) handleBackup() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/octet-stream")
-		w.Header().Set("Content-Disposition", `attachment; filename="botio.db"`)
-
-		length, err := s.db.Backup(w)
-		w.Header().Set("Content-Length", strconv.Itoa(length))
-		if err != nil {
-			s.errResp(w, r, "error while trying to backup the database", err, http.StatusInternalServerError)
-		}
 	}
 }
 

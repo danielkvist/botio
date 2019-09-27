@@ -2,7 +2,6 @@ package db
 
 import (
 	"fmt"
-	"io"
 
 	"github.com/danielkvist/botio/models"
 )
@@ -10,11 +9,11 @@ import (
 // Mem is a simple in-memory map for testing that satisfies the DB interface.
 type Mem map[string]string
 
-func (m Mem) Open(path, col string) error {
+func (m Mem) Connect() error {
 	return nil
 }
 
-func (m Mem) Set(el, val string) (*models.Command, error) {
+func (m Mem) Add(el, val string) (*models.Command, error) {
 	m[el] = val
 
 	return &models.Command{
@@ -64,6 +63,10 @@ func (m Mem) Update(el, val string) (*models.Command, error) {
 	}, nil
 }
 
-func (m Mem) Backup(w io.Writer) (int, error) {
-	return 0, nil
+func (m Mem) Close() error {
+	for k := range m {
+		delete(m, k)
+	}
+
+	return nil
 }

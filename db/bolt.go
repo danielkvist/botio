@@ -2,7 +2,6 @@ package db
 
 import (
 	"fmt"
-	"io"
 	"time"
 
 	"github.com/danielkvist/botio/models"
@@ -12,18 +11,19 @@ import (
 
 // Bolt wraps a bolt.DB database and satifies the DB interface.
 type Bolt struct {
-	db  *bolt.DB
-	col string
+	Path string
+	Col  string
+	db   *bolt.DB
 }
 
-func (bdb *Bolt) Open(path, col string) error {
-	db, err := bolt.Open(path, 0600, &bolt.Options{Timeout: 2 * time.Second})
+func (bdb *Bolt) Connect() error {
+	db, err := bolt.Open(bdb.Path, 0600, &bolt.Options{Timeout: 2 * time.Second})
 	if err != nil {
-		return fmt.Errorf("while opening DB on %q: %v", path, err)
+		return fmt.Errorf("while opening DB on %q: %v", bdb.Path, err)
 	}
 
 	err = db.Update(func(tx *bolt.Tx) error {
-		bucket := []byte(col)
+		bucket := []byte(bdb.Col)
 		if _, err := tx.CreateBucketIfNotExists(bucket); err != nil {
 			return err
 		}
@@ -32,22 +32,21 @@ func (bdb *Bolt) Open(path, col string) error {
 	})
 
 	if err != nil {
-		return fmt.Errorf("while initializing collection %q on database %q: %v", col, path, err)
+		return fmt.Errorf("while initializing collection %q on DB %q: %v", bdb.Col, bdb.Path, err)
 	}
 
-	bdb.col = col
 	bdb.db = db
 	return nil
 }
 
-func (bdb *Bolt) Set(el, val string) (*models.Command, error) {
+func (bdb *Bolt) Add(el, val string) (*models.Command, error) {
 	err := bdb.db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(bdb.col))
+		b := tx.Bucket([]byte(bdb.Col))
 		return b.Put([]byte(el), []byte(val))
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("while adding command %q: %v", el, err)
 	}
 
 	command := &models.Command{
@@ -61,7 +60,7 @@ func (bdb *Bolt) Set(el, val string) (*models.Command, error) {
 func (bdb *Bolt) Get(el string) (*models.Command, error) {
 	var val []byte
 	err := bdb.db.View(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte(bdb.col))
+		bucket := tx.Bucket([]byte(bdb.Col))
 		val = bucket.Get([]byte(el))
 
 		if len(val) == 0 {
@@ -72,7 +71,7 @@ func (bdb *Bolt) Get(el string) (*models.Command, error) {
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("while getting command %q: %v", el, err)
 	}
 
 	command := &models.Command{
@@ -86,7 +85,7 @@ func (bdb *Bolt) Get(el string) (*models.Command, error) {
 func (bdb *Bolt) GetAll() ([]*models.Command, error) {
 	var commands []*models.Command
 	err := bdb.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(bdb.col))
+		b := tx.Bucket([]byte(bdb.Col))
 		c := b.Cursor()
 
 		for k, v := c.First(); k != nil; k, v = c.Next() {
@@ -104,22 +103,24 @@ func (bdb *Bolt) GetAll() ([]*models.Command, error) {
 
 func (bdb *Bolt) Remove(el string) error {
 	return bdb.db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(bdb.col))
+		b := tx.Bucket([]byte(bdb.Col))
 		return b.Delete([]byte(el))
 	})
 }
 
 func (bdb *Bolt) Update(el, val string) (*models.Command, error) {
-	return bdb.Set(el, val)
+	command, err := bdb.Add(el, val)
+	if err != nil {
+		return nil, fmt.Errorf("while updating command %q: %v", el, err)
+	}
+
+	return command, nil
 }
 
-func (bdb *Bolt) Backup(w io.Writer) (int, error) {
-	var length int
-	err := bdb.db.View(func(tx *bolt.Tx) error {
-		length = int(tx.Size())
-		_, err := tx.WriteTo(w)
-		return err
-	})
+func (bdb *Bolt) Close() error {
+	if err := bdb.db.Close(); err != nil {
+		return fmt.Errorf("while closing DB: %v", err)
+	}
 
-	return length, err
+	return nil
 }

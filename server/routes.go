@@ -24,9 +24,5 @@ func (s *Server) routes() {
 		r.Delete("/{command}", s.jwtMiddleware(s.handleDelete()))
 	})
 
-	r.Route("/api/backup", func(r chi.Router) {
-		r.Get("/", s.jwtMiddleware(s.handleBackup()))
-	})
-
 	s.router = r
 }

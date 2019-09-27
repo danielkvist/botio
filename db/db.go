@@ -2,20 +2,18 @@
 package db
 
 import (
-	"io"
-
 	"github.com/danielkvist/botio/models"
 )
 
 // DB represents a database with basic CRUD methods.
 type DB interface {
-	Open(path, col string) error
-	Set(el, val string) (*models.Command, error)
+	Connect() error
+	Add(el, val string) (*models.Command, error)
 	Get(el string) (*models.Command, error)
 	GetAll() ([]*models.Command, error)
 	Remove(el string) error
-	Update(el string, val string) (*models.Command, error)
-	Backup(w io.Writer) (int, error)
+	Update(el, val string) (*models.Command, error)
+	Close() error
 }
 
 // Create returns a database that satisfies the DB interface
@@ -24,6 +22,8 @@ func Create(env string) DB {
 	switch env {
 	case "local":
 		return &Bolt{}
+	case "postgres":
+		return &Postgres{}
 	case "testing":
 		var m Mem
 		m = make(map[string]string)

@@ -23,23 +23,22 @@ type Server struct {
 // Option represents an option to a *Server.
 type Option func(s *Server)
 
-// WithDB receives an environment, a path and a collection
-// and returns an Option that creates, connects and
-// assigns a db.DB to the Server's db.
-func WithDB(env, path, col string) Option {
-	return func(s *Server) {
-		s.db = db.Create(env)
-		s.db.Open(path, col)
-	}
-}
-
 // WithBoltDB receives a path and a collection and returns
 // an Option that creates, connects and assigns
 // a BoltDB db.DB to the Server's db.
 func WithBoltDB(path, col string) Option {
 	return func(s *Server) {
-		s.db = db.Create("local")
-		s.db.Open(path, col)
+		database := db.Create("local")
+		bdb, ok := database.(*db.Bolt)
+		if !ok {
+			log.Fatalf("while creating BoltDB database a fatal error happened")
+		}
+
+		bdb.Path = path
+		bdb.Col = col
+		s.db = bdb
+
+		s.db.Connect()
 	}
 }
 
