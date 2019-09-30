@@ -17,7 +17,7 @@ Botio is a simple and opinionated CLI to create and manage easily bots for diffe
 First, we create a server from which we're going to manage the commands to our bot:
 
 ```bash
-botio server --db ./data/botio.db --col commands --http :9090 --key mysupersecretkey
+botio server bolt --db ./data/botio.db --col commands --http :9090 --key mysupersecretkey
 ```
 
 We add a command:
