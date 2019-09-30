@@ -36,9 +36,30 @@ func WithBoltDB(path, col string) Option {
 
 		bdb.Path = path
 		bdb.Col = col
-		s.db = bdb
 
-		s.db.Connect()
+		s.db = bdb
+	}
+}
+
+// WithPostgresDB receives a set of parameters neccessaries to initialize
+// a PostgreSQL database and return an Option to assign it to the
+// Server's db.
+func WithPostgresDB(host, port, dbName, table, user, password string) Option {
+	return func(s *Server) {
+		database := db.Create("postgres")
+		ps, ok := database.(*db.Postgres)
+		if !ok {
+			log.Fatalf("while creating a PostgreSQL database a fatal error happened")
+		}
+
+		ps.Host = host
+		ps.Port = port
+		ps.User = user
+		ps.Password = password
+		ps.DB = dbName
+		ps.Table = table
+
+		s.db = ps
 	}
 }
 

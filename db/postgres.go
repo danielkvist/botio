@@ -5,8 +5,12 @@ import (
 	"fmt"
 
 	"github.com/danielkvist/botio/models"
+
+	// registers postgres driver.
+	_ "github.com/lib/pq"
 )
 
+// Postgres wraps a sql.DB client and satisfies the DB interface.
 type Postgres struct {
 	Host     string
 	Port     string

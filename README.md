@@ -96,21 +96,41 @@ Use "botio [command] --help" for more information about a command.
 
 ```text
 $ botio server --help
-Starts a server to manage the commands with simple HTTP methods
+server contains some subcommands to initialize a server with different databases
 
 Usage:
   botio server [flags]
+  botio server [command]
 
-Examples:
-botio server --database ./data/botio.db --collection commands --http :9090 --key mysupersecretkey
+Available Commands:
+  bolt        Starts a server with a BoltDB database to manage your commands with HTTP methods
+  postgres    Starts a server with that connects to a PostgreSQL database to manage your commands with HTTP methods
 
 Flags:
-  -c, --collection string   collection used to store commands (default "commands")
-  -d, --database string     database path (default "./commands.db")
-  -h, --help                help for server
+  -h, --help   help for server
+
+Use "botio server [command] --help" for more information about a command.
+```
+
+#### bolt
+
+```text
+$ botio server bolt --help
+Starts a server with a BoltDB database to manage your commands with HTTP methods
+
+Usage:
+  botio server bolt [flags]
+
+Examples:
+botio server bolt --database ./data/botio.db --collection commands --http :9090 --key mysupersecretkey
+
+Flags:
+      --collection string   collection used to store commands (default "commands")
+      --database string     database path (default "./commands.db")
+  -h, --help                help for bolt
       --http string         port for HTTP connections (default ":80")
       --https string        port for HTTPS connections (default ":443")
-  -k, --key string          authentication key
+      --key string          authentication key
       --sslcert string      ssl certification file
       --sslkey string       ssl certification key file
 ```
@@ -118,10 +138,41 @@ Flags:
 Example:
 
 ```bash
-botio server --database ./data/botio.db --collection commands --http :9090 --key mysupersecretkey
+botio server bolt --database ./data/botio.db --collection commands --http :9090 --key mysupersecretkey
 ```
 
-> The database used is based on BoltDB. You can read more about it [here](https://github.com/etcd-io/bbolt).
+#### postgres
+
+```text
+$ botio server postgres --help
+Starts a server with that connects to a PostgreSQL database to manage your commands with HTTP methods
+
+Usage:
+  botio server postgres [flags]
+
+Examples:
+botio server postgres --user postgres --password toor --database botio --table commands --key mysupersecretkey
+
+Flags:
+      --database string   PostgreSQL database name (default "botio")
+  -h, --help              help for postgres
+      --host string       host of the PostgreSQL database (default "postgres")
+      --http string       port for HTTP connections (default ":80")
+      --https string      port for HTTPS connections (default ":443")
+      --key string        authentication key
+      --password string   password for the user of the PostgreSQL database
+      --port string       port of the PostgreSQL database host (default "5432")
+      --sslcert string    ssl certification file
+      --sslkey string     ssl certification key file
+      --table string      table of the PostgreSQL database
+      --user string       user of the PostgreSQL database
+```
+
+Example:
+
+```bash
+botio server postgres --user postgres --password toor --database botio --table commands --key mysupersecretkey
+```
 
 ### bot
 
@@ -352,23 +403,10 @@ http://<url>:<port>/api/commands/<command>
 http://localhost:9090/api/commands/start
 ```
 
-### Backup
-
-> Backup is an special endpoint that will send to the client a backup of the database.
-
-```text
-http://<url>:<port>/api/backup
-```
-
-```text
-http://localhost:9090/api/backup
-```
-
 ## ToDo
 
 - [ ] Docker Compose
 - [ ] Web Interface
-- [ ] Alternative databases like PostgreSQL
 - [ ] Support for Facebook Messenger bots
 - [ ] Support for Slack bots
 - [ ] Support for Skype bots

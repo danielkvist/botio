@@ -13,6 +13,24 @@ import (
 
 // Server returns a *cobra.Command.
 func Server() *cobra.Command {
+	return serverCmd(serverWithBoltDB(), serverWithPostgresDB())
+}
+
+func serverCmd(commands ...*cobra.Command) *cobra.Command {
+	serverCmd := &cobra.Command{
+		Use:   "server",
+		Short: "server contains some subcommands to initialize a server with different databases",
+		Run:   func(cmd *cobra.Command, args []string) {},
+	}
+
+	for _, cmd := range commands {
+		serverCmd.AddCommand(cmd)
+	}
+
+	return serverCmd
+}
+
+func serverWithBoltDB() *cobra.Command {
 	var collection string
 	var database string
 	var porthttp string
@@ -22,9 +40,9 @@ func Server() *cobra.Command {
 	var sslkey string
 
 	s := &cobra.Command{
-		Use:     "server",
-		Short:   "Starts a server to manage the commands with simple HTTP methods",
-		Example: "botio server --database ./data/botio.db --collection commands --http :9090 --key mysupersecretkey",
+		Use:     "bolt",
+		Short:   "Starts a server with a BoltDB database to manage your commands with HTTP methods",
+		Example: "botio server bolt --database ./data/botio.db --collection commands --http :9090 --key mysupersecretkey",
 		Run: func(cmd *cobra.Command, args []string) {
 			var tls bool
 			if sslcert != "" && sslkey != "" {
@@ -37,24 +55,67 @@ func Server() *cobra.Command {
 			}
 
 			s := server.New(serverOptions...)
-			done := make(chan struct{}, 1)
-
-			go func() {
-				err := listenAndServe(porthttp, porthttps, s, tls, sslcert, sslkey)
-				if err != nil {
-					log.Printf("%v", err)
-					done <- struct{}{}
-				}
-			}()
-			<-done
+			if err := listenAndServe(porthttp, porthttps, s, tls, sslcert, sslkey); err != nil {
+				log.Printf("%v", err)
+			}
 		},
 	}
 
-	s.Flags().StringVarP(&collection, "collection", "c", "commands", "collection used to store commands")
-	s.Flags().StringVarP(&database, "database", "d", "./commands.db", "database path")
+	s.Flags().StringVar(&collection, "collection", "commands", "collection used to store commands")
+	s.Flags().StringVar(&database, "database", "./commands.db", "database path")
 	s.Flags().StringVar(&porthttp, "http", ":80", "port for HTTP connections")
 	s.Flags().StringVar(&porthttps, "https", ":443", "port for HTTPS connections")
-	s.Flags().StringVarP(&key, "key", "k", "", "authentication key")
+	s.Flags().StringVar(&key, "key", "", "authentication key")
+	s.Flags().StringVar(&sslcert, "sslcert", "", "ssl certification file")
+	s.Flags().StringVar(&sslkey, "sslkey", "", "ssl certification key file")
+
+	return s
+}
+
+func serverWithPostgresDB() *cobra.Command {
+	var host string
+	var port string
+	var user string
+	var password string
+	var table string
+	var database string
+	var porthttp string
+	var porthttps string
+	var key string
+	var sslcert string
+	var sslkey string
+
+	s := &cobra.Command{
+		Use:     "postgres",
+		Short:   "Starts a server with that connects to a PostgreSQL database to manage your commands with HTTP methods",
+		Example: "botio server postgres --user postgres --password toor --database botio --table commands --key mysupersecretkey",
+		Run: func(cmd *cobra.Command, args []string) {
+			var tls bool
+			if sslcert != "" && sslkey != "" {
+				tls = true
+			}
+
+			serverOptions := []server.Option{
+				server.WithPostgresDB(host, port, database, table, user, password),
+				server.WithJWTMiddleware(key),
+			}
+
+			s := server.New(serverOptions...)
+			if err := listenAndServe(porthttp, porthttps, s, tls, sslcert, sslkey); err != nil {
+				log.Printf("%v", err)
+			}
+		},
+	}
+
+	s.Flags().StringVar(&host, "host", "postgres", "host of the PostgreSQL database")
+	s.Flags().StringVar(&port, "port", "5432", "port of the PostgreSQL database host")
+	s.Flags().StringVar(&database, "database", "botio", "PostgreSQL database name")
+	s.Flags().StringVar(&table, "table", "", "table of the PostgreSQL database")
+	s.Flags().StringVar(&user, "user", "", "user of the PostgreSQL database")
+	s.Flags().StringVar(&password, "password", "", "password for the user of the PostgreSQL database")
+	s.Flags().StringVar(&porthttp, "http", ":80", "port for HTTP connections")
+	s.Flags().StringVar(&porthttps, "https", ":443", "port for HTTPS connections")
+	s.Flags().StringVar(&key, "key", "", "authentication key")
 	s.Flags().StringVar(&sslcert, "sslcert", "", "ssl certification file")
 	s.Flags().StringVar(&sslkey, "sslkey", "", "ssl certification key file")
 
