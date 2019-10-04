@@ -14,8 +14,6 @@ import (
 
 func (s *Server) handleGet() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-
 		command := chi.URLParam(r, "command")
 		result, err := s.db.Get(command)
 		if err != nil {
@@ -29,8 +27,6 @@ func (s *Server) handleGet() func(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleGetAll() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-
 		commands, err := s.db.GetAll()
 		if err != nil {
 			s.errResp(w, r, "error while getting items", err, http.StatusInternalServerError)
@@ -43,13 +39,6 @@ func (s *Server) handleGetAll() func(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handlePost() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-
-		if r.ContentLength == 0 {
-			s.errResp(w, r, "bad request body", fmt.Errorf("bad request body"), http.StatusBadRequest)
-			return
-		}
-
 		body, err := ioutil.ReadAll(io.LimitReader(r.Body, 10240))
 		if err != nil {
 			s.errResp(w, r, "error while reading request body", err, http.StatusRequestEntityTooLarge)
@@ -87,8 +76,6 @@ func (s *Server) handlePut() func(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleDelete() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-
 		command := chi.URLParam(r, "command")
 		if err := s.db.Remove(command); err != nil {
 			s.errResp(w, r, "error while removing command", err, http.StatusInternalServerError)
@@ -100,11 +87,13 @@ func (s *Server) handleDelete() func(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) errResp(w http.ResponseWriter, r *http.Request, msg string, err error, status int) {
+	w.Header().Set("Content-Type", "text/plain; charset=UTF-8")
 	http.Error(w, msg, status)
 	s.log(w, r, status, err)
 }
 
 func (s *Server) encodedResp(w http.ResponseWriter, r *http.Request, data interface{}) {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 	if data == nil {
 		s.log(w, r, http.StatusOK, nil)
