@@ -1,12 +1,13 @@
 package bot
 
 import (
+	"os"
 	"strings"
 	"sync"
 
 	"github.com/danielkvist/botio/client"
-	"github.com/danielkvist/botio/logger"
 
+	"github.com/sirupsen/logrus"
 	"github.com/yanzay/tbot/v2"
 )
 
@@ -16,7 +17,7 @@ type Telegram struct {
 	s  *tbot.Server
 	c  *tbot.Client
 	r  chan *Response
-	l  *logger.Logger
+	l  *logrus.Logger
 	wg sync.WaitGroup
 }
 
@@ -32,7 +33,13 @@ func (t *Telegram) Connect(token string, cap int) error {
 	t.s = s
 	t.c = c
 	t.r = responses
-	t.l = logger.New()
+	t.l = logrus.New()
+	t.l.SetFormatter(&logrus.TextFormatter{
+		FullTimestamp:    true,
+		QuoteEmptyFields: true,
+		TimestampFormat:  "02-01-2006 15:04:05",
+	})
+	t.l.Out = os.Stdout
 
 	t.wg.Add(1)
 	go func() {
@@ -58,7 +65,6 @@ func (t *Telegram) Listen(url, key string) error {
 
 		cmd, err := client.Get(url+"/"+msg, key)
 		if err != nil {
-			// FIXME:
 			resp.text = "I'm sorry. I didn't understand you. Bzz"
 			t.r <- resp
 			return
@@ -67,7 +73,7 @@ func (t *Telegram) Listen(url, key string) error {
 		resp.text = cmd.Response
 		t.r <- resp
 
-		t.l.LogMsg("telegram", m.Chat.ID, msg, resp.text)
+		log(t.l, "telegram", m.Chat.ID, msg, resp.text)
 		return
 	})
 

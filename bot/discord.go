@@ -2,13 +2,14 @@ package bot
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"sync"
 
 	"github.com/danielkvist/botio/client"
-	"github.com/danielkvist/botio/logger"
 
 	dg "github.com/bwmarrin/discordgo"
+	"github.com/sirupsen/logrus"
 )
 
 // Discord is a wrapper for a bwmawwin/discordgo session
@@ -18,7 +19,7 @@ type Discord struct {
 	s  *dg.Session
 	r  chan *Response
 	c  chan struct{}
-	l  *logger.Logger
+	l  *logrus.Logger
 	wg sync.WaitGroup
 }
 
@@ -43,7 +44,13 @@ func (d *Discord) Connect(token string, cap int) error {
 	d.s = s
 	d.r = responses
 	d.c = c
-	d.l = logger.New()
+	d.l = logrus.New()
+	d.l.SetFormatter(&logrus.TextFormatter{
+		FullTimestamp:    true,
+		QuoteEmptyFields: true,
+		TimestampFormat:  "02-01-2006 15:04:05",
+	})
+	d.l.Out = os.Stdout
 
 	d.wg.Add(1)
 	go func() {
@@ -80,14 +87,13 @@ func (d *Discord) Listen(url, key string) error {
 
 		cmd, err := client.Get(url+"/"+strings.ToLower(msg[1]), key)
 		if err != nil {
-			// FIXME:
 			return
 		}
 
 		resp.text = cmd.Response
 		d.r <- resp
 
-		d.l.LogMsg("discord", m.ChannelID, msg[1], resp.text)
+		log(d.l, "discord", m.ChannelID, msg[1], resp.text)
 		return
 	})
 	return nil
@@ -110,8 +116,7 @@ func (d *Discord) Stop() error {
 	close(d.c)
 	d.wg.Wait()
 	if err := d.s.Close(); err != nil {
-		// FIXME:
-		return fmt.Errorf("while closing a connection: %v", err)
+		return fmt.Errorf("while closing connection: %v", err)
 	}
 
 	return nil
