@@ -33,13 +33,21 @@ func (ps *Postgres) Connect() error {
 		return fmt.Errorf("while opening a connection to DB: %v", err)
 	}
 
+	statement := `
+		CREATE IF NOT EXISTS $1 (
+			command VARCHAR(20) NOT NULL PRIMARY KEY,
+			response TEXT NOT NULL
+		);`
+
+	if _, err := ps.client.Exec(statement, ps.Table); err != nil {
+		return fmt.Errorf("while creating a table for commands: %v", err)
+	}
+
 	return nil
 }
 
 func (ps *Postgres) Add(el, val string) (*models.Command, error) {
-	statement := `
-	INSERT INTO $1 (command, response )
-	VALUES ($2, $3);`
+	statement := `INSERT INTO $1 (command, response) VALUES ($2, $3);`
 
 	if _, err := ps.client.Exec(statement, ps.Table, el, val); err != nil {
 		return nil, fmt.Errorf("while adding command %q: %v", el, err)
@@ -100,11 +108,10 @@ func (ps *Postgres) Remove(el string) error {
 func (ps *Postgres) Update(el, val string) (*models.Command, error) {
 	statement := `
 	UPDATE $1
-	SET command=$2
-		response=$3
-	WHERE command=$4;`
+	SET response=$2
+	WHERE command=$3;`
 
-	if _, err := ps.client.Exec(statement, el, val); err != nil {
+	if _, err := ps.client.Exec(statement, val, el); err != nil {
 		return nil, fmt.Errorf("while updating command %q: %v", el, err)
 	}
 
