@@ -92,6 +92,10 @@ func New(options ...Option) *Server {
 		opt(s)
 	}
 
+	if err := s.db.Connect(); err != nil {
+		log.Fatalf("while connecting Server to database: %v", err)
+	}
+
 	return s
 }
 
