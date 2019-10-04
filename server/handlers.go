@@ -57,7 +57,7 @@ func (s *Server) handlePost() func(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if err := r.Body.Close(); err != nil {
-			s.logger.LogRequest(w, r, 0, err)
+			s.log(w, r, 0, err)
 		}
 
 		var cmd models.Command
@@ -101,13 +101,13 @@ func (s *Server) handleDelete() func(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) errResp(w http.ResponseWriter, r *http.Request, msg string, err error, status int) {
 	http.Error(w, msg, status)
-	s.logger.LogRequest(w, r, status, err)
+	s.log(w, r, status, err)
 }
 
 func (s *Server) encodedResp(w http.ResponseWriter, r *http.Request, data interface{}) {
 	w.WriteHeader(http.StatusOK)
 	if data == nil {
-		s.logger.LogRequest(w, r, http.StatusOK, nil)
+		s.log(w, r, http.StatusOK, nil)
 		return
 	}
 
@@ -116,5 +116,5 @@ func (s *Server) encodedResp(w http.ResponseWriter, r *http.Request, data interf
 		return
 	}
 
-	s.logger.LogRequest(w, r, http.StatusOK, nil)
+	s.log(w, r, http.StatusOK, nil)
 }

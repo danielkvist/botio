@@ -5,9 +5,10 @@ package server
 import (
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/danielkvist/botio/db"
-	"github.com/danielkvist/botio/logger"
+	"github.com/sirupsen/logrus"
 
 	"github.com/go-chi/chi"
 )
@@ -17,7 +18,7 @@ type Server struct {
 	key    string
 	db     db.DB
 	router *chi.Mux
-	logger *logger.Logger
+	logger *logrus.Logger
 }
 
 // Option represents an option to a *Server.
@@ -79,7 +80,13 @@ func New(options ...Option) *Server {
 	}
 	s := &Server{}
 	s.routes()
-	s.logger = logger.New()
+	s.logger = logrus.New()
+	s.logger.SetFormatter(&logrus.TextFormatter{
+		FullTimestamp:    true,
+		QuoteEmptyFields: true,
+		TimestampFormat:  "02-01-2006 15:04:05",
+	})
+	s.logger.Out = os.Stdout
 
 	for _, opt := range options {
 		opt(s)
