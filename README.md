@@ -126,7 +126,7 @@ botio server bolt --database ./data/botio.db --collection commands --http :9090 
 
 Flags:
       --collection string   collection used to store commands (default "commands")
-      --database string     database path (default "./commands.db")
+      --database string     database path (default "./botio.db")
   -h, --help                help for bolt
       --http string         port for HTTP connections (default ":80")
       --https string        port for HTTPS connections (default ":443")
@@ -164,7 +164,7 @@ Flags:
       --port string       port of the PostgreSQL database host (default "5432")
       --sslcert string    ssl certification file
       --sslkey string     ssl certification key file
-      --table string      table of the PostgreSQL database
+      --table string      table of the PostgreSQL database (default "commands")
       --user string       user of the PostgreSQL database
 ```
 
