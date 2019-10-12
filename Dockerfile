@@ -1,5 +1,5 @@
 # Build stage
-FROM golang:1.13-alpine3.10 AS build
+FROM golang:1.13.1-alpine3.10 AS build
 RUN apk add --no-cache git
 WORKDIR /app/
 COPY go.mod .
