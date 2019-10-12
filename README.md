@@ -3,7 +3,10 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/danielkvist/botio)](https://goreportcard.com/report/github.com/danielkvist/botio)
 [![CircleCI](https://circleci.com/gh/danielkvist/botio.svg?style=svg)](https://circleci.com/gh/danielkvist/botio)
 [![Docker Pulls](https://img.shields.io/docker/pulls/danielkvist/botio.svg?maxAge=604800)](https://hub.docker.com/r/danielkvist/botio/)
+[![LICENSE](https://img.shields.io/github/license/danielkvist/botio)](https://github.com/danielkvist/botio/blob/master/LICENSE)
+[![Issues](https://img.shields.io/github/issues/danielkvist/botio)](https://github.com/danielkvist/botio/issues)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
+[![GoDoc](https://godoc.org/github.com/danielkvist/botio?status.svg)](https://godoc.org/github.com/danielkvist/botio)
 
 Botio is a simple and opinionated CLI to create and manage easily bots for differents platforms.
 
@@ -23,25 +26,26 @@ botio server bolt --db ./data/botio.db --col commands --http :9090 --key mysuper
 We add a command:
 
 ```bash
-botio client add --command start --response Hello --url :9090 --key mysupersecretkey
+botio client add --command start --response Hello --url :9090 --token <jwt-token>
 ```
 
 We can check that the command has been created successfully with `print`:
 
 ```bash
-botio client print --command start --url :9090 --key mysupersecretkey
+botio client print --command start --url :9090 --token <jwt-token>
+
 ```
 
 Or see a list of all our commands with `list`:
 
 ```bash
-botio client list --url :9090 --key mysupersecretkey
+botio client list --url :9090 --token <jwt-token>
 ```
 
 Now, we can start a Telegram's bot:
 
 ```bash
-botio bot --platform telegram --token <telegram-token> --url :9090 --key mysupersecretkey
+botio bot --platform telegram --token <telegram-token> --url :9090 --jwt <jwt-token>
 ```
 
 To check all the available commands use the `help` flag:
@@ -76,15 +80,15 @@ Usage:
   botio [command]
 
 Examples:
-botio server --database ./data/commands.db --collection commands --http :9090 --key mysupersecretkey
-botio bot --platform telegram --token <telegram-token> --url :9090 --key mysupersecretkey
-botio client print --command start --url :9090 --key mysupersecretkey
+botio server bolt --database ./data/commands.db --collection commands --http :9090 --key mysupersecretkey
+botio bot --platform telegram --token <telegram-token> --url :9090 --token <jwt-token>
+botio client print --command start --url :9090 --jwt <jwt-token>
 
 Available Commands:
   bot         Initializes a bot for a supported platform (telegram and discord for the moment)
   client      Client contains some subcommands to manage your bot's commands
   help        Help about any command
-  server      Starts a server to manage the commands with simple HTTP methods
+  server      server contains some subcommands to initialize a server with different databases
 
 Flags:
   -h, --help   help for botio
@@ -130,7 +134,7 @@ Flags:
   -h, --help                help for bolt
       --http string         port for HTTP connections (default ":80")
       --https string        port for HTTPS connections (default ":443")
-      --key string          authentication key
+      --key string          authentication key to generate a jwt token
       --sslcert string      ssl certification file
       --sslkey string       ssl certification key file
 ```
@@ -159,7 +163,7 @@ Flags:
       --host string       host of the PostgreSQL database (default "postgres")
       --http string       port for HTTP connections (default ":80")
       --https string      port for HTTPS connections (default ":443")
-      --key string        authentication key
+      --key string        authentication key to generate a jwt token
       --password string   password for the user of the PostgreSQL database
       --port string       port of the PostgreSQL database host (default "5432")
       --sslcert string    ssl certification file
@@ -184,11 +188,11 @@ Usage:
   botio bot [flags]
 
 Examples:
-botio bot --platform telegram --token <telegram-token> --url :9090 --key mysupersecretkey
+botio bot --platform telegram --token <telegram-token> --url :9090 --jwt <jwt-token>
 
 Flags:
   -h, --help              help for bot
-  -k, --key string        authentication key
+  -j, --jwt string        jwt authenticaton token
   -p, --platform string   platform (discord or telegram)
   -t, --token string      bot's token
   -u, --url string        botio's server URL
@@ -197,7 +201,7 @@ Flags:
 Example:
 
 ```bash
-botio bot --platform telegram --token <telegram-token> --url :9090 --key mysupersecretkey
+botio bot --platform telegram --token <telegram-token> --url :9090 --jwt <jwt-token>
 ```
 
 ### client
@@ -233,20 +237,20 @@ Usage:
   botio client add [flags]
 
 Examples:
-botio client add --command start --response Hello --url :9090 --key mysupersecretkey
+botio client add --command start --response Hello --url :9090 --token <jwt-token>
 
 Flags:
   -c, --command string    command to add
   -h, --help              help for add
-  -k, --key string        authentication key
   -r, --response string   command's response
+  -t, --token string      jwt authentication token
   -u, --url string        botio's server url
 ```
 
 Example:
 
 ```bash
-bodio client add --command start --response Hello --url :9090 --key mysupersecretpassword
+botio client add --command start --response Hello --url :9090 --token <jwt-token>
 ```
 
 #### print
@@ -259,19 +263,19 @@ Usage:
   botio client print [flags]
 
 Examples:
-botio client print --command start --url :9090 --key mysupersecretkey
+botio client print --command start --url :9090 --token <jwt-token>
 
 Flags:
   -c, --command string   command to print
   -h, --help             help for print
-  -k, --key string       authentication key
+  -t, --token string     jwt authentication token
   -u, --url string       botio's server URL
 ```
 
 Example:
 
 ```bash
-botio client print --command start --url :9090 --key mysupersecretkey
+botio client print --command start --url :9090 --token <jwt-token>
 ```
 
 ### list
@@ -284,18 +288,18 @@ Usage:
   botio client list [flags]
 
 Examples:
-botio client list --url :9090 --key mysupersecretkey
+botio client list --url :9090 --token <jwt-token>
 
 Flags:
-  -h, --help         help for list
-  -k, --key string   authentication key
-  -u, --url string   botio's server URL
+  -h, --help           help for list
+  -t, --token string   jwt authentication token
+  -u, --url string     botio's server URL
 ```
 
 Example:
 
 ```bash
-botio client list --url :9090 --key mysupersecretkey
+botio client list --url :9090 --token <jwt-token>
 ```
 
 ### update
@@ -308,20 +312,20 @@ Usage:
   botio client update [flags]
 
 Examples:
-botio client update --command start --response Hi --url :9090 --key mysupersecretkey
+botio client update --command start --response Hi --url :9090 --token <jwt-token>
 
 Flags:
   -c, --command string    command to update
   -h, --help              help for update
-  -k, --key string        authentication key
   -r, --response string   command's new response
+  -t, --token string      jwt authentication token
   -u, --url string        botio's server url
 ```
 
 Example:
 
 ```text
-botio client update --command start --response Hi --url :9090 --key mysupersecretkey
+botio client update --command start --response Hi --url :9090 --token <jwt-token>
 ```
 
 ### delete
@@ -334,19 +338,19 @@ Usage:
   botio client delete [flags]
 
 Examples:
-botio delete --command start --url :9090 --key mysupersecretkey
+botio client delete --command start --url :9090 --token <jwt-authentication>
 
 Flags:
   -c, --command string   command to delete
   -h, --help             help for delete
-  -k, --key string       authentication key
+  -t, --token string     jwt authentication token
   -u, --url string       botio's server url
 ```
 
 Example:
 
 ```bash
-botio client delete --command start --url :9090 --key mysupersecretkey
+botio client delete --command start --url :9090 --token <jwt-authentication>
 ```
 
 ## API Endpoints
@@ -405,6 +409,7 @@ http://localhost:9090/api/commands/start
 
 ## ToDo
 
+- [ ] Tests
 - [ ] Docker Compose
 - [ ] Web Interface
 - [ ] Support for Facebook Messenger bots
