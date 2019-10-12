@@ -8,7 +8,7 @@ import "fmt"
 type Bot interface {
 	Connect(token string, cap int) error
 	Start() error
-	Listen(url, key string) error
+	Listen(url, jwtToken string) error
 	Stop() error
 }
 

@@ -11,14 +11,14 @@ import (
 // Bot returns a *cobra.Command
 func Bot() *cobra.Command {
 	var platform string
-	var key string
+	var jwtToken string
 	var token string
 	var url string
 
 	b := &cobra.Command{
 		Use:     "bot",
 		Short:   "Initializes a bot for a supported platform (telegram and discord for the moment)",
-		Example: "botio bot --platform telegram --token <telegram-token> --url :9090 --key mysupersecretkey",
+		Example: "botio bot --platform telegram --token <telegram-token> --url :9090 --jwt <jwt-token>",
 		Run: func(cmd *cobra.Command, args []string) {
 			u, err := checkURL(url)
 			if err != nil {
@@ -31,7 +31,7 @@ func Bot() *cobra.Command {
 			}
 
 			b.Connect(token, 10)
-			b.Listen(u, key)
+			b.Listen(u, jwtToken)
 			defer b.Stop()
 
 			if err := b.Start(); err != nil {
@@ -41,7 +41,7 @@ func Bot() *cobra.Command {
 	}
 
 	b.Flags().StringVarP(&platform, "platform", "p", "", "platform (discord or telegram)")
-	b.Flags().StringVarP(&key, "key", "k", "", "authentication key")
+	b.Flags().StringVarP(&jwtToken, "jwt", "j", "", "jwt authenticaton token")
 	b.Flags().StringVarP(&token, "token", "t", "", "bot's token")
 	b.Flags().StringVarP(&url, "url", "u", "", "botio's server URL")
 

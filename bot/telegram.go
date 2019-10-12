@@ -56,14 +56,14 @@ func (t *Telegram) Connect(token string, cap int) error {
 // and tries to get the response for the asked command from the botio's server
 // and submit it to the responses channel, which eventually should send
 // the response back to the client.
-func (t *Telegram) Listen(url, key string) error {
+func (t *Telegram) Listen(url, jwtToken string) error {
 	t.s.HandleMessage(".", func(m *tbot.Message) {
 		msg := strings.TrimPrefix(m.Text, "/")
 		resp := &Response{
 			id: m.Chat.ID,
 		}
 
-		cmd, err := client.Get(url+"/"+msg, key)
+		cmd, err := client.Get(url+"/"+msg, jwtToken)
 		if err != nil {
 			resp.text = "I'm sorry. I didn't understand you. Bzz"
 			t.r <- resp

@@ -55,6 +55,13 @@ func serverWithBoltDB() *cobra.Command {
 			}
 
 			s := server.New(serverOptions...)
+			t, err := s.GenerateJWT()
+			if err != nil {
+				log.Printf("%v", err)
+				return
+			}
+
+			log.Printf("authentication token for the server: %s", t)
 			if err := listenAndServe(porthttp, porthttps, s, tls, sslcert, sslkey); err != nil {
 				log.Printf("%v", err)
 			}
@@ -65,7 +72,7 @@ func serverWithBoltDB() *cobra.Command {
 	s.Flags().StringVar(&database, "database", "./botio.db", "database path")
 	s.Flags().StringVar(&porthttp, "http", ":80", "port for HTTP connections")
 	s.Flags().StringVar(&porthttps, "https", ":443", "port for HTTPS connections")
-	s.Flags().StringVar(&key, "key", "", "authentication key")
+	s.Flags().StringVar(&key, "key", "", "authentication key to generate a jwt token")
 	s.Flags().StringVar(&sslcert, "sslcert", "", "ssl certification file")
 	s.Flags().StringVar(&sslkey, "sslkey", "", "ssl certification key file")
 
@@ -101,6 +108,13 @@ func serverWithPostgresDB() *cobra.Command {
 			}
 
 			s := server.New(serverOptions...)
+			t, err := s.GenerateJWT()
+			if err != nil {
+				log.Printf("%v", err)
+				return
+			}
+
+			log.Printf("authentication token for the server: %s", t)
 			if err := listenAndServe(porthttp, porthttps, s, tls, sslcert, sslkey); err != nil {
 				log.Printf("%v", err)
 			}
@@ -115,7 +129,7 @@ func serverWithPostgresDB() *cobra.Command {
 	s.Flags().StringVar(&password, "password", "", "password for the user of the PostgreSQL database")
 	s.Flags().StringVar(&porthttp, "http", ":80", "port for HTTP connections")
 	s.Flags().StringVar(&porthttps, "https", ":443", "port for HTTPS connections")
-	s.Flags().StringVar(&key, "key", "", "authentication key")
+	s.Flags().StringVar(&key, "key", "", "authentication key to generate a jwt token")
 	s.Flags().StringVar(&sslcert, "sslcert", "", "ssl certification file")
 	s.Flags().StringVar(&sslkey, "sslkey", "", "ssl certification key file")
 

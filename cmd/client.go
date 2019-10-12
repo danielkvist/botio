@@ -31,21 +31,21 @@ func clientCmd(commands ...*cobra.Command) *cobra.Command {
 
 func add() *cobra.Command {
 	var command string
-	var key string
+	var token string
 	var response string
 	var url string
 
 	add := &cobra.Command{
 		Use:     "add",
 		Short:   "Adds a new command",
-		Example: "botio client add --command start --response Hello --url :9090 --key mysupersecretkey",
+		Example: "botio client add --command start --response Hello --url :9090 --token <jwt-token>",
 		Run: func(cmd *cobra.Command, args []string) {
 			u, err := checkURL(url)
 			if err != nil {
 				log.Fatalf("%v", err)
 			}
 
-			c, err := client.Post(u, key, command, response)
+			c, err := client.Post(u, token, command, response)
 			if err != nil {
 				log.Fatalf("%v", err)
 			}
@@ -55,7 +55,7 @@ func add() *cobra.Command {
 	}
 
 	add.Flags().StringVarP(&command, "command", "c", "", "command to add")
-	add.Flags().StringVarP(&key, "key", "k", "", "authentication key")
+	add.Flags().StringVarP(&token, "token", "t", "", "jwt authentication token")
 	add.Flags().StringVarP(&response, "response", "r", "", "command's response")
 	add.Flags().StringVarP(&url, "url", "u", "", "botio's server url")
 
@@ -64,20 +64,20 @@ func add() *cobra.Command {
 
 func print() *cobra.Command {
 	var command string
-	var key string
+	var token string
 	var url string
 
 	print := &cobra.Command{
 		Use:     "print",
 		Short:   "Prints the specified command and his response",
-		Example: "botio client print --command start --url :9090 --key mysupersecretkey",
+		Example: "botio client print --command start --url :9090 --token <jwt-token>",
 		Run: func(cmd *cobra.Command, args []string) {
 			u, err := checkURL(url)
 			if err != nil {
 				log.Fatalf("%v", err)
 			}
 
-			c, err := client.Get(u+"/"+command, key)
+			c, err := client.Get(u+"/"+command, token)
 			if err != nil {
 				log.Fatalf("%v", err)
 			}
@@ -87,27 +87,27 @@ func print() *cobra.Command {
 	}
 
 	print.Flags().StringVarP(&command, "command", "c", "", "command to print")
-	print.Flags().StringVarP(&key, "key", "k", "", "authentication key")
+	print.Flags().StringVarP(&token, "token", "t", "", "jwt authentication token")
 	print.Flags().StringVarP(&url, "url", "u", "", "botio's server URL")
 
 	return print
 }
 
 func list() *cobra.Command {
-	var key string
+	var token string
 	var url string
 
 	list := &cobra.Command{
 		Use:     "list",
 		Short:   "Prints a list with all the commands",
-		Example: "botio client list --url :9090 --key mysupersecretkey",
+		Example: "botio client list --url :9090 --token <jwt-token>",
 		Run: func(cmd *cobra.Command, args []string) {
 			u, err := checkURL(url)
 			if err != nil {
 				log.Fatalf("%v", err)
 			}
 
-			commands, err := client.GetAll(u, key)
+			commands, err := client.GetAll(u, token)
 			if err != nil {
 				log.Fatalf("%v", err)
 			}
@@ -116,7 +116,7 @@ func list() *cobra.Command {
 		},
 	}
 
-	list.Flags().StringVarP(&key, "key", "k", "", "authentication key")
+	list.Flags().StringVarP(&token, "token", "t", "", "jwt authentication token")
 	list.Flags().StringVarP(&url, "url", "u", "", "botio's server URL")
 
 	return list
@@ -124,21 +124,21 @@ func list() *cobra.Command {
 
 func update() *cobra.Command {
 	var command string
-	var key string
+	var token string
 	var response string
 	var url string
 
 	update := &cobra.Command{
 		Use:     "update",
 		Short:   "Updates an existing command (or adds it if not exists)",
-		Example: "botio client update --command start --response Hi --url :9090 --key mysupersecretkey",
+		Example: "botio client update --command start --response Hi --url :9090 --token <jwt-token>",
 		Run: func(cmd *cobra.Command, args []string) {
 			u, err := checkURL(url)
 			if err != nil {
 				log.Fatalf("%v", err)
 			}
 
-			c, err := client.Put(u, key, command, response)
+			c, err := client.Put(u, token, command, response)
 			if err != nil {
 				log.Fatalf("%v", err)
 			}
@@ -148,7 +148,7 @@ func update() *cobra.Command {
 	}
 
 	update.Flags().StringVarP(&command, "command", "c", "", "command to update")
-	update.Flags().StringVarP(&key, "key", "k", "", "authentication key")
+	update.Flags().StringVarP(&token, "token", "t", "", "jwt authentication token")
 	update.Flags().StringVarP(&response, "response", "r", "", "command's new response")
 	update.Flags().StringVarP(&url, "url", "u", "", "botio's server url")
 
@@ -157,20 +157,20 @@ func update() *cobra.Command {
 
 func delete() *cobra.Command {
 	var command string
-	var key string
+	var token string
 	var url string
 
 	delete := &cobra.Command{
 		Use:     "delete",
 		Short:   "Deletes the specified command",
-		Example: "botio client delete --command start --url :9090 --key mysupersecretkey",
+		Example: "botio client delete --command start --url :9090 --token <jwt-authentication>",
 		Run: func(cmd *cobra.Command, args []string) {
 			u, err := checkURL(url)
 			if err != nil {
 				log.Fatalf("%v", err)
 			}
 
-			if err := client.Delete(u+"/"+command, key); err != nil {
+			if err := client.Delete(u+"/"+command, token); err != nil {
 				log.Fatalf("%v", err)
 			}
 
@@ -179,7 +179,7 @@ func delete() *cobra.Command {
 	}
 
 	delete.Flags().StringVarP(&command, "command", "c", "", "command to delete")
-	delete.Flags().StringVarP(&key, "key", "k", "", "authentication key")
+	delete.Flags().StringVarP(&token, "token", "t", "", "jwt authentication token")
 	delete.Flags().StringVarP(&url, "url", "u", "", "botio's server url")
 
 	return delete

@@ -67,7 +67,7 @@ func (d *Discord) Connect(token string, cap int) error {
 // and tries to get the response for the asked command from the botio's server
 // and submit it to the responses channel, which eventually
 // should send the response back to the client.
-func (d *Discord) Listen(url, key string) error {
+func (d *Discord) Listen(url, jwtToken string) error {
 	d.s.AddHandler(func(s *dg.Session, m *dg.MessageCreate) {
 		if m.Author.Bot {
 			return
@@ -85,7 +85,7 @@ func (d *Discord) Listen(url, key string) error {
 			return
 		}
 
-		cmd, err := client.Get(url+"/"+strings.ToLower(msg[1]), key)
+		cmd, err := client.Get(url+"/"+strings.ToLower(msg[1]), jwtToken)
 		if err != nil {
 			return
 		}

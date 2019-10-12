@@ -3,11 +3,13 @@
 package server
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
 
 	"github.com/danielkvist/botio/db"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/sirupsen/logrus"
 
 	"github.com/go-chi/chi"
@@ -102,4 +104,17 @@ func New(options ...Option) *Server {
 // ServeHTTP makes the Server type to satisfy the http.Handler interface.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.router.ServeHTTP(w, r)
+}
+
+// GenerateJWT returns a JWT token to interact safely with the application
+// or an error if something goes wrong.
+func (s *Server) GenerateJWT() (string, error) {
+	token := jwt.New(jwt.SigningMethodHS256)
+
+	tkStr, err := token.SignedString([]byte(s.key))
+	if err != nil {
+		return "", fmt.Errorf("while generating JWT token for authentication: %v", err)
+	}
+
+	return tkStr, nil
 }
