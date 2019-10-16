@@ -1,0 +1,29 @@
+syntax="proto3";
+package proto;
+
+message Command{
+    string command = 1;
+}
+
+message Response {
+    string response = 1;
+}
+
+message BotCommand {
+    Command cmd = 1;
+    Response resp = 2;
+}
+
+message BotCommands {
+    repeated BotCommand commands = 1;
+}
+
+message Void {}
+
+service Botio {
+    rpc GetCommand(Command) returns (BotCommand);
+    rpc GetCommands(Void) returns (BotCommands);
+    rpc AddCommand(BotCommand) returns (Void);
+    rpc UpdateCommand(BotCommand) returns (Void);
+    rpc DeleteCommand(Command) returns (Void);
+}
