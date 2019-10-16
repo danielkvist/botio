@@ -3,66 +3,84 @@ package db
 import (
 	"fmt"
 
-	"github.com/danielkvist/botio/models"
+	"github.com/danielkvist/botio/proto"
 )
 
-// Mem is a simple in-memory map for testing that satisfies the DB interface.
+// Mem is a mocked-up database for testing.
 type Mem map[string]string
 
+// Connect simulates a connection with a database.
 func (m Mem) Connect() error {
 	return nil
 }
 
-func (m Mem) Add(el, val string) (*models.Command, error) {
+// Add receives a *proto.BotCommand and adds it
+// to the map using the Command as key and the
+// Response as a value.
+func (m Mem) Add(cmd *proto.BotCommand) error {
+	el := cmd.GetCmd().GetCommand()
+	val := cmd.GetResp().GetResponse()
 	m[el] = val
-
-	return &models.Command{
-		Cmd:      el,
-		Response: val,
-	}, nil
+	return nil
 }
 
-func (m Mem) Get(el string) (*models.Command, error) {
+// Get receives a *proto.Command and returns if exists
+// the respective *proto.BotCommand.
+func (m Mem) Get(cmd *proto.Command) (*proto.BotCommand, error) {
+	el := cmd.GetCommand()
 	val, ok := m[el]
 	if !ok {
-		return nil, fmt.Errorf("element %q not found", el)
+		return nil, fmt.Errorf("command %q not found", el)
 	}
 
-	return &models.Command{
-		Cmd:      el,
-		Response: val,
+	return &proto.BotCommand{
+		Cmd: &proto.Command{
+			Command: el,
+		},
+		Resp: &proto.Response{
+			Response: val,
+		},
 	}, nil
 }
 
-func (m Mem) GetAll() ([]*models.Command, error) {
-	var commands []*models.Command
+// GetAll ranges over the map and returns a *proto.BotCommands
+// with all the *proto.BotCommand found.
+func (m Mem) GetAll() (*proto.BotCommands, error) {
+	var commands []*proto.BotCommand
 
 	for k, v := range m {
-		c := &models.Command{
-			Cmd:      k,
-			Response: v,
+		c := &proto.BotCommand{
+			Cmd: &proto.Command{
+				Command: k,
+			},
+			Resp: &proto.Response{
+				Response: v,
+			},
 		}
 
 		commands = append(commands, c)
 	}
 
-	return commands, nil
-}
-
-func (m Mem) Remove(el string) error {
-	delete(m, el)
-	return nil
-}
-
-func (m Mem) Update(el, val string) (*models.Command, error) {
-	m[el] = val
-
-	return &models.Command{
-		Cmd:      el,
-		Response: val,
+	return &proto.BotCommands{
+		Commands: commands,
 	}, nil
 }
 
+// Remove removes a *proto.BotCommand from the map.
+func (m Mem) Remove(cmd *proto.Command) error {
+	delete(m, cmd.GetCommand())
+	return nil
+}
+
+// Update updates the Response of an existing *proto.BotCommand
+// with the Response of the received *proto.BotCommand.
+// If the *proto.BotCommand didn't exists it adds it.
+func (m Mem) Update(cmd *proto.BotCommand) error {
+	m[cmd.GetCmd().GetCommand()] = cmd.GetResp().GetResponse()
+	return nil
+}
+
+// Close deletes all the keys from the map.
 func (m Mem) Close() error {
 	for k := range m {
 		delete(m, k)
