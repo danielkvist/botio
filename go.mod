@@ -3,7 +3,7 @@ module github.com/danielkvist/botio
 go 1.12
 
 require (
-	github.com/bwmarrin/discordgo v0.19.0
+	github.com/bwmarrin/discordgo v0.20.1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/go-chi/chi v4.0.2+incompatible
 	github.com/gorilla/websocket v1.4.1 // indirect
