@@ -1,58 +1,62 @@
-// Package server exports a struct called Server that satisfies the
-// http.Handler interface.
+// Package server defines a gRPC server implementation
+// with options for its creation and logging.
 package server
 
 import (
+	"context"
 	"fmt"
-	"log"
-	"net/http"
-	"os"
 
 	"github.com/danielkvist/botio/db"
-	"github.com/dgrijalva/jwt-go"
-	"github.com/sirupsen/logrus"
-
-	"github.com/go-chi/chi"
+	"github.com/danielkvist/botio/proto"
 )
 
-// Server is an abstraction to manage differents aspects of a mux router.
-type Server struct {
-	key    string
-	db     db.DB
-	router *chi.Mux
-	logger *logrus.Logger
+// Server represents a gRPC BotioServer with a method to connect
+// to its database.
+type Server interface {
+	AddCommand(context.Context, *proto.BotCommand) (*proto.Void, error)
+	GetCommand(context.Context, *proto.Command) (*proto.BotCommand, error)
+	ListCommands(context.Context, *proto.Void) (*proto.BotCommands, error)
+	UpdateCommand(context.Context, *proto.BotCommand) (*proto.Void, error)
+	DeleteCommand(context.Context, *proto.Command) (*proto.Void, error)
+	Connect() error
 }
 
-// Option represents an option to a *Server.
-type Option func(s *Server)
+type server struct {
+	db db.DB
+}
 
-// WithBoltDB receives a path and a collection and returns
-// an Option that creates, connects and assigns
-// a BoltDB db.DB to the Server's db.
+// Option represents an option for a new *server.
+type Option func(s *server) error
+
+// WithBoltDB receives a path and a colletion to create a BoltDB client
+// and assign it to the new server. If something goes wrong while
+// configuring the client it panics.
 func WithBoltDB(path, col string) Option {
-	return func(s *Server) {
+	return func(s *server) error {
 		database := db.Create("local")
 		bdb, ok := database.(*db.Bolt)
 		if !ok {
-			log.Fatalf("while creating BoltDB database a fatal error happened")
+			return fmt.Errorf("while connecting BoltDB database a fatal error happened")
 		}
 
 		bdb.Path = path
 		bdb.Col = col
 
 		s.db = bdb
+
+		return nil
 	}
 }
 
-// WithPostgresDB receives a set of parameters neccessaries to initialize
-// a PostgreSQL database and return an Option to assign it to the
-// Server's db.
+// WithPostgresDB receives a set of parameters to create a PostgreSQL client
+// and assign it to the new server. If something goes wrong while
+// configuring the client it panics.
 func WithPostgresDB(host, port, dbName, table, user, password string) Option {
-	return func(s *Server) {
+	return func(s *server) error {
 		database := db.Create("postgres")
 		ps, ok := database.(*db.Postgres)
 		if !ok {
-			log.Fatalf("while creating a PostgreSQL database a fatal error happened")
+			return fmt.Errorf("while creating a PostgreSQL database a fatal error happened")
 		}
 
 		ps.Host = host
@@ -63,58 +67,44 @@ func WithPostgresDB(host, port, dbName, table, user, password string) Option {
 		ps.Table = table
 
 		s.db = ps
+
+		return nil
 	}
 }
 
-// WithJWTMiddleware receives a key and returns an Option
-// that assigns it to the Server's key.
-func WithJWTMiddleware(key string) Option {
-	return func(s *Server) {
-		s.key = key
+// WithTestDB returns an Option to a new server that assigns to its
+// db field an in-memory database for testing.
+func WithTestDB() Option {
+	return func(s *server) error {
+		database := db.Create("testing")
+		s.db = database
+
+		return nil
 	}
 }
 
-// New should receive one or more Options to apply then to a new *Server
+// New should receive one or more Options to apply then to a new Server
 // that will be return completely initialized.
-func New(options ...Option) *Server {
+func New(options ...Option) (Server, error) {
 	if len(options) == 0 {
-		log.Fatalf("no options received for creating a new Server")
+		return nil, fmt.Errorf("no options received for creating a new Server")
 	}
-	s := &Server{}
-	s.routes()
-	s.logger = logrus.New()
-	s.logger.SetFormatter(&logrus.TextFormatter{
-		FullTimestamp:    true,
-		QuoteEmptyFields: true,
-		TimestampFormat:  "02-01-2006 15:04:05",
-	})
-	s.logger.Out = os.Stdout
 
+	s := &server{}
 	for _, opt := range options {
-		opt(s)
+		if err := opt(s); err != nil {
+			return nil, fmt.Errorf("while creating a new Server: %v", err)
+		}
 	}
 
+	return s, nil
+}
+
+// Connect tries to connect the Server to its database.
+func (s *server) Connect() error {
 	if err := s.db.Connect(); err != nil {
-		log.Fatalf("while connecting Server to database: %v", err)
+		return fmt.Errorf("while connecting Server to database: %v", err)
 	}
 
-	return s
-}
-
-// ServeHTTP makes the Server type to satisfy the http.Handler interface.
-func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	s.router.ServeHTTP(w, r)
-}
-
-// GenerateJWT returns a JWT token to interact safely with the application
-// or an error if something goes wrong.
-func (s *Server) GenerateJWT() (string, error) {
-	token := jwt.New(jwt.SigningMethodHS256)
-
-	tkStr, err := token.SignedString([]byte(s.key))
-	if err != nil {
-		return "", fmt.Errorf("while generating JWT token for authentication: %v", err)
-	}
-
-	return tkStr, nil
+	return nil
 }
