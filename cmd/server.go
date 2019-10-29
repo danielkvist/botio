@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"crypto/tls"
 	"log"
 	"net/http"
 	"time"
@@ -51,17 +50,13 @@ func serverWithBoltDB() *cobra.Command {
 
 			serverOptions := []server.Option{
 				server.WithBoltDB(database, collection),
-				server.WithJWTMiddleware(key),
 			}
 
-			s := server.New(serverOptions...)
-			t, err := s.GenerateJWT()
+			s, err := server.New(serverOptions...)
 			if err != nil {
-				log.Printf("%v", err)
-				return
+				log.Fatalf("while creating a new Server: %v", err)
 			}
 
-			log.Printf("authentication token for the server: %s", t)
 			if err := listenAndServe(porthttp, porthttps, s, tls, sslcert, sslkey); err != nil {
 				log.Printf("%v", err)
 			}
@@ -104,17 +99,13 @@ func serverWithPostgresDB() *cobra.Command {
 
 			serverOptions := []server.Option{
 				server.WithPostgresDB(host, port, database, table, user, password),
-				server.WithJWTMiddleware(key),
 			}
 
-			s := server.New(serverOptions...)
-			t, err := s.GenerateJWT()
+			s, err := server.New(serverOptions...)
 			if err != nil {
-				log.Printf("%v", err)
-				return
+				log.Fatalf("while creating a new Server: %v", err)
 			}
 
-			log.Printf("authentication token for the server: %s", t)
 			if err := listenAndServe(porthttp, porthttps, s, tls, sslcert, sslkey); err != nil {
 				log.Printf("%v", err)
 			}
@@ -145,27 +136,5 @@ func listenAndServe(httpaddr string, httpsaddr string, h http.Handler, tls bool,
 		IdleTimeout:  120 * time.Second,
 	}
 
-	if tls {
-		return listenAndServeHTTPS(httpsaddr, s, sslcert, sslkey)
-	}
-
 	return s.ListenAndServe()
-}
-
-func listenAndServeHTTPS(addr string, s *http.Server, sslcert string, sslkey string) error {
-	tlsConf := &tls.Config{
-		PreferServerCipherSuites: true,
-		MinVersion:               tls.VersionTLS12,
-		CipherSuites: []uint16{
-			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-		},
-	}
-
-	s.TLSConfig = tlsConf
-	s.Addr = addr
-
-	return s.ListenAndServeTLS(sslcert, sslkey)
 }

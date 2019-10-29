@@ -2,6 +2,7 @@ syntax="proto3";
 package proto;
 
 import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
 
 // Command represents a command's name.
 message Command{
@@ -25,11 +26,8 @@ message BotCommands {
     repeated BotCommand commands = 1;
 }
 
-// Void represents not important value.
-message Void {}
-
 service Botio {
-    rpc AddCommand(BotCommand) returns (Void) {
+    rpc AddCommand(BotCommand) returns (google.protobuf.Empty) {
         // Route to /api/v1/commands
         option (google.api.http) = {
             post: "/api/v1/commands"
@@ -44,14 +42,14 @@ service Botio {
         };
     }
 
-    rpc ListCommands(Void) returns (BotCommands) {
+    rpc ListCommands(google.protobuf.Empty) returns (BotCommands) {
         // Route to /api/v1/commands
         option (google.api.http) = {
             get: "/api/v1/commands"
         };
     }
 
-    rpc UpdateCommand(BotCommand) returns (Void) {
+    rpc UpdateCommand(BotCommand) returns (google.protobuf.Empty) {
         // Route to /api/v1/commands/{cmd.command}
         option (google.api.http) = {
             patch: "/api/v1/commands/{cmd.command}"
@@ -59,7 +57,7 @@ service Botio {
         };
     }
 
-    rpc DeleteCommand(Command) returns (Void) {
+    rpc DeleteCommand(Command) returns (google.protobuf.Empty) {
         // Route to /api/v1/commands/{command}
         option (google.api.http) = {
             delete: "/api/v1/commands/{command}"

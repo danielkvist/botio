@@ -17,11 +17,11 @@ require (
 	github.com/stretchr/testify v1.4.0 // indirect
 	github.com/yanzay/tbot/v2 v2.0.2
 	go.etcd.io/bbolt v1.3.3
-	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550 // indirect
-	golang.org/x/net v0.0.0-20191027212002-d64ee3fa515a // indirect
-	golang.org/x/sys v0.0.0-20191027211539-f8518d3b3627 // indirect
+	golang.org/x/crypto v0.0.0-20191029031824-8986dd9e96cf // indirect
+	golang.org/x/net v0.0.0-20191028085509-fe3aa8a45271 // indirect
+	golang.org/x/sys v0.0.0-20191029155521-f43be2a4598c // indirect
 	golang.org/x/text v0.3.2 // indirect
-	google.golang.org/genproto v0.0.0-20191009194640-548a555dbc03
+	google.golang.org/genproto v0.0.0-20191028173616-919d9bdd9fe6
 	google.golang.org/grpc v1.24.0
 	gopkg.in/yaml.v2 v2.2.4 // indirect
 )

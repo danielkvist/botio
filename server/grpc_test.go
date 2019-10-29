@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/danielkvist/botio/proto"
+
+	"github.com/golang/protobuf/ptypes/empty"
 )
 
 func TestAddCommand(t *testing.T) {
@@ -105,7 +107,7 @@ func TestListCommands(t *testing.T) {
 		t.Fatalf("while adding command %q: %v", commandTwo.GetCmd().GetCommand(), err)
 	}
 
-	commands, err := s.ListCommands(context.TODO(), &proto.Void{})
+	commands, err := s.ListCommands(context.TODO(), &empty.Empty{})
 	if err != nil {
 		t.Fatalf("while listing commands: %v", err)
 	}
@@ -178,7 +180,7 @@ func TestDeleteCommand(t *testing.T) {
 		t.Fatalf("while deleting command: %v", err)
 	}
 
-	commands, err := s.ListCommands(context.TODO(), &proto.Void{})
+	commands, err := s.ListCommands(context.TODO(), &empty.Empty{})
 	if err != nil {
 		t.Fatalf("while listing commands: %v", err)
 	}

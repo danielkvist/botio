@@ -8,16 +8,18 @@ import (
 
 	"github.com/danielkvist/botio/db"
 	"github.com/danielkvist/botio/proto"
+
+	"github.com/golang/protobuf/ptypes/empty"
 )
 
 // Server represents a gRPC BotioServer with a method to connect
 // to its database.
 type Server interface {
-	AddCommand(context.Context, *proto.BotCommand) (*proto.Void, error)
+	AddCommand(context.Context, *proto.BotCommand) (*empty.Empty, error)
 	GetCommand(context.Context, *proto.Command) (*proto.BotCommand, error)
-	ListCommands(context.Context, *proto.Void) (*proto.BotCommands, error)
-	UpdateCommand(context.Context, *proto.BotCommand) (*proto.Void, error)
-	DeleteCommand(context.Context, *proto.Command) (*proto.Void, error)
+	ListCommands(context.Context, *empty.Empty) (*proto.BotCommands, error)
+	UpdateCommand(context.Context, *proto.BotCommand) (*empty.Empty, error)
+	DeleteCommand(context.Context, *proto.Command) (*empty.Empty, error)
 	Connect() error
 }
 
