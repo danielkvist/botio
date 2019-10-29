@@ -30,8 +30,8 @@ func Bot() *cobra.Command {
 				log.Fatalf("%v", err)
 			}
 
-			b.Connect(token, 10)
-			b.Listen(u, jwtToken)
+			b.Connect(u, token, 10)
+			b.Listen()
 			defer b.Stop()
 
 			if err := b.Start(); err != nil {

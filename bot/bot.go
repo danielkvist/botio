@@ -6,9 +6,9 @@ import "fmt"
 
 // Bot is an interface to manage bots for differentes platforms.
 type Bot interface {
-	Connect(token string, cap int) error
+	Connect(addr string, token string, cap int) error
 	Start() error
-	Listen(url, jwtToken string) error
+	Listen() error
 	Stop() error
 }
 
