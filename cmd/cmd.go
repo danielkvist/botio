@@ -38,8 +38,8 @@ func checkURL(url string, prefix bool, suffix bool) (string, error) {
 		return "", fmt.Errorf("server URL cannot be an empty string")
 	}
 
-	if !strings.HasPrefix(url, "http://") && prefix {
-		url = "http://" + url
+	if !strings.HasPrefix(url, "https://") && prefix {
+		url = "https://" + url
 	}
 
 	if !strings.HasSuffix(url, "/api/commands") && suffix {

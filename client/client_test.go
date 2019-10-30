@@ -14,58 +14,6 @@ import (
 	"google.golang.org/grpc/test/bufconn"
 )
 
-func TestNew(t *testing.T) {
-	const bufSize = 1024 * 1024
-	listener := bufconn.Listen(bufSize)
-	s, err := server.New(server.WithTestDB())
-	if err != nil {
-		t.Fatalf("while creating a new Server for testing: %v", err)
-	}
-
-	srv := grpc.NewServer()
-	proto.RegisterBotioServer(srv, s)
-	go func(t *testing.T) {
-		if err := srv.Serve(listener); err != nil {
-			t.Fatalf("while creating a new BotioServer for testing: %v", err)
-		}
-	}(t)
-
-	addr := listener.Addr().String()
-	tt := []struct {
-		name           string
-		options        []grpc.DialOption
-		expectedToFail bool
-	}{
-		{
-			name:           "no options",
-			expectedToFail: true,
-		},
-		{
-			name: "with insecure dial option",
-			options: []grpc.DialOption{
-				grpc.WithInsecure(),
-			},
-		},
-	}
-
-	for _, tc := range tt {
-		t.Run(tc.name, func(t *testing.T) {
-			_, err := New(addr, tc.options...)
-			if err != nil {
-				if tc.expectedToFail {
-					t.Skipf("while creating a new Client failed as expected: %v", err)
-				}
-
-				t.Fatalf("while creating a new Client: %v", err)
-			}
-
-			if tc.expectedToFail {
-				t.Fatalf("while creating a new Client test not failed as expected")
-			}
-		})
-	}
-}
-
 func TestAddCommand(t *testing.T) {
 	close := make(chan struct{})
 	c := testClient(t, close)

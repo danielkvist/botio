@@ -12,7 +12,7 @@ func TestCheckURL(t *testing.T) {
 		{
 			name:           "base URL",
 			originalURL:    "google.com",
-			expectedURL:    "http://google.com/api/commands",
+			expectedURL:    "https://google.com/api/commands",
 			expectedToFail: false,
 		},
 		{
@@ -21,8 +21,8 @@ func TestCheckURL(t *testing.T) {
 		},
 		{
 			name:           "http URL",
-			originalURL:    "http://google.com",
-			expectedURL:    "http://google.com/api/commands",
+			originalURL:    "https://google.com",
+			expectedURL:    "https://google.com/api/commands",
 			expectedToFail: false,
 		},
 	}

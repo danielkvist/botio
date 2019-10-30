@@ -11,7 +11,8 @@ import (
 // Bot returns a *cobra.Command
 func Bot() *cobra.Command {
 	var platform string
-	var jwtToken string
+	var cert string
+	// var jwtToken string
 	var token string
 	var url string
 
@@ -30,7 +31,7 @@ func Bot() *cobra.Command {
 				log.Fatalf("%v", err)
 			}
 
-			b.Connect(u, token, 10)
+			b.Connect(u, cert, token, 10)
 			b.Listen()
 			defer b.Stop()
 
@@ -41,7 +42,8 @@ func Bot() *cobra.Command {
 	}
 
 	b.Flags().StringVarP(&platform, "platform", "p", "", "platform (discord or telegram)")
-	b.Flags().StringVarP(&jwtToken, "jwt", "j", "", "jwt authenticaton token")
+	b.Flags().StringVar(&cert, "cert", "./server.crt", "server public key for secure connection")
+	// b.Flags().StringVarP(&jwtToken, "jwt", "j", "", "jwt authenticaton token")
 	b.Flags().StringVarP(&token, "token", "t", "", "bot's token")
 	b.Flags().StringVarP(&url, "url", "u", "", "botio's server URL")
 

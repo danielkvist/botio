@@ -24,18 +24,13 @@ type client struct {
 	client proto.BotioClient
 }
 
-func New(addr string, dialOptions ...grpc.DialOption) (Client, error) {
+func New(addr string, conn *grpc.ClientConn) Client {
 	c := &client{}
+
 	c.addr = addr
-
-	conn, err := grpc.Dial(c.addr, dialOptions...)
-	if err != nil {
-		return nil, fmt.Errorf("while creating a new gRPC dial for a client: %v", err)
-	}
-
 	c.conn = conn
 	c.client = proto.NewBotioClient(c.conn)
-	return c, nil
+	return c
 }
 
 func (c *client) AddCommand(ctx context.Context, cmd *proto.BotCommand) (*empty.Empty, error) {
