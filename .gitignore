@@ -33,8 +33,10 @@ Session.vim
 # Temporary
 .netrwhist
 *~
+
 # Auto-generated tag files
 tags
+
 # Persistent undo
 [._]*.un~
 
@@ -56,3 +58,9 @@ tags
 
 # BoltDB
 *.db
+
+# Certifications
+*.crt
+*.csr
+*.key
+*.pem
