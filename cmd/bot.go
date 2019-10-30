@@ -20,7 +20,7 @@ func Bot() *cobra.Command {
 		Short:   "Initializes a bot for a supported platform (telegram and discord for the moment)",
 		Example: "botio bot --platform telegram --token <telegram-token> --url :9090 --jwt <jwt-token>",
 		Run: func(cmd *cobra.Command, args []string) {
-			u, err := checkURL(url)
+			u, err := checkURL(url, false, false)
 			if err != nil {
 				log.Fatalf("%v", err)
 			}

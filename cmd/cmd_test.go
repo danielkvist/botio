@@ -29,7 +29,7 @@ func TestCheckURL(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			u, err := checkURL(tc.originalURL)
+			u, err := checkURL(tc.originalURL, true)
 			if err != nil {
 				if tc.expectedToFail {
 					t.Logf("while checking URL failed as expected: %v", err)
