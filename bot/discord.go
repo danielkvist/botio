@@ -12,8 +12,6 @@ import (
 
 	dg "github.com/bwmarrin/discordgo"
 	"github.com/sirupsen/logrus"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 )
 
 // Discord is a wrapper for a bwmawwin/discordgo session
@@ -31,23 +29,12 @@ type Discord struct {
 // Connect receives a token with which tries to identify, setups
 // everything necessary and initializes a goroutine to send
 // the responses from the responses channel to the respective clients.
-func (d *Discord) Connect(addr string, cert string, token string, cap int) error {
+func (d *Discord) Connect(c client.Client, addr string, token string, cap int) error {
 	session, err := dg.New("Bot " + token)
 	if err != nil {
 		return fmt.Errorf("while creating a new Discord session: %v", err)
 	}
 
-	creds, err := credentials.NewClientTLSFromFile(cert, "")
-	if err != nil {
-		return fmt.Errorf("while creating TLS credentials: %v", err)
-	}
-
-	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
-	if err != nil {
-		return fmt.Errorf("while creating a new Dial for %q: %v", addr, err)
-	}
-
-	c := client.New(addr, conn)
 	d.client = c
 
 	id, err := session.User("@me")

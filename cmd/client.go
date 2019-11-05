@@ -5,12 +5,9 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/danielkvist/botio/client"
 	"github.com/danielkvist/botio/proto"
-	"github.com/golang/protobuf/ptypes/empty"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 
+	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/spf13/cobra"
 )
 
@@ -37,10 +34,13 @@ func clientCmd(commands ...*cobra.Command) *cobra.Command {
 }
 
 func add() *cobra.Command {
+	var sslcrt string
+	var sslkey string
+	var sslca string
+	var serverName string
 	var command string
-	var cert string
-	var token string
 	var response string
+	var token string
 	var url string
 
 	add := &cobra.Command{
@@ -48,7 +48,7 @@ func add() *cobra.Command {
 		Short:   "Adds a new command",
 		Example: "botio client add --command start --response Hello --url :9090 --token <jwt-token>",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := getClient(url, cert)
+			c, err := getClient(url, serverName, sslcrt, sslkey, sslca)
 			if err != nil {
 				return err
 			}
@@ -69,18 +69,23 @@ func add() *cobra.Command {
 		},
 	}
 
+	add.Flags().StringVar(&sslca, "sslca", "./ca.crt", "ssl client certification file")
+	add.Flags().StringVar(&sslcrt, "sslcrt", "./server.crt", "ssl certification file")
+	add.Flags().StringVar(&sslkey, "sslkey", "./server.key", "ssl certification key file")
 	add.Flags().StringVar(&command, "command", "", "command to add")
-	add.Flags().StringVar(&cert, "cert", "./server.crt", "server public key for secure connection")
-	add.Flags().StringVar(&token, "token", "", "jwt authentication token")
 	add.Flags().StringVar(&response, "response", "", "command's response")
+	add.Flags().StringVar(&token, "token", "", "jwt authentication token")
 	add.Flags().StringVar(&url, "url", "", "botio's server url")
 
 	return add
 }
 
 func print() *cobra.Command {
+	var sslcrt string
+	var sslkey string
+	var sslca string
+	var serverName string
 	var command string
-	var cert string
 	var token string
 	var url string
 
@@ -89,7 +94,7 @@ func print() *cobra.Command {
 		Short:   "Prints the specified command and his response",
 		Example: "botio client print --command start --url :9090 --token <jwt-token>",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := getClient(url, cert)
+			c, err := getClient(url, serverName, sslcrt, sslkey, sslca)
 			if err != nil {
 				return err
 			}
@@ -106,8 +111,10 @@ func print() *cobra.Command {
 		},
 	}
 
+	print.Flags().StringVar(&sslca, "sslca", "./ca.crt", "ssl client certification file")
+	print.Flags().StringVar(&sslcrt, "sslcrt", "./server.crt", "ssl certification file")
+	print.Flags().StringVar(&sslkey, "sslkey", "./server.key", "ssl certification key file")
 	print.Flags().StringVarP(&command, "command", "c", "", "command to print")
-	print.Flags().StringVar(&cert, "cert", "./server.crt", "server public key for secure connection")
 	print.Flags().StringVarP(&token, "token", "t", "", "jwt authentication token")
 	print.Flags().StringVarP(&url, "url", "u", "", "botio's server URL")
 
@@ -115,8 +122,11 @@ func print() *cobra.Command {
 }
 
 func list() *cobra.Command {
+	var sslcrt string
+	var sslkey string
+	var sslca string
+	var serverName string
 	var token string
-	var cert string
 	var url string
 
 	list := &cobra.Command{
@@ -124,7 +134,7 @@ func list() *cobra.Command {
 		Short:   "Prints a list with all the commands",
 		Example: "botio client list --url :9090 --token <jwt-token>",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := getClient(url, cert)
+			c, err := getClient(url, serverName, sslcrt, sslkey, sslca)
 			if err != nil {
 				return err
 			}
@@ -138,18 +148,23 @@ func list() *cobra.Command {
 		},
 	}
 
+	list.Flags().StringVar(&sslca, "sslca", "./ca.crt", "ssl client certification file")
+	list.Flags().StringVar(&sslcrt, "sslcrt", "./server.crt", "ssl certification file")
+	list.Flags().StringVar(&sslkey, "sslkey", "./server.key", "ssl certification key file")
 	list.Flags().StringVarP(&token, "token", "t", "", "jwt authentication token")
-	list.Flags().StringVar(&cert, "cert", "./server.crt", "server public key for secure connection")
 	list.Flags().StringVarP(&url, "url", "u", "", "botio's server URL")
 
 	return list
 }
 
 func update() *cobra.Command {
+	var sslcrt string
+	var sslkey string
+	var sslca string
+	var serverName string
 	var command string
-	var cert string
-	var token string
 	var response string
+	var token string
 	var url string
 
 	update := &cobra.Command{
@@ -157,7 +172,7 @@ func update() *cobra.Command {
 		Short:   "Updates an existing command (or adds it if not exists)",
 		Example: "botio client update --command start --response Hi --url :9090 --token <jwt-token>",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := getClient(url, cert)
+			c, err := getClient(url, serverName, sslcrt, sslkey, sslca)
 			if err != nil {
 				return err
 			}
@@ -178,18 +193,23 @@ func update() *cobra.Command {
 		},
 	}
 
+	update.Flags().StringVar(&sslca, "sslca", "./ca.crt", "ssl client certification file")
+	update.Flags().StringVar(&sslcrt, "sslcrt", "./server.crt", "ssl certification file")
+	update.Flags().StringVar(&sslkey, "sslkey", "./server.key", "ssl certification key file")
 	update.Flags().StringVarP(&command, "command", "c", "", "command to update")
-	update.Flags().StringVar(&cert, "cert", "./server.crt", "server public key for secure connection")
-	update.Flags().StringVarP(&token, "token", "t", "", "jwt authentication token")
 	update.Flags().StringVarP(&response, "response", "r", "", "command's new response")
+	update.Flags().StringVarP(&token, "token", "t", "", "jwt authentication token")
 	update.Flags().StringVarP(&url, "url", "u", "", "botio's server url")
 
 	return update
 }
 
 func delete() *cobra.Command {
+	var sslcrt string
+	var sslkey string
+	var sslca string
+	var serverName string
 	var command string
-	var cert string
 	var token string
 	var url string
 
@@ -198,7 +218,7 @@ func delete() *cobra.Command {
 		Short:   "Deletes the specified command",
 		Example: "botio client delete --command start --url :9090 --token <jwt-authentication>",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := getClient(url, cert)
+			c, err := getClient(url, serverName, sslcrt, sslkey, sslca)
 			if err != nil {
 				return err
 			}
@@ -214,30 +234,12 @@ func delete() *cobra.Command {
 		},
 	}
 
+	delete.Flags().StringVar(&sslca, "sslca", "./ca.crt", "ssl client certification file")
+	delete.Flags().StringVar(&sslcrt, "sslcrt", "./server.crt", "ssl certification file")
+	delete.Flags().StringVar(&sslkey, "sslkey", "./server.key", "ssl certification key file")
 	delete.Flags().StringVarP(&command, "command", "c", "", "command to delete")
-	delete.Flags().StringVar(&cert, "cert", "./server.crt", "server public key for secure connection")
 	delete.Flags().StringVarP(&token, "token", "t", "", "jwt authentication token")
 	delete.Flags().StringVarP(&url, "url", "u", "", "botio's server url")
 
 	return delete
-}
-
-func getClient(url string, cert string) (client.Client, error) {
-	u, err := checkURL(url, false, false)
-	if err != nil {
-		return nil, fmt.Errorf("while parsing URL: %v", err)
-	}
-
-	creds, err := credentials.NewClientTLSFromFile(cert, "")
-	if err != nil {
-		return nil, fmt.Errorf("while creating TLS credentials: %v", err)
-	}
-
-	conn, err := grpc.Dial(u, grpc.WithTransportCredentials(creds))
-	if err != nil {
-		return nil, fmt.Errorf("while creating a new Dial for %q: %v", u, err)
-	}
-
-	c := client.New(u, conn)
-	return c, nil
 }

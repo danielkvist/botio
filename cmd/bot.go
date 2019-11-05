@@ -10,9 +10,13 @@ import (
 
 // Bot returns a *cobra.Command
 func Bot() *cobra.Command {
-	var platform string
-	var cert string
 	// var jwtToken string
+	var goroutines int
+	var platform string
+	var serverName string
+	var sslca string
+	var sslcrt string
+	var sslkey string
 	var token string
 	var url string
 
@@ -20,10 +24,15 @@ func Bot() *cobra.Command {
 		Use:     "bot",
 		Short:   "Initializes a bot for a supported platform (telegram and discord for the moment)",
 		Example: "botio bot --platform telegram --token <telegram-token> --url :9090 --jwt <jwt-token>",
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			u, err := checkURL(url, false, false)
 			if err != nil {
-				log.Fatalf("%v", err)
+				return err
+			}
+
+			c, err := getClient(u, serverName, sslcrt, sslkey, sslca)
+			if err != nil {
+				return err
 			}
 
 			b, err := bot.Create(platform)
@@ -31,21 +40,22 @@ func Bot() *cobra.Command {
 				log.Fatalf("%v", err)
 			}
 
-			b.Connect(u, cert, token, 10)
+			b.Connect(c, u, token, goroutines)
 			b.Listen()
 			defer b.Stop()
 
-			if err := b.Start(); err != nil {
-				log.Fatalf("%v", err)
-			}
+			return b.Start()
 		},
 	}
 
-	b.Flags().StringVarP(&platform, "platform", "p", "", "platform (discord or telegram)")
-	b.Flags().StringVar(&cert, "cert", "./server.crt", "server public key for secure connection")
 	// b.Flags().StringVarP(&jwtToken, "jwt", "j", "", "jwt authenticaton token")
-	b.Flags().StringVarP(&token, "token", "t", "", "bot's token")
-	b.Flags().StringVarP(&url, "url", "u", "", "botio's server URL")
+	b.Flags().IntVar(&goroutines, "goroutines", 10, "number of goroutines")
+	b.Flags().StringVar(&sslca, "sslca", "./ca.crt", "ssl client certification file")
+	b.Flags().StringVar(&sslcrt, "sslcrt", "./server.crt", "ssl certification file")
+	b.Flags().StringVar(&sslcrt, "sslkey", "./server.key", "ssl certification key file")
+	b.Flags().StringVar(&token, "token", "", "bot's token")
+	b.Flags().StringVar(&url, "url", "", "botio's server URL")
+	b.Flags().StringVar(&platform, "platform", "", "platform (discord or telegram)")
 
 	return b
 }

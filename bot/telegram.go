@@ -2,7 +2,6 @@ package bot
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"strings"
 	"sync"
@@ -12,8 +11,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/yanzay/tbot/v2"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 )
 
 // Telegram is a wrapper for a yanzay/tbot client
@@ -31,22 +28,10 @@ type Telegram struct {
 // setups everything necessary and initializes a goroutine
 // to send the responses from the responses channel to the respective
 // clients.
-func (t *Telegram) Connect(addr string, cert string, token string, cap int) error {
+func (t *Telegram) Connect(c client.Client, addr string, token string, cap int) error {
 	session := tbot.New(token)
 	tclient := session.Client()
 	responses := make(chan *Response, cap)
-
-	creds, err := credentials.NewClientTLSFromFile(cert, "")
-	if err != nil {
-		return fmt.Errorf("while creating TLS credentials: %v", err)
-	}
-
-	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
-	if err != nil {
-		return fmt.Errorf("while creating a new Dial for %q: %v", addr, err)
-	}
-
-	c := client.New(addr, conn)
 
 	t.session = session
 	t.client = c

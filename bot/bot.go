@@ -2,11 +2,15 @@
 // for differents platforms easily.
 package bot
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/danielkvist/botio/client"
+)
 
 // Bot is an interface to manage bots for differentes platforms.
 type Bot interface {
-	Connect(addr string, cert string, token string, cap int) error
+	Connect(c client.Client, addr string, token string, cap int) error
 	Start() error
 	Listen() error
 	Stop() error
