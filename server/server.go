@@ -94,11 +94,13 @@ func WithTestDB() Option {
 	}
 }
 
-func WithListener(port string) Option {
+// WithListener returns an Option to a new Server that assigns to its
+// listener field a TCP listener with the received address.
+func WithListener(addr string) Option {
 	return func(s *server) error {
-		listener, err := net.Listen("tcp", port)
+		listener, err := net.Listen("tcp", addr)
 		if err != nil {
-			return fmt.Errorf("while creating a new tcp listener on port %q: %v", port, err)
+			return fmt.Errorf("while creating a new tcp listener with addr %q: %v", addr, err)
 		}
 
 		s.listener = listener
@@ -106,6 +108,8 @@ func WithListener(port string) Option {
 	}
 }
 
+// WithSecuredGRPCServer returns an Option to a new Server that assigns to its
+// srv field a secured gRPC server with TLS.
 func WithSecuredGRPCServer(crt, key, ca string) Option {
 	return func(s *server) error {
 		cert, err := tls.LoadX509KeyPair(crt, key)
@@ -134,6 +138,8 @@ func WithSecuredGRPCServer(crt, key, ca string) Option {
 	}
 }
 
+// WithInsecureGRPCServer returns an Option to a new Server that assigns to its
+// srv field a insecure gRPC server.
 func WithInsecureGRPCServer() Option {
 	return func(s *server) error {
 		s.srv = grpc.NewServer()
@@ -166,6 +172,7 @@ func New(options ...Option) (Server, error) {
 	return s, nil
 }
 
+// Serve accepts incoming connections on the Server's listener.
 func (s *server) Serve() error {
 	return s.srv.Serve(s.listener)
 }
@@ -179,6 +186,7 @@ func (s *server) Connect() error {
 	return nil
 }
 
+// CloseList closes the Server's listener.
 func (s *server) CloseList() {
 	s.listener.Close()
 }

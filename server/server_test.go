@@ -49,6 +49,13 @@ func TestNew(t *testing.T) {
 			},
 			expectedToFail: true,
 		},
+		{
+			name: "with listener and Boltdb",
+			options: []Option{
+				WithListener(":0"),
+				WithBoltDB("", ""),
+			},
+		},
 	}
 
 	for _, tc := range tt {
