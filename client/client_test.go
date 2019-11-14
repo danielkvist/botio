@@ -8,8 +8,8 @@ import (
 
 	"github.com/danielkvist/botio/proto"
 	"github.com/danielkvist/botio/server"
-	"github.com/golang/protobuf/ptypes/empty"
 
+	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/test/bufconn"
 )
