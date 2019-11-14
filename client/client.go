@@ -2,12 +2,16 @@ package client
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"io/ioutil"
 
 	"github.com/danielkvist/botio/proto"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 type Client interface {
@@ -24,13 +28,63 @@ type client struct {
 	client proto.BotioClient
 }
 
-func New(addr string, conn *grpc.ClientConn) Client {
-	c := &client{}
+type ConnOption func() (*grpc.ClientConn, error)
 
+func WithInsecureConn(url string) ConnOption {
+	return func() (*grpc.ClientConn, error) {
+		conn, err := grpc.Dial(url, grpc.WithInsecure())
+		if err != nil {
+			return nil, fmt.Errorf("while creating a new insecure grpc.ClientConn: %v", err)
+		}
+
+		return conn, nil
+	}
+}
+
+func WithTLSSecureConn(url, server, crt, key, ca string) ConnOption {
+	return func() (*grpc.ClientConn, error) {
+		cert, err := tls.LoadX509KeyPair(crt, key)
+		if err != nil {
+			return nil, fmt.Errorf("while loading client SSL key pair: %v", err)
+		}
+
+		certPool := x509.NewCertPool()
+		caCert, err := ioutil.ReadFile(ca)
+		if err != nil {
+			return nil, fmt.Errorf("while reading CA certificate: %v", err)
+		}
+
+		if ok := certPool.AppendCertsFromPEM(caCert); !ok {
+			return nil, fmt.Errorf("faile to append CA certificates")
+		}
+
+		creds := credentials.NewTLS(&tls.Config{
+			ServerName:   server,
+			Certificates: []tls.Certificate{cert},
+			RootCAs:      certPool,
+		})
+
+		conn, err := grpc.Dial(url, grpc.WithTransportCredentials(creds))
+		if err != nil {
+			return nil, fmt.Errorf("while creating a new Dial for %q: %v", url, err)
+		}
+
+		return conn, nil
+	}
+}
+
+func New(addr string, connOpt ConnOption) (Client, error) {
+	c := &client{}
 	c.addr = addr
+
+	conn, err := connOpt()
+	if err != nil {
+		return nil, fmt.Errorf("while creating new grpc.ClientConn: %v", err)
+	}
+
 	c.conn = conn
 	c.client = proto.NewBotioClient(c.conn)
-	return c
+	return c, nil
 }
 
 func (c *client) AddCommand(ctx context.Context, cmd *proto.BotCommand) (*empty.Empty, error) {
