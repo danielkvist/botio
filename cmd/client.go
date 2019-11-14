@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/danielkvist/botio/client"
 	"github.com/danielkvist/botio/proto"
 
 	"github.com/golang/protobuf/ptypes/empty"
@@ -69,9 +70,9 @@ func add() *cobra.Command {
 		},
 	}
 
-	add.Flags().StringVar(&sslca, "sslca", "./ca.crt", "ssl client certification file")
-	add.Flags().StringVar(&sslcrt, "sslcrt", "./server.crt", "ssl certification file")
-	add.Flags().StringVar(&sslkey, "sslkey", "./server.key", "ssl certification key file")
+	add.Flags().StringVar(&sslca, "sslca", "", "ssl client certification file")
+	add.Flags().StringVar(&sslcrt, "sslcrt", "", "ssl certification file")
+	add.Flags().StringVar(&sslkey, "sslkey", "", "ssl certification key file")
 	add.Flags().StringVar(&command, "command", "", "command to add")
 	add.Flags().StringVar(&response, "response", "", "command's response")
 	add.Flags().StringVar(&token, "token", "", "jwt authentication token")
@@ -111,9 +112,9 @@ func print() *cobra.Command {
 		},
 	}
 
-	print.Flags().StringVar(&sslca, "sslca", "./ca.crt", "ssl client certification file")
-	print.Flags().StringVar(&sslcrt, "sslcrt", "./server.crt", "ssl certification file")
-	print.Flags().StringVar(&sslkey, "sslkey", "./server.key", "ssl certification key file")
+	print.Flags().StringVar(&sslca, "sslca", "", "ssl client certification file")
+	print.Flags().StringVar(&sslcrt, "sslcrt", "", "ssl certification file")
+	print.Flags().StringVar(&sslkey, "sslkey", "", "ssl certification key file")
 	print.Flags().StringVarP(&command, "command", "c", "", "command to print")
 	print.Flags().StringVarP(&token, "token", "t", "", "jwt authentication token")
 	print.Flags().StringVarP(&url, "url", "u", "", "botio's server URL")
@@ -148,9 +149,9 @@ func list() *cobra.Command {
 		},
 	}
 
-	list.Flags().StringVar(&sslca, "sslca", "./ca.crt", "ssl client certification file")
-	list.Flags().StringVar(&sslcrt, "sslcrt", "./server.crt", "ssl certification file")
-	list.Flags().StringVar(&sslkey, "sslkey", "./server.key", "ssl certification key file")
+	list.Flags().StringVar(&sslca, "sslca", "", "ssl client certification file")
+	list.Flags().StringVar(&sslcrt, "sslcrt", "", "ssl certification file")
+	list.Flags().StringVar(&sslkey, "sslkey", "", "ssl certification key file")
 	list.Flags().StringVarP(&token, "token", "t", "", "jwt authentication token")
 	list.Flags().StringVarP(&url, "url", "u", "", "botio's server URL")
 
@@ -193,9 +194,9 @@ func update() *cobra.Command {
 		},
 	}
 
-	update.Flags().StringVar(&sslca, "sslca", "./ca.crt", "ssl client certification file")
-	update.Flags().StringVar(&sslcrt, "sslcrt", "./server.crt", "ssl certification file")
-	update.Flags().StringVar(&sslkey, "sslkey", "./server.key", "ssl certification key file")
+	update.Flags().StringVar(&sslca, "sslca", "", "ssl client certification file")
+	update.Flags().StringVar(&sslcrt, "sslcrt", "", "ssl certification file")
+	update.Flags().StringVar(&sslkey, "sslkey", "", "ssl certification key file")
 	update.Flags().StringVarP(&command, "command", "c", "", "command to update")
 	update.Flags().StringVarP(&response, "response", "r", "", "command's new response")
 	update.Flags().StringVarP(&token, "token", "t", "", "jwt authentication token")
@@ -234,12 +235,47 @@ func delete() *cobra.Command {
 		},
 	}
 
-	delete.Flags().StringVar(&sslca, "sslca", "./ca.crt", "ssl client certification file")
-	delete.Flags().StringVar(&sslcrt, "sslcrt", "./server.crt", "ssl certification file")
-	delete.Flags().StringVar(&sslkey, "sslkey", "./server.key", "ssl certification key file")
+	delete.Flags().StringVar(&sslca, "sslca", "", "ssl client certification file")
+	delete.Flags().StringVar(&sslcrt, "sslcrt", "", "ssl certification file")
+	delete.Flags().StringVar(&sslkey, "sslkey", "", "ssl certification key file")
 	delete.Flags().StringVarP(&command, "command", "c", "", "command to delete")
 	delete.Flags().StringVarP(&token, "token", "t", "", "jwt authentication token")
 	delete.Flags().StringVarP(&url, "url", "u", "", "botio's server url")
 
 	return delete
+}
+
+func getClient(url, server, crt, key, ca string) (client.Client, error) {
+	var c client.Client
+	var u string
+	var err error
+
+	u, err = checkURL(url, false, false)
+	if err != nil {
+		return nil, fmt.Errorf("while parsing URL: %v", err)
+	}
+
+	if crt == "" || key == "" || ca == "" {
+		c, err = insecureClient(u)
+	} else {
+		c, err = securedClient(u, server, crt, key, ca)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return c, nil
+}
+
+func insecureClient(url string) (client.Client, error) {
+	return client.New(url, client.WithInsecureConn(url))
+}
+
+func securedClient(url, server, crt, key, ca string) (client.Client, error) {
+	return client.New(url, client.WithTLSSecureConn(url, server, crt, key, ca))
+}
+
+func printCommand(cmd *proto.BotCommand) {
+	fmt.Printf("%q: %q\n", cmd.GetCmd().GetCommand(), cmd.GetResp().GetResponse())
 }

@@ -2,12 +2,8 @@ package cmd
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"net"
 	"net/http"
 
 	"github.com/danielkvist/botio/proto"
@@ -16,10 +12,7 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 )
-
-// TODO: Check flags description in both commands
 
 // Server returns a *cobra.Command.
 func Server() *cobra.Command {
@@ -30,9 +23,6 @@ func serverCmd(commands ...*cobra.Command) *cobra.Command {
 	serverCmd := &cobra.Command{
 		Use:   "server",
 		Short: "server contains some subcommands to initialize a server with different databases",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return nil
-		},
 	}
 
 	for _, cmd := range commands {
@@ -61,7 +51,14 @@ func serverWithBoltDB() *cobra.Command {
 			defer close(quit)
 
 			serverOptions := []server.Option{
+				server.WithListener(port),
 				server.WithBoltDB(database, collection),
+			}
+
+			if sslcrt == "" || sslkey == "" || sslca == "" {
+				serverOptions = append(serverOptions, server.WithInsecureGRPCServer())
+			} else {
+				serverOptions = append(serverOptions, server.WithSecuredGRPCServer(sslcrt, sslkey, sslca))
 			}
 
 			s, err := server.New(serverOptions...)
@@ -69,39 +66,10 @@ func serverWithBoltDB() *cobra.Command {
 				return fmt.Errorf("while creating a new Server: %v", err)
 			}
 
-			listener, err := net.Listen("tcp", port)
-			if err != nil {
-				return fmt.Errorf("while creating a new listener: %v", err)
-			}
-			defer listener.Close()
-
-			cert, err := tls.LoadX509KeyPair(sslcrt, sslkey)
-			if err != nil {
-				return fmt.Errorf("while loading SSL key pair: %v", err)
-			}
-
-			certPool := x509.NewCertPool()
-			ca, err := ioutil.ReadFile(sslca)
-			if err != nil {
-				return fmt.Errorf("while reading CA certificate: %v", err)
-			}
-
-			if ok := certPool.AppendCertsFromPEM(ca); !ok {
-				return fmt.Errorf("fail while appending client certificates")
-			}
-
-			creds := credentials.NewTLS(&tls.Config{
-				ClientAuth:   tls.RequireAndVerifyClientCert,
-				Certificates: []tls.Certificate{cert},
-				ClientCAs:    certPool,
-			})
-
-			srv := grpc.NewServer(grpc.Creds(creds))
-			proto.RegisterBotioServer(srv, s)
-
 			go func() {
-				if err := srv.Serve(listener); err != nil {
-					quit <- fmt.Errorf("while listeting to requests on %v: %v", listener.Addr().String(), err)
+				if err := s.Serve(); err != nil {
+					log.Println("serve error")
+					quit <- fmt.Errorf("while listeting to requests: %v", err)
 				}
 			}()
 
@@ -120,9 +88,9 @@ func serverWithBoltDB() *cobra.Command {
 	s.Flags().StringVar(&database, "database", "./botio.db", "database path")
 	s.Flags().StringVar(&httpPort, "http", ":8081", "port for HTTP server")
 	s.Flags().StringVar(&port, "port", ":9091", "port for gRPC server")
-	s.Flags().StringVar(&sslca, "sslca", "./ca.crt", "ssl client certification file")
-	s.Flags().StringVar(&sslcrt, "sslcrt", "./server.crt", "ssl certification file")
-	s.Flags().StringVar(&sslkey, "sslkey", "./server.key", "ssl certification key file")
+	s.Flags().StringVar(&sslca, "sslca", "", "ssl client certification file")
+	s.Flags().StringVar(&sslcrt, "sslcrt", "", "ssl certification file")
+	s.Flags().StringVar(&sslkey, "sslkey", "", "ssl certification key file")
 
 	return s
 }
@@ -150,47 +118,25 @@ func serverWithPostgresDB() *cobra.Command {
 			defer close(quit)
 
 			serverOptions := []server.Option{
+				server.WithListener(port),
 				server.WithPostgresDB(host, pport, database, table, user, password),
+			}
+
+			if sslcrt == "" || sslkey == "" || sslca == "" {
+				serverOptions = append(serverOptions, server.WithInsecureGRPCServer())
+			} else {
+				serverOptions = append(serverOptions, server.WithSecuredGRPCServer(sslcrt, sslkey, sslca))
 			}
 
 			s, err := server.New(serverOptions...)
 			if err != nil {
-				log.Fatalf("while creating a new Server: %v", err)
+				return fmt.Errorf("while creating a new Server: %v", err)
 			}
-
-			listener, err := net.Listen("tcp", port)
-			if err != nil {
-				return fmt.Errorf("while creating a new listener: %v", err)
-			}
-			defer listener.Close()
-
-			cert, err := tls.LoadX509KeyPair(sslcrt, sslkey)
-			if err != nil {
-				return fmt.Errorf("while loading SSL key pair: %v", err)
-			}
-
-			certPool := x509.NewCertPool()
-			ca, err := ioutil.ReadFile(sslca)
-			if err != nil {
-				return fmt.Errorf("while reading CA certificate: %v", err)
-			}
-
-			if ok := certPool.AppendCertsFromPEM(ca); !ok {
-				return fmt.Errorf("fail while appending client certificates")
-			}
-
-			creds := credentials.NewTLS(&tls.Config{
-				ClientAuth:   tls.RequireAndVerifyClientCert,
-				Certificates: []tls.Certificate{cert},
-				ClientCAs:    certPool,
-			})
-
-			srv := grpc.NewServer(grpc.Creds(creds))
-			proto.RegisterBotioServer(srv, s)
 
 			go func() {
-				if err := srv.Serve(listener); err != nil {
-					quit <- fmt.Errorf("while listeting to requests on %v: %v", listener.Addr().String(), err)
+				if err := s.Serve(); err != nil {
+					log.Println("serve error")
+					quit <- fmt.Errorf("while listeting to requests: %v", err)
 				}
 			}()
 
@@ -201,6 +147,7 @@ func serverWithPostgresDB() *cobra.Command {
 			}()
 
 			return <-quit
+
 		},
 	}
 
@@ -211,9 +158,9 @@ func serverWithPostgresDB() *cobra.Command {
 	s.Flags().StringVar(&password, "password", "", "password for the user of the PostgreSQL database")
 	s.Flags().StringVar(&port, "port", ":9091", "port for gRPC server")
 	s.Flags().StringVar(&pport, "postgresPort", "5432", "port of the PostgreSQL database host")
-	s.Flags().StringVar(&sslca, "sslca", "./ca.crt", "ssl client certification file")
-	s.Flags().StringVar(&sslcrt, "sslcrt", "./server.crt", "ssl certification file")
-	s.Flags().StringVar(&sslkey, "sslkey", "./server.key", "ssl certification key file")
+	s.Flags().StringVar(&sslca, "sslca", "", "ssl client certification file")
+	s.Flags().StringVar(&sslcrt, "sslcrt", "", "ssl certification file")
+	s.Flags().StringVar(&sslkey, "sslkey", "", "ssl certification key file")
 	s.Flags().StringVar(&table, "table", "commands", "table of the PostgreSQL database")
 	s.Flags().StringVar(&user, "user", "", "user of the PostgreSQL database")
 
