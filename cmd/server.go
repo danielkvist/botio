@@ -67,6 +67,11 @@ func serverWithBoltDB() *cobra.Command {
 			}
 
 			go func() {
+				if err := s.Connect(); err != nil {
+					quit <- errors.Wrapf(err, "while connectign server to BoltDB")
+					return
+				}
+
 				if err := s.Serve(); err != nil {
 					quit <- errors.Wrap(err, "while listening to requests")
 				}
@@ -135,6 +140,11 @@ func serverWithPostgresDB() *cobra.Command {
 			}
 
 			go func() {
+				if err := s.Connect(); err != nil {
+					quit <- errors.Wrapf(err, "while connectign server to PostgreSQL")
+					return
+				}
+
 				if err := s.Serve(); err != nil {
 					quit <- errors.Wrap(err, "while listening to requests")
 				}
