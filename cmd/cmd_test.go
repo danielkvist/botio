@@ -12,7 +12,7 @@ func TestCheckURL(t *testing.T) {
 		{
 			name:           "base URL",
 			originalURL:    "google.com",
-			expectedURL:    "http://google.com/api/commands",
+			expectedURL:    "https://google.com/api/commands",
 			expectedToFail: false,
 		},
 		{
@@ -21,15 +21,15 @@ func TestCheckURL(t *testing.T) {
 		},
 		{
 			name:           "http URL",
-			originalURL:    "http://google.com",
-			expectedURL:    "http://google.com/api/commands",
+			originalURL:    "https://google.com",
+			expectedURL:    "https://google.com/api/commands",
 			expectedToFail: false,
 		},
 	}
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			u, err := checkURL(tc.originalURL)
+			u, err := checkURL(tc.originalURL, true, true)
 			if err != nil {
 				if tc.expectedToFail {
 					t.Logf("while checking URL failed as expected: %v", err)

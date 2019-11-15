@@ -5,45 +5,63 @@ import (
 
 	"github.com/danielkvist/botio/bot"
 
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
 // Bot returns a *cobra.Command
 func Bot() *cobra.Command {
+	// var jwtToken string
+	var addr string
+	var goroutines int
 	var platform string
-	var jwtToken string
+	var serverName string
+	var sslca string
+	var sslcrt string
+	var sslkey string
 	var token string
-	var url string
 
 	b := &cobra.Command{
 		Use:     "bot",
-		Short:   "Initializes a bot for a supported platform (telegram and discord for the moment)",
-		Example: "botio bot --platform telegram --token <telegram-token> --url :9090 --jwt <jwt-token>",
-		Run: func(cmd *cobra.Command, args []string) {
-			u, err := checkURL(url)
+		Short:   "Starts a chatbot for the specified platform.",
+		Example: "botio bot --platform telegram --token <telegram-token>",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			u, err := checkURL(addr, false, false)
 			if err != nil {
-				log.Fatalf("%v", err)
+				return err
+			}
+
+			c, err := getClient(u, serverName, sslcrt, sslkey, sslca)
+			if err != nil {
+				return err
 			}
 
 			b, err := bot.Create(platform)
 			if err != nil {
-				log.Fatalf("%v", err)
+				return errors.Wrapf(err, "while creating a new chatbot for platform %q: %v", platform, err)
 			}
 
-			b.Connect(token, 10)
-			b.Listen(u, jwtToken)
+			b.Connect(c, u, token, goroutines)
+			b.Listen()
 			defer b.Stop()
 
+			log.Printf("chatbot for platform %q initialized!\n", platform)
 			if err := b.Start(); err != nil {
-				log.Fatalf("%v", err)
+				return errors.Wrapf(b.Start(), "while starting chatbot for platform %q", platform)
 			}
+
+			return nil
 		},
 	}
 
-	b.Flags().StringVarP(&platform, "platform", "p", "", "platform (discord or telegram)")
-	b.Flags().StringVarP(&jwtToken, "jwt", "j", "", "jwt authenticaton token")
-	b.Flags().StringVarP(&token, "token", "t", "", "bot's token")
-	b.Flags().StringVarP(&url, "url", "u", "", "botio's server URL")
+	// b.Flags().StringVarP(&jwtToken, "jwt", "j", "", "jwt authenticaton token")
+	b.Flags().IntVar(&goroutines, "goroutines", 10, "number of goroutines")
+	b.Flags().StringVar(&addr, "addr", ":9091", "botio's gRPC server address")
+	b.Flags().StringVar(&platform, "platform", "", "platform (discord or telegram)")
+	b.Flags().StringVar(&sslca, "sslca", "", "ssl client certification file")
+	b.Flags().StringVar(&sslcrt, "sslcrt", "", "ssl certification file")
+	b.Flags().StringVar(&sslcrt, "sslkey", "", "ssl certification key file")
+	b.Flags().StringVar(&token, "token", "", "bot's token")
 
 	return b
 }

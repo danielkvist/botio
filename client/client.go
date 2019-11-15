@@ -1,149 +1,134 @@
-// Package client exports functions to manage botio's commands with HTTP methods
-// and JWT based authentication.
 package client
 
 import (
-	"bytes"
-	"encoding/json"
+	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"io/ioutil"
-	"net/http"
 
-	"github.com/danielkvist/botio/models"
+	"github.com/danielkvist/botio/proto"
+
+	"github.com/golang/protobuf/ptypes/empty"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
-// Get receives an URL and a JWT token for auth to perform an HTTP GET request
-// and returns a *models.Command. If something goes wrong it returns a non-nil error.
-func Get(url, token string) (*models.Command, error) {
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil {
-		return nil, fmt.Errorf("while creating a new request for %q: %v", url, err)
-	}
-	req.Header.Set("Token", token)
-
-	c := &http.Client{}
-	resp, err := c.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("while making a request for %q: %v", url, err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("while making a GET request for %q a %v status code was expected. got %q", url, http.StatusOK, resp.Status)
-	}
-
-	d, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("while reading the response body from %q: %v", url, err)
-	}
-
-	var cmd models.Command
-	if err := json.Unmarshal(d, &cmd); err != nil {
-		return nil, fmt.Errorf("while unmarshaling the response body from %q: %v", url, err)
-	}
-
-	return &cmd, nil
+type Client interface {
+	AddCommand(context.Context, *proto.BotCommand) (*empty.Empty, error)
+	GetCommand(context.Context, *proto.Command) (*proto.BotCommand, error)
+	ListCommands(context.Context, *empty.Empty) (*proto.BotCommands, error)
+	UpdateCommand(context.Context, *proto.BotCommand) (*empty.Empty, error)
+	DeleteCommand(context.Context, *proto.Command) (*empty.Empty, error)
 }
 
-// GetAll receives an URL and a JWT token for auth to perform an HTTP GET request
-// and returns an []*models.Command. If something goes wrong it returns a non-nil error.
-func GetAll(url, token string) ([]*models.Command, error) {
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil {
-		return nil, fmt.Errorf("while creating a new request for %q: %v", url, err)
-	}
-	req.Header.Set("Token", token)
-
-	c := &http.Client{}
-	resp, err := c.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("while making a request for %q: %v", url, err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("while making a GET request for %q a %v status code was expected. got %q", url, http.StatusOK, resp.Status)
-	}
-
-	d, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("while reading the response body from %q: %v", url, err)
-	}
-
-	commands := []*models.Command{}
-	if err := json.Unmarshal(d, &commands); err != nil {
-		return nil, fmt.Errorf("while unmarshaling the response body from %q: %v", url, err)
-	}
-
-	return commands, nil
+type client struct {
+	addr   string
+	conn   *grpc.ClientConn
+	client proto.BotioClient
 }
 
-// Post receives an URL and a JWT token for auth with a command and a response and performs
-// an HTTP POST request using the command and the response as the body of the request.
-// If something goes wrong it returns a non-nil error.
-func Post(url, token, command, response string) (*models.Command, error) {
+type ConnOption func() (*grpc.ClientConn, error)
+
+func WithInsecureConn(url string) ConnOption {
+	return func() (*grpc.ClientConn, error) {
+		conn, err := grpc.Dial(url, grpc.WithInsecure())
+		if err != nil {
+			return nil, fmt.Errorf("while creating a new insecure grpc.ClientConn: %v", err)
+		}
+
+		return conn, nil
+	}
+}
+
+func WithTLSSecureConn(url, server, crt, key, ca string) ConnOption {
+	return func() (*grpc.ClientConn, error) {
+		cert, err := tls.LoadX509KeyPair(crt, key)
+		if err != nil {
+			return nil, fmt.Errorf("while loading client SSL key pair: %v", err)
+		}
+
+		certPool := x509.NewCertPool()
+		caCert, err := ioutil.ReadFile(ca)
+		if err != nil {
+			return nil, fmt.Errorf("while reading CA certificate: %v", err)
+		}
+
+		if ok := certPool.AppendCertsFromPEM(caCert); !ok {
+			return nil, fmt.Errorf("faile to append CA certificates")
+		}
+
+		creds := credentials.NewTLS(&tls.Config{
+			ServerName:   server,
+			Certificates: []tls.Certificate{cert},
+			RootCAs:      certPool,
+		})
+
+		conn, err := grpc.Dial(url, grpc.WithTransportCredentials(creds))
+		if err != nil {
+			return nil, fmt.Errorf("while creating a new Dial for %q: %v", url, err)
+		}
+
+		return conn, nil
+	}
+}
+
+func New(addr string, connOpt ConnOption) (Client, error) {
+	c := &client{}
+	c.addr = addr
+
+	conn, err := connOpt()
+	if err != nil {
+		return nil, fmt.Errorf("while creating new grpc.ClientConn: %v", err)
+	}
+
+	c.conn = conn
+	c.client = proto.NewBotioClient(c.conn)
+	return c, nil
+}
+
+func (c *client) AddCommand(ctx context.Context, cmd *proto.BotCommand) (*empty.Empty, error) {
+	command := cmd.GetCmd().GetCommand()
+	response := cmd.GetResp().GetResponse()
 	if command == "" || response == "" {
-		return nil, fmt.Errorf("empty fields are not allowed")
+		return &empty.Empty{}, fmt.Errorf("received proto.BotCommand to add has an invalid command=%q or response=%q", command, response)
 	}
 
-	cmd := models.Command{
-		Cmd:      command,
-		Response: response,
-	}
-	cmdData, err := json.Marshal(cmd)
-	if err != nil {
-		return nil, fmt.Errorf("while marshaling command %q: %v", command, err)
+	if _, err := c.client.AddCommand(ctx, cmd); err != nil {
+		return &empty.Empty{}, fmt.Errorf("while adding proto.BotCommand: %v", err)
 	}
 
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(cmdData))
-	if err != nil {
-		return nil, fmt.Errorf("while making a request for %q: %v", url, err)
-
-	}
-	req.Header.Set("Token", token)
-
-	c := &http.Client{}
-	resp, err := c.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("while making a request for %q: %v", url, err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("while making a POST request for %q a %v status code was expected. got %q", url, http.StatusOK, resp.Status)
-	}
-
-	return &cmd, nil
+	return &empty.Empty{}, nil
 }
 
-// Put receives an URL and a JWT token for auth with a command and a response and performs
-// an HTTP POST request using the command and the response as the body of the request.
-// It performs an HTTP POST request instead of an HTTP PUT request
-// due to how BoltDB databases work.
-// If something goes wrong it returns a non-nil error.
-func Put(url, token, command, response string) (*models.Command, error) {
-	return Post(url, token, command, response)
+func (c *client) GetCommand(ctx context.Context, cmd *proto.Command) (*proto.BotCommand, error) {
+	command := cmd.GetCommand()
+	if command == "" {
+		return nil, fmt.Errorf("received an proto.Command with no command")
+	}
+
+	return c.client.GetCommand(ctx, cmd)
 }
 
-// Delete receives an URL and a JWT token for auth and performs an HTTP DELETE request
-// If something goes wrong it returns a non-nil error.
-func Delete(url, token string) error {
-	req, err := http.NewRequest(http.MethodDelete, url, nil)
-	if err != nil {
-		return fmt.Errorf("while creating a new request for %q: %v", url, err)
-	}
-	req.Header.Set("Token", token)
+func (c *client) ListCommands(ctx context.Context, _ *empty.Empty) (*proto.BotCommands, error) {
+	return c.client.ListCommands(ctx, &empty.Empty{})
+}
 
-	c := &http.Client{}
-	resp, err := c.Do(req)
-	if err != nil {
-		return fmt.Errorf("while making a request for %q: %v", url, err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("while making a DELETE request for %q a %v status code was expected. got %q", url, http.StatusOK, resp.Status)
+func (c *client) UpdateCommand(ctx context.Context, cmd *proto.BotCommand) (*empty.Empty, error) {
+	command := cmd.GetCmd().GetCommand()
+	response := cmd.GetResp().GetResponse()
+	if command == "" || response == "" {
+		return nil, fmt.Errorf("received proto.BotCommand to update has an invalid command=%q or response=%q", command, response)
 	}
 
-	return nil
+	return c.client.UpdateCommand(ctx, cmd)
+}
+
+func (c *client) DeleteCommand(ctx context.Context, cmd *proto.Command) (*empty.Empty, error) {
+	command := cmd.GetCommand()
+	if command == "" {
+		return nil, fmt.Errorf("received an proto.Command with no command")
+	}
+
+	return c.client.DeleteCommand(ctx, cmd)
 }

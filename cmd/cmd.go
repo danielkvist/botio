@@ -2,13 +2,9 @@
 package cmd
 
 import (
-	"fmt"
-	"os"
 	"strings"
-	"text/tabwriter"
 
-	"github.com/danielkvist/botio/models"
-
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -17,16 +13,19 @@ import (
 // returning an error if any.
 func Root(commands ...*cobra.Command) error {
 	examples := []string{
-		"botio server bolt --database ./data/commands.db --collection commands --http :9090 --key mysupersecretkey",
-		"botio bot --platform telegram --token <telegram-token> --url :9090 --token <jwt-token>",
-		"botio client print --command start --url :9090 --jwt <jwt-token>",
+		"botio server bolt --database ./data/commands.db --collection commands",
+		"botio client add --command start --response Hi",
+		"botio bot --platform telegram --token <telegram-token>",
 	}
 
 	root := &cobra.Command{
-		Use:          "botio",
-		Short:        "Botio is a simple and opinionated CLI to create and manage easily bots for differents platforms.",
-		Example:      strings.Join(examples, "\n"),
-		SilenceUsage: true,
+		Use:   "botio",
+		Short: "Botio is a CLI to create and manage easily chatbots for different platforms with the possibility of using differents databases.",
+		Long: `Botio is a CLI to create and manage easily chatbots for different platforms such as Telegram or Discord.
+It also let's you use different databases to manage their available commands wuch as BoltDB or PostgreSQL.
+		
+Botio is a project in development so use it with caution!`,
+		Example: strings.Join(examples, "\n"),
 	}
 
 	for _, cmd := range commands {
@@ -36,31 +35,18 @@ func Root(commands ...*cobra.Command) error {
 	return root.Execute()
 }
 
-func checkURL(url string) (string, error) {
+func checkURL(url string, prefix bool, suffix bool) (string, error) {
 	if url == "" {
-		return "", fmt.Errorf("server URL cannot be an empty string")
+		return "", errors.New("server URL cannot be an empty string")
 	}
 
-	if !strings.HasPrefix(url, "http://") {
-		url = "http://" + url
+	if !strings.HasPrefix(url, "https://") && prefix {
+		url = "https://" + url
 	}
 
-	if !strings.HasSuffix(url, "/api/commands") {
+	if !strings.HasSuffix(url, "/api/commands") && suffix {
 		url = url + "/api/commands"
 	}
 
 	return url, nil
-}
-
-func printCommands(commands ...*models.Command) {
-	const format = "%s\t\t%s\n"
-	tw := new(tabwriter.Writer).Init(os.Stdout, 0, 8, 2, ' ', 0)
-	fmt.Fprintf(tw, format, "command", "response")
-	fmt.Fprintf(tw, format, "-------", "--------")
-
-	for _, c := range commands {
-		fmt.Fprintf(tw, format, c.Cmd, c.Response)
-	}
-
-	tw.Flush()
 }

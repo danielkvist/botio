@@ -1,58 +1,73 @@
-// Package server exports a struct called Server that satisfies the
-// http.Handler interface.
+// Package server defines a gRPC server implementation
+// with options for its creation and logging.
 package server
 
 import (
+	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
-	"log"
-	"net/http"
-	"os"
+	"io/ioutil"
+	"net"
 
 	"github.com/danielkvist/botio/db"
-	"github.com/dgrijalva/jwt-go"
-	"github.com/sirupsen/logrus"
+	"github.com/danielkvist/botio/proto"
 
-	"github.com/go-chi/chi"
+	"github.com/golang/protobuf/ptypes/empty"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
-// Server is an abstraction to manage differents aspects of a mux router.
-type Server struct {
-	key    string
-	db     db.DB
-	router *chi.Mux
-	logger *logrus.Logger
+// Server represents a gRPC BotioServer with a method to connect
+// to its database.
+type Server interface {
+	AddCommand(context.Context, *proto.BotCommand) (*empty.Empty, error)
+	GetCommand(context.Context, *proto.Command) (*proto.BotCommand, error)
+	ListCommands(context.Context, *empty.Empty) (*proto.BotCommands, error)
+	UpdateCommand(context.Context, *proto.BotCommand) (*empty.Empty, error)
+	DeleteCommand(context.Context, *proto.Command) (*empty.Empty, error)
+	Connect() error
+	Serve() error
 }
 
-// Option represents an option to a *Server.
-type Option func(s *Server)
+type server struct {
+	db       db.DB
+	srv      *grpc.Server
+	listener net.Listener
+}
 
-// WithBoltDB receives a path and a collection and returns
-// an Option that creates, connects and assigns
-// a BoltDB db.DB to the Server's db.
+// Option represents an option for a new *server.
+type Option func(s *server) error
+
+// WithBoltDB receives a path and a colletion to create a BoltDB client
+// and assign it to the new server. If something goes wrong while
+// configuring the client it panics.
 func WithBoltDB(path, col string) Option {
-	return func(s *Server) {
+	return func(s *server) error {
 		database := db.Create("local")
 		bdb, ok := database.(*db.Bolt)
 		if !ok {
-			log.Fatalf("while creating BoltDB database a fatal error happened")
+			return fmt.Errorf("while connecting BoltDB database a fatal error happened")
 		}
 
 		bdb.Path = path
 		bdb.Col = col
 
 		s.db = bdb
+
+		return nil
 	}
 }
 
-// WithPostgresDB receives a set of parameters neccessaries to initialize
-// a PostgreSQL database and return an Option to assign it to the
-// Server's db.
+// WithPostgresDB receives a set of parameters to create a PostgreSQL client
+// and assign it to the new server. If something goes wrong while
+// configuring the client it panics.
 func WithPostgresDB(host, port, dbName, table, user, password string) Option {
-	return func(s *Server) {
+	return func(s *server) error {
 		database := db.Create("postgres")
 		ps, ok := database.(*db.Postgres)
 		if !ok {
-			log.Fatalf("while creating a PostgreSQL database a fatal error happened")
+			return fmt.Errorf("while creating a PostgreSQL database a fatal error happened")
 		}
 
 		ps.Host = host
@@ -63,58 +78,115 @@ func WithPostgresDB(host, port, dbName, table, user, password string) Option {
 		ps.Table = table
 
 		s.db = ps
+
+		return nil
 	}
 }
 
-// WithJWTMiddleware receives a key and returns an Option
-// that assigns it to the Server's key.
-func WithJWTMiddleware(key string) Option {
-	return func(s *Server) {
-		s.key = key
+// WithTestDB returns an Option to a new server that assigns to its
+// db field an in-memory database for testing.
+func WithTestDB() Option {
+	return func(s *server) error {
+		database := db.Create("testing")
+		s.db = database
+
+		return nil
 	}
 }
 
-// New should receive one or more Options to apply then to a new *Server
+// WithListener returns an Option to a new Server that assigns to its
+// listener field a TCP listener with the received address.
+func WithListener(addr string) Option {
+	return func(s *server) error {
+		listener, err := net.Listen("tcp", addr)
+		if err != nil {
+			return fmt.Errorf("while creating a new tcp listener with addr %q: %v", addr, err)
+		}
+
+		s.listener = listener
+		return nil
+	}
+}
+
+// WithSecuredGRPCServer returns an Option to a new Server that assigns to its
+// srv field a secured gRPC server with TLS.
+func WithSecuredGRPCServer(crt, key, ca string) Option {
+	return func(s *server) error {
+		cert, err := tls.LoadX509KeyPair(crt, key)
+		if err != nil {
+			return fmt.Errorf("while loading SSL key pair: %v", err)
+		}
+
+		certPool := x509.NewCertPool()
+		ca, err := ioutil.ReadFile(ca)
+		if err != nil {
+			return fmt.Errorf("while reading CA certificate: %v", err)
+		}
+
+		if ok := certPool.AppendCertsFromPEM(ca); !ok {
+			return fmt.Errorf("fail while appending client certificates")
+		}
+
+		creds := credentials.NewTLS(&tls.Config{
+			ClientAuth:   tls.RequireAndVerifyClientCert,
+			Certificates: []tls.Certificate{cert},
+			ClientCAs:    certPool,
+		})
+
+		s.srv = grpc.NewServer(grpc.Creds(creds))
+		return nil
+	}
+}
+
+// WithInsecureGRPCServer returns an Option to a new Server that assigns to its
+// srv field a insecure gRPC server.
+func WithInsecureGRPCServer() Option {
+	return func(s *server) error {
+		s.srv = grpc.NewServer()
+		return nil
+	}
+}
+
+// New should receive one or more Options to apply then to a new Server
 // that will be return completely initialized.
-func New(options ...Option) *Server {
+func New(options ...Option) (Server, error) {
 	if len(options) == 0 {
-		log.Fatalf("no options received for creating a new Server")
+		return nil, fmt.Errorf("no options received for creating a new Server")
 	}
-	s := &Server{}
-	s.routes()
-	s.logger = logrus.New()
-	s.logger.SetFormatter(&logrus.TextFormatter{
-		FullTimestamp:    true,
-		QuoteEmptyFields: true,
-		TimestampFormat:  "02-01-2006 15:04:05",
-	})
-	s.logger.Out = os.Stdout
 
+	s := &server{}
 	for _, opt := range options {
-		opt(s)
+		if err := opt(s); err != nil {
+			return nil, fmt.Errorf("while creating a new Server: %v", err)
+		}
 	}
 
+	if s.srv == nil {
+		insecureOpt := WithInsecureGRPCServer()
+		if err := insecureOpt(s); err != nil {
+			return nil, fmt.Errorf("while creating a new Server: %v", err)
+		}
+	}
+
+	proto.RegisterBotioServer(s.srv, s)
+	return s, nil
+}
+
+// Serve accepts incoming connections on the Server's listener.
+func (s *server) Serve() error {
+	return s.srv.Serve(s.listener)
+}
+
+// Connect tries to connect the Server to its database.
+func (s *server) Connect() error {
 	if err := s.db.Connect(); err != nil {
-		log.Fatalf("while connecting Server to database: %v", err)
+		return fmt.Errorf("while connecting Server to database: %v", err)
 	}
 
-	return s
+	return nil
 }
 
-// ServeHTTP makes the Server type to satisfy the http.Handler interface.
-func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	s.router.ServeHTTP(w, r)
-}
-
-// GenerateJWT returns a JWT token to interact safely with the application
-// or an error if something goes wrong.
-func (s *Server) GenerateJWT() (string, error) {
-	token := jwt.New(jwt.SigningMethodHS256)
-
-	tkStr, err := token.SignedString([]byte(s.key))
-	if err != nil {
-		return "", fmt.Errorf("while generating JWT token for authentication: %v", err)
-	}
-
-	return tkStr, nil
+// CloseList closes the Server's listener.
+func (s *server) CloseList() {
+	s.listener.Close()
 }

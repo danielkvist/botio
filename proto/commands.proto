@@ -1,0 +1,66 @@
+syntax="proto3";
+package proto;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+
+// Command represents a command's name.
+message Command{
+    string command = 1;
+}
+
+// Response represents a commnad's response.
+message Response {
+    string response = 1;
+}
+
+// BotCommand is a encapsulates a command's name and his
+// response.
+message BotCommand {
+    Command cmd = 1;
+    Response resp = 2;
+}
+
+// BotCommands represents a list of BotCommands.
+message BotCommands {
+    repeated BotCommand commands = 1;
+}
+
+service Botio {
+    rpc AddCommand(BotCommand) returns (google.protobuf.Empty) {
+        // Route to /api/v1/commands
+        option (google.api.http) = {
+            post: "/api/v1/commands"
+            body: "*"
+        };
+    }
+
+    rpc GetCommand(Command) returns (BotCommand) {
+        // Route to /api/v1/commands/{command}
+        option (google.api.http) = {
+            get: "/api/v1/commands/{command}"
+        };
+    }
+
+    rpc ListCommands(google.protobuf.Empty) returns (BotCommands) {
+        // Route to /api/v1/commands
+        option (google.api.http) = {
+            get: "/api/v1/commands"
+        };
+    }
+
+    rpc UpdateCommand(BotCommand) returns (google.protobuf.Empty) {
+        // Route to /api/v1/commands/{cmd.command}
+        option (google.api.http) = {
+            patch: "/api/v1/commands/{cmd.command}"
+            body: "*"
+        };
+    }
+
+    rpc DeleteCommand(Command) returns (google.protobuf.Empty) {
+        // Route to /api/v1/commands/{command}
+        option (google.api.http) = {
+            delete: "/api/v1/commands/{command}"
+        };
+    }
+}

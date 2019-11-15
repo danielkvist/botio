@@ -1,14 +1,17 @@
 package cmd
 
 import (
-	"crypto/tls"
+	"context"
 	"log"
 	"net/http"
-	"time"
 
+	"github.com/danielkvist/botio/proto"
 	"github.com/danielkvist/botio/server"
 
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
 )
 
 // Server returns a *cobra.Command.
@@ -19,8 +22,7 @@ func Server() *cobra.Command {
 func serverCmd(commands ...*cobra.Command) *cobra.Command {
 	serverCmd := &cobra.Command{
 		Use:   "server",
-		Short: "server contains some subcommands to initialize a server with different databases",
-		Run:   func(cmd *cobra.Command, args []string) {},
+		Short: "Server provides subcommands to initialize a server with differents databases.",
 	}
 
 	for _, cmd := range commands {
@@ -31,141 +33,164 @@ func serverCmd(commands ...*cobra.Command) *cobra.Command {
 }
 
 func serverWithBoltDB() *cobra.Command {
+	// var key string
 	var collection string
 	var database string
-	var porthttp string
-	var porthttps string
-	var key string
-	var sslcert string
+	var httpPort string
+	var port string
+	var sslca string
+	var sslcrt string
 	var sslkey string
 
 	s := &cobra.Command{
 		Use:     "bolt",
-		Short:   "Starts a server with a BoltDB database to manage your commands with HTTP methods",
-		Example: "botio server bolt --database ./data/botio.db --collection commands --http :9090 --key mysupersecretkey",
-		Run: func(cmd *cobra.Command, args []string) {
-			var tls bool
-			if sslcert != "" && sslkey != "" {
-				tls = true
-			}
+		Short:   "Starts a Botio server with BoltDB.",
+		Example: "botio server bolt --database ./data/botio.db --collection commands --http :8081 --port :9091",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			quit := make(chan error, 2)
+			defer close(quit)
 
 			serverOptions := []server.Option{
+				server.WithListener(port),
 				server.WithBoltDB(database, collection),
-				server.WithJWTMiddleware(key),
 			}
 
-			s := server.New(serverOptions...)
-			t, err := s.GenerateJWT()
+			if sslcrt == "" || sslkey == "" || sslca == "" {
+				serverOptions = append(serverOptions, server.WithInsecureGRPCServer())
+			} else {
+				serverOptions = append(serverOptions, server.WithSecuredGRPCServer(sslcrt, sslkey, sslca))
+			}
+
+			s, err := server.New(serverOptions...)
 			if err != nil {
-				log.Printf("%v", err)
-				return
+				return errors.Wrap(err, "while creating a new Botio server with BoltDB")
 			}
 
-			log.Printf("authentication token for the server: %s", t)
-			if err := listenAndServe(porthttp, porthttps, s, tls, sslcert, sslkey); err != nil {
-				log.Printf("%v", err)
-			}
+			go func() {
+				if err := s.Connect(); err != nil {
+					quit <- errors.Wrapf(err, "while connectign server to BoltDB")
+					return
+				}
+
+				if err := s.Serve(); err != nil {
+					quit <- errors.Wrap(err, "while listening to requests")
+				}
+			}()
+
+			go func() {
+				if err := runHTTPEndpoint(httpPort); err != nil {
+					quit <- err
+				}
+			}()
+
+			log.Printf("server with BoltDB listening to HTTP requests on %q and to gRPC requests on %q!", httpPort, port)
+			return <-quit
 		},
 	}
 
+	// s.Flags().StringVar(&key, "key", "", "authentication key to generate a jwt token")
 	s.Flags().StringVar(&collection, "collection", "commands", "collection used to store commands")
 	s.Flags().StringVar(&database, "database", "./botio.db", "database path")
-	s.Flags().StringVar(&porthttp, "http", ":80", "port for HTTP connections")
-	s.Flags().StringVar(&porthttps, "https", ":443", "port for HTTPS connections")
-	s.Flags().StringVar(&key, "key", "", "authentication key to generate a jwt token")
-	s.Flags().StringVar(&sslcert, "sslcert", "", "ssl certification file")
+	s.Flags().StringVar(&httpPort, "http", ":8081", "port for HTTP server")
+	s.Flags().StringVar(&port, "port", ":9091", "port for gRPC server")
+	s.Flags().StringVar(&sslca, "sslca", "", "ssl client certification file")
+	s.Flags().StringVar(&sslcrt, "sslcrt", "", "ssl certification file")
 	s.Flags().StringVar(&sslkey, "sslkey", "", "ssl certification key file")
 
 	return s
 }
 
 func serverWithPostgresDB() *cobra.Command {
-	var host string
-	var port string
-	var user string
-	var password string
-	var table string
+	// var key string
 	var database string
-	var porthttp string
-	var porthttps string
-	var key string
-	var sslcert string
+	var host string
+	var httpPort string
+	var password string
+	var port string
+	var pport string
+	var sslca string
+	var sslcrt string
 	var sslkey string
+	var table string
+	var user string
 
 	s := &cobra.Command{
 		Use:     "postgres",
-		Short:   "Starts a server with that connects to a PostgreSQL database to manage your commands with HTTP methods",
-		Example: "botio server postgres --user postgres --password toor --database botio --table commands --key mysupersecretkey",
-		Run: func(cmd *cobra.Command, args []string) {
-			var tls bool
-			if sslcert != "" && sslkey != "" {
-				tls = true
-			}
+		Short:   "Starts a Botio server with PostgreSQL.",
+		Example: "botio server postgres --user postgres --password toor --database botio --table commands --http :8081 --port :9091",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			quit := make(chan error, 2)
+			defer close(quit)
 
 			serverOptions := []server.Option{
-				server.WithPostgresDB(host, port, database, table, user, password),
-				server.WithJWTMiddleware(key),
+				server.WithListener(port),
+				// TODO: Clean pport
+				server.WithPostgresDB(host, pport, database, table, user, password),
 			}
 
-			s := server.New(serverOptions...)
-			t, err := s.GenerateJWT()
+			if sslcrt == "" || sslkey == "" || sslca == "" {
+				serverOptions = append(serverOptions, server.WithInsecureGRPCServer())
+			} else {
+				serverOptions = append(serverOptions, server.WithSecuredGRPCServer(sslcrt, sslkey, sslca))
+			}
+
+			s, err := server.New(serverOptions...)
 			if err != nil {
-				log.Printf("%v", err)
-				return
+				return errors.Wrap(err, "while creating a new Botio server with PostgreSQL")
 			}
 
-			log.Printf("authentication token for the server: %s", t)
-			if err := listenAndServe(porthttp, porthttps, s, tls, sslcert, sslkey); err != nil {
-				log.Printf("%v", err)
-			}
+			go func() {
+				if err := s.Connect(); err != nil {
+					quit <- errors.Wrapf(err, "while connectign server to PostgreSQL")
+					return
+				}
+
+				if err := s.Serve(); err != nil {
+					quit <- errors.Wrap(err, "while listening to requests")
+				}
+			}()
+
+			go func() {
+				if err := runHTTPEndpoint(httpPort); err != nil {
+					quit <- err
+				}
+			}()
+
+			log.Printf("server with PostgreSQL listening to HTTP requests on %q and to gRPC requests on %q!", httpPort, port)
+			return <-quit
 		},
 	}
 
-	s.Flags().StringVar(&host, "host", "postgres", "host of the PostgreSQL database")
-	s.Flags().StringVar(&port, "port", "5432", "port of the PostgreSQL database host")
+	// s.Flags().StringVar(&key, "key", "", "authentication key to generate a jwt token")
 	s.Flags().StringVar(&database, "database", "botio", "PostgreSQL database name")
+	s.Flags().StringVar(&host, "host", "postgres", "host of the PostgreSQL database")
+	s.Flags().StringVar(&httpPort, "http", ":8081", "port for HTTP server")
+	s.Flags().StringVar(&password, "password", "", "password for the user of the PostgreSQL database")
+	s.Flags().StringVar(&port, "port", ":9091", "port for gRPC server")
+	s.Flags().StringVar(&pport, "postgresPort", "5432", "port of the PostgreSQL database host")
+	s.Flags().StringVar(&sslca, "sslca", "", "ssl client certification file")
+	s.Flags().StringVar(&sslcrt, "sslcrt", "", "ssl certification file")
+	s.Flags().StringVar(&sslkey, "sslkey", "", "ssl certification key file")
 	s.Flags().StringVar(&table, "table", "commands", "table of the PostgreSQL database")
 	s.Flags().StringVar(&user, "user", "", "user of the PostgreSQL database")
-	s.Flags().StringVar(&password, "password", "", "password for the user of the PostgreSQL database")
-	s.Flags().StringVar(&porthttp, "http", ":80", "port for HTTP connections")
-	s.Flags().StringVar(&porthttps, "https", ":443", "port for HTTPS connections")
-	s.Flags().StringVar(&key, "key", "", "authentication key to generate a jwt token")
-	s.Flags().StringVar(&sslcert, "sslcert", "", "ssl certification file")
-	s.Flags().StringVar(&sslkey, "sslkey", "", "ssl certification key file")
 
 	return s
 }
 
-func listenAndServe(httpaddr string, httpsaddr string, h http.Handler, tls bool, sslcert string, sslkey string) error {
-	s := &http.Server{
-		Addr:         httpaddr,
-		Handler:      h,
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 10 * time.Second,
-		IdleTimeout:  120 * time.Second,
+// FIXME:
+func runHTTPEndpoint(port string) error {
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	mux := runtime.NewServeMux()
+	options := []grpc.DialOption{
+		grpc.WithInsecure(),
 	}
 
-	if tls {
-		return listenAndServeHTTPS(httpsaddr, s, sslcert, sslkey)
+	if err := proto.RegisterBotioHandlerFromEndpoint(ctx, mux, port, options); err != nil {
+		return errors.Wrapf(err, "while registering gRPC HTTP endpoint")
 	}
 
-	return s.ListenAndServe()
-}
-
-func listenAndServeHTTPS(addr string, s *http.Server, sslcert string, sslkey string) error {
-	tlsConf := &tls.Config{
-		PreferServerCipherSuites: true,
-		MinVersion:               tls.VersionTLS12,
-		CipherSuites: []uint16{
-			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-		},
-	}
-
-	s.TLSConfig = tlsConf
-	s.Addr = addr
-
-	return s.ListenAndServeTLS(sslcert, sslkey)
+	return http.ListenAndServe(port, mux)
 }
