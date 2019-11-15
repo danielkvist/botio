@@ -5,6 +5,7 @@ import (
 
 	"github.com/danielkvist/botio/bot"
 
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -22,8 +23,8 @@ func Bot() *cobra.Command {
 
 	b := &cobra.Command{
 		Use:     "bot",
-		Short:   "Initializes a bot for a supported platform (telegram and discord for the moment)",
-		Example: "botio bot --platform telegram --token <telegram-token> --url :9090 --jwt <jwt-token>",
+		Short:   "Starts a chatbot for the specified platform.",
+		Example: "botio bot --platform telegram --token <telegram-token> --url :9090",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			u, err := checkURL(url, false, false)
 			if err != nil {
@@ -37,14 +38,19 @@ func Bot() *cobra.Command {
 
 			b, err := bot.Create(platform)
 			if err != nil {
-				log.Fatalf("%v", err)
+				return errors.Wrapf(err, "while creating a new chatbot for platform %q: %v", platform, err)
 			}
 
 			b.Connect(c, u, token, goroutines)
 			b.Listen()
 			defer b.Stop()
 
-			return b.Start()
+			log.Printf("chatbot for platform %q initialized!\n", platform)
+			if err := b.Start(); err != nil {
+				return errors.Wrapf(b.Start(), "while starting chatbot for platform %q", platform)
+			}
+
+			return nil
 		},
 	}
 

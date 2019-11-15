@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 
@@ -10,6 +9,7 @@ import (
 	"github.com/danielkvist/botio/server"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 )
@@ -22,7 +22,7 @@ func Server() *cobra.Command {
 func serverCmd(commands ...*cobra.Command) *cobra.Command {
 	serverCmd := &cobra.Command{
 		Use:   "server",
-		Short: "server contains some subcommands to initialize a server with different databases",
+		Short: "Server provides subcommands to initialize a server with differents databases.",
 	}
 
 	for _, cmd := range commands {
@@ -44,8 +44,8 @@ func serverWithBoltDB() *cobra.Command {
 
 	s := &cobra.Command{
 		Use:     "bolt",
-		Short:   "Starts a server with a BoltDB database to manage your commands with HTTP methods",
-		Example: "botio server bolt --database ./data/botio.db --collection commands --http :9090 --key mysupersecretkey",
+		Short:   "Starts a Botio server with BoltDB.",
+		Example: "botio server bolt --database ./data/botio.db --collection commands --http :8081 --port :9091",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			quit := make(chan error, 2)
 			defer close(quit)
@@ -63,13 +63,12 @@ func serverWithBoltDB() *cobra.Command {
 
 			s, err := server.New(serverOptions...)
 			if err != nil {
-				return fmt.Errorf("while creating a new Server: %v", err)
+				return errors.Wrap(err, "while creating a new Botio server with BoltDB")
 			}
 
 			go func() {
 				if err := s.Serve(); err != nil {
-					log.Println("serve error")
-					quit <- fmt.Errorf("while listeting to requests: %v", err)
+					quit <- errors.Wrap(err, "while listening to requests")
 				}
 			}()
 
@@ -79,6 +78,7 @@ func serverWithBoltDB() *cobra.Command {
 				}
 			}()
 
+			log.Printf("server with BoltDB listening to HTTP requests on %q and to gRPC requests on %q!", httpPort, port)
 			return <-quit
 		},
 	}
@@ -111,14 +111,15 @@ func serverWithPostgresDB() *cobra.Command {
 
 	s := &cobra.Command{
 		Use:     "postgres",
-		Short:   "Starts a server with that connects to a PostgreSQL database to manage your commands with HTTP methods",
-		Example: "botio server postgres --user postgres --password toor --database botio --table commands --key mysupersecretkey",
+		Short:   "Starts a Botio server with PostgreSQL.",
+		Example: "botio server postgres --user postgres --password toor --database botio --table commands --http :8081 --port :9091",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			quit := make(chan error, 2)
 			defer close(quit)
 
 			serverOptions := []server.Option{
 				server.WithListener(port),
+				// TODO: Clean pport
 				server.WithPostgresDB(host, pport, database, table, user, password),
 			}
 
@@ -130,13 +131,12 @@ func serverWithPostgresDB() *cobra.Command {
 
 			s, err := server.New(serverOptions...)
 			if err != nil {
-				return fmt.Errorf("while creating a new Server: %v", err)
+				return errors.Wrap(err, "while creating a new Botio server with PostgreSQL")
 			}
 
 			go func() {
 				if err := s.Serve(); err != nil {
-					log.Println("serve error")
-					quit <- fmt.Errorf("while listeting to requests: %v", err)
+					quit <- errors.Wrap(err, "while listening to requests")
 				}
 			}()
 
@@ -146,8 +146,8 @@ func serverWithPostgresDB() *cobra.Command {
 				}
 			}()
 
+			log.Printf("server with PostgreSQL listening to HTTP requests on %q and to gRPC requests on %q!", httpPort, port)
 			return <-quit
-
 		},
 	}
 
@@ -167,6 +167,7 @@ func serverWithPostgresDB() *cobra.Command {
 	return s
 }
 
+// FIXME:
 func runHTTPEndpoint(port string) error {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
@@ -178,7 +179,7 @@ func runHTTPEndpoint(port string) error {
 	}
 
 	if err := proto.RegisterBotioHandlerFromEndpoint(ctx, mux, port, options); err != nil {
-		return fmt.Errorf("while registering gRPC HTTP endpoint: %v", err)
+		return errors.Wrapf(err, "while registering gRPC HTTP endpoint")
 	}
 
 	return http.ListenAndServe(port, mux)
