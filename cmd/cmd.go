@@ -14,8 +14,8 @@ import (
 func Root(commands ...*cobra.Command) error {
 	examples := []string{
 		"botio server bolt --database ./data/commands.db --collection commands",
-		"botio bot --platform telegram --token <telegram-token> --addr :9091",
 		"botio client add --command start --response Hi",
+		"botio bot --platform telegram --token <telegram-token>",
 	}
 
 	root := &cobra.Command{

@@ -12,6 +12,7 @@ import (
 // Bot returns a *cobra.Command
 func Bot() *cobra.Command {
 	// var jwtToken string
+	var addr string
 	var goroutines int
 	var platform string
 	var serverName string
@@ -19,14 +20,13 @@ func Bot() *cobra.Command {
 	var sslcrt string
 	var sslkey string
 	var token string
-	var url string
 
 	b := &cobra.Command{
 		Use:     "bot",
 		Short:   "Starts a chatbot for the specified platform.",
-		Example: "botio bot --platform telegram --token <telegram-token> --url :9090",
+		Example: "botio bot --platform telegram --token <telegram-token>",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			u, err := checkURL(url, false, false)
+			u, err := checkURL(addr, false, false)
 			if err != nil {
 				return err
 			}
@@ -56,12 +56,12 @@ func Bot() *cobra.Command {
 
 	// b.Flags().StringVarP(&jwtToken, "jwt", "j", "", "jwt authenticaton token")
 	b.Flags().IntVar(&goroutines, "goroutines", 10, "number of goroutines")
+	b.Flags().StringVar(&addr, "addr", ":9091", "botio's gRPC server address")
+	b.Flags().StringVar(&platform, "platform", "", "platform (discord or telegram)")
 	b.Flags().StringVar(&sslca, "sslca", "", "ssl client certification file")
 	b.Flags().StringVar(&sslcrt, "sslcrt", "", "ssl certification file")
 	b.Flags().StringVar(&sslcrt, "sslkey", "", "ssl certification key file")
 	b.Flags().StringVar(&token, "token", "", "bot's token")
-	b.Flags().StringVar(&url, "url", "", "botio's server URL")
-	b.Flags().StringVar(&platform, "platform", "", "platform (discord or telegram)")
 
 	return b
 }
