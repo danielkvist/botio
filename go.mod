@@ -4,6 +4,7 @@ go 1.12
 
 require (
 	github.com/bwmarrin/discordgo v0.20.1
+	github.com/dgraph-io/ristretto v0.0.0-20191114170855-99d1bbbf28e6
 	github.com/golang/protobuf v1.3.2
 	github.com/gorilla/websocket v1.4.1 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.12.1

@@ -122,6 +122,7 @@ func (bdb *Bolt) GetAll() (*proto.BotCommands, error) {
 // It returns a non-nil error if something goes wrong.
 func (bdb *Bolt) Remove(cmd *proto.Command) error {
 	el := cmd.GetCommand()
+
 	return bdb.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(bdb.Col))
 		err := b.Delete([]byte(el))
