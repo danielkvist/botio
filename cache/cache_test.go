@@ -182,6 +182,7 @@ func TestRemove(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	time.Sleep(10 * time.Millisecond)
 	if _, err = c.Get(cmd.GetCmd()); err == nil {
 		t.Fatalf("command %q should have triggered an error", cmd.GetCmd().GetCommand())
 	}
