@@ -98,9 +98,9 @@ func WithTestDB() Option {
 
 // WithCache returns an Option to a new Server that assigns to its cache
 // field an in-memory concurrently-safe cache.
-func WithCache(counters, cost, bufferItems int64) Option {
+func WithCache(cap int64) Option {
 	return func(s *server) error {
-		c, err := cache.New(counters, cost, bufferItems)
+		c, err := cache.New(cap)
 		if err != nil {
 			return err
 		}
@@ -188,7 +188,7 @@ func New(options ...Option) (Server, error) {
 	if s.cache == nil {
 		// 262,144,000 its the number of bytes for the cache capacity.
 		// 262144000 Bytes => 250 Megabytes
-		cacheOpt := WithCache(1e7, 262144000, 64)
+		cacheOpt := WithCache(262144000)
 		if err := cacheOpt(s); err != nil {
 			return nil, errors.Wrapf(err, "while creating a new Server")
 		}

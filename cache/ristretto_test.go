@@ -9,43 +9,22 @@ import (
 
 func TestNew(t *testing.T) {
 	tt := []struct {
-		name             string
-		countersValue    int64
-		costValue        int64
-		bufferItemsValue int64
-		expectedToFail   bool
+		name           string
+		capValue       int64
+		expectedToFail bool
 	}{
 		{
-			name:             "with example values",
-			countersValue:    1e7,
-			costValue:        1 << 30,
-			bufferItemsValue: 64,
+			name:     "with capacity",
+			capValue: 1 << 30,
 		},
 		{
-			name:             "zero for countersValue",
-			countersValue:    0,
-			costValue:        1 << 30,
-			bufferItemsValue: 64,
-			expectedToFail:   true,
-		},
-		{
-			name:             "zero for costValue",
-			countersValue:    1e7,
-			costValue:        0,
-			bufferItemsValue: 64,
-			expectedToFail:   true,
-		},
-		{
-			name:             "zero for bufferItemsValue",
-			countersValue:    1e7,
-			costValue:        1 << 30,
-			bufferItemsValue: 0,
-			expectedToFail:   true,
+			name:           "without capacity",
+			expectedToFail: true,
 		},
 	}
 
 	for _, tc := range tt {
-		if _, err := New(tc.countersValue, tc.costValue, tc.bufferItemsValue); err != nil {
+		if _, err := New(tc.capValue); err != nil {
 			if tc.expectedToFail {
 				t.Skipf("test failed as expected: %v", err)
 			}
@@ -54,7 +33,7 @@ func TestNew(t *testing.T) {
 		}
 
 		if tc.expectedToFail {
-			t.Fatalf("test expected to fail with values for countersValue=%v, costValue=%v and bufferItemsValue=%v not failed as expected", tc.countersValue, tc.costValue, tc.bufferItemsValue)
+			t.Fatalf("test expected to fail with capacity %v not failed as expected", tc.capValue)
 		}
 	}
 }
@@ -102,7 +81,7 @@ func TestAdd(t *testing.T) {
 		},
 	}
 
-	c, err := New(1e7, 1<<30, 64)
+	c, err := New(1 << 30)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -132,7 +111,7 @@ func TestGet(t *testing.T) {
 		},
 	}
 
-	c, err := New(1e7, 1<<30, 64)
+	c, err := New(1 << 30)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -168,7 +147,7 @@ func TestRemove(t *testing.T) {
 		},
 	}
 
-	c, err := New(1e7, 1<<30, 64)
+	c, err := New(1 << 30)
 	if err != nil {
 		t.Fatal(err)
 	}
