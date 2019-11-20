@@ -34,6 +34,7 @@ func serverCmd(commands ...*cobra.Command) *cobra.Command {
 
 func serverWithBoltDB() *cobra.Command {
 	// var key string
+	var cacheCap int64
 	var collection string
 	var database string
 	var httpPort string
@@ -53,6 +54,7 @@ func serverWithBoltDB() *cobra.Command {
 			serverOptions := []server.Option{
 				server.WithListener(port),
 				server.WithBoltDB(database, collection),
+				server.WithCache(cacheCap),
 			}
 
 			if sslcrt == "" || sslkey == "" || sslca == "" {
@@ -89,6 +91,7 @@ func serverWithBoltDB() *cobra.Command {
 	}
 
 	// s.Flags().StringVar(&key, "key", "", "authentication key to generate a jwt token")
+	s.Flags().Int64Var(&cacheCap, "cache", 262144000, "capacity of the in-memory cache in bytes")
 	s.Flags().StringVar(&collection, "collection", "commands", "collection used to store commands")
 	s.Flags().StringVar(&database, "database", "./botio.db", "database path")
 	s.Flags().StringVar(&httpPort, "http", ":8081", "port for HTTP server")
@@ -102,6 +105,7 @@ func serverWithBoltDB() *cobra.Command {
 
 func serverWithPostgresDB() *cobra.Command {
 	// var key string
+	var cacheCap int64
 	var database string
 	var host string
 	var httpPort string
@@ -124,6 +128,7 @@ func serverWithPostgresDB() *cobra.Command {
 
 			serverOptions := []server.Option{
 				server.WithListener(port),
+				server.WithCache(cacheCap),
 				// TODO: Clean pport
 				server.WithPostgresDB(host, pport, database, table, user, password),
 			}
@@ -162,6 +167,7 @@ func serverWithPostgresDB() *cobra.Command {
 	}
 
 	// s.Flags().StringVar(&key, "key", "", "authentication key to generate a jwt token")
+	s.Flags().Int64Var(&cacheCap, "cache", 262144000, "capacity of the in-memory cache in bytes")
 	s.Flags().StringVar(&database, "database", "botio", "PostgreSQL database name")
 	s.Flags().StringVar(&host, "host", "postgres", "host of the PostgreSQL database")
 	s.Flags().StringVar(&httpPort, "http", ":8081", "port for HTTP server")
