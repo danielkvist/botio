@@ -20,3 +20,6 @@ generate:
 		proto/commands.proto
 
 setup: install generate
+
+build:
+	go build .
