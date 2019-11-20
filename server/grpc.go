@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/danielkvist/botio/proto"
 
@@ -36,7 +37,17 @@ func (s *server) GetCommand(ctx context.Context, cmd *proto.Command) (*proto.Bot
 	case <-ctx.Done():
 		return &proto.BotCommand{}, status.Error(codes.Canceled, ctx.Err().Error())
 	default:
-		c, err = s.db.Get(cmd)
+		if ok := s.inCache(cmd); !ok {
+			c, err = s.db.Get(cmd)
+
+			if err := s.cache.Add(c); err != nil {
+				// FIXME:
+				log.Printf("while adding command %q to server's cache: %v\n", cmd.GetCommand(), err)
+			}
+		} else {
+			c, err = s.cache.Get(cmd)
+		}
+
 		if err != nil {
 			return &proto.BotCommand{}, status.Error(codes.Internal, fmt.Sprintf("while getting command %q: %v", cmd.GetCommand(), err))
 		}
@@ -71,6 +82,13 @@ func (s *server) UpdateCommand(ctx context.Context, cmd *proto.BotCommand) (*emp
 	case <-ctx.Done():
 		return &empty.Empty{}, status.Error(codes.Canceled, ctx.Err().Error())
 	default:
+		if ok := s.inCache(cmd.GetCmd()); ok {
+			if err := s.cache.Remove(cmd.GetCmd()); err != nil {
+				// FIXME:
+				log.Printf("while removing command %q from cache: %v\n", cmd.GetCmd().GetCommand(), err)
+			}
+		}
+
 		if err := s.db.Update(cmd); err != nil {
 			return &empty.Empty{}, status.Error(codes.Internal, fmt.Sprintf("while updating command %q: %v", cmd.GetCmd().GetCommand(), err))
 		}
@@ -86,10 +104,23 @@ func (s *server) DeleteCommand(ctx context.Context, cmd *proto.Command) (*empty.
 	case <-ctx.Done():
 		return &empty.Empty{}, status.Error(codes.Canceled, ctx.Err().Error())
 	default:
+		if err := s.cache.Remove(cmd); err != nil {
+			// FIXME:
+			log.Printf("while removing command %q from cache: %v\n", cmd.GetCommand(), err)
+		}
+
 		if err := s.db.Remove(cmd); err != nil {
 			return &empty.Empty{}, status.Error(codes.Internal, fmt.Sprintf("while deleting command %q: %v", cmd.GetCommand(), err))
 		}
 	}
 
 	return &empty.Empty{}, nil
+}
+
+func (s *server) inCache(cmd *proto.Command) bool {
+	if _, err := s.cache.Get(cmd); err != nil {
+		return false
+	}
+
+	return true
 }

@@ -6,14 +6,15 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"fmt"
 	"io/ioutil"
 	"net"
 
+	"github.com/danielkvist/botio/cache"
 	"github.com/danielkvist/botio/db"
 	"github.com/danielkvist/botio/proto"
 
 	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -32,6 +33,7 @@ type Server interface {
 
 type server struct {
 	db       db.DB
+	cache    cache.Cache
 	srv      *grpc.Server
 	listener net.Listener
 }
@@ -47,7 +49,7 @@ func WithBoltDB(path, col string) Option {
 		database := db.Create("local")
 		bdb, ok := database.(*db.Bolt)
 		if !ok {
-			return fmt.Errorf("while connecting BoltDB database a fatal error happened")
+			return errors.Errorf("while connecting BoltDB database on path %q a fatal error happened", path)
 		}
 
 		bdb.Path = path
@@ -67,7 +69,7 @@ func WithPostgresDB(host, port, dbName, table, user, password string) Option {
 		database := db.Create("postgres")
 		ps, ok := database.(*db.Postgres)
 		if !ok {
-			return fmt.Errorf("while creating a PostgreSQL database a fatal error happened")
+			return errors.Errorf("while connecting to PostgreSQL server on %s:%s a fatal error happened", host, port)
 		}
 
 		ps.Host = host
@@ -94,13 +96,28 @@ func WithTestDB() Option {
 	}
 }
 
+// WithCache returns an Option to a new Server that assigns to its cache
+// field an in-memory concurrently-safe cache.
+func WithCache(counters, cost, bufferItems int64) Option {
+	return func(s *server) error {
+		c, err := cache.New(counters, cost, bufferItems)
+		if err != nil {
+			return err
+		}
+
+		s.cache = c
+
+		return nil
+	}
+}
+
 // WithListener returns an Option to a new Server that assigns to its
 // listener field a TCP listener with the received address.
 func WithListener(addr string) Option {
 	return func(s *server) error {
 		listener, err := net.Listen("tcp", addr)
 		if err != nil {
-			return fmt.Errorf("while creating a new tcp listener with addr %q: %v", addr, err)
+			return errors.Wrapf(err, "while creating a new tcp listener for addr %q", addr)
 		}
 
 		s.listener = listener
@@ -114,17 +131,17 @@ func WithSecuredGRPCServer(crt, key, ca string) Option {
 	return func(s *server) error {
 		cert, err := tls.LoadX509KeyPair(crt, key)
 		if err != nil {
-			return fmt.Errorf("while loading SSL key pair: %v", err)
+			return errors.Wrapf(err, "while loading SSL key pair")
 		}
 
 		certPool := x509.NewCertPool()
 		ca, err := ioutil.ReadFile(ca)
 		if err != nil {
-			return fmt.Errorf("while reading CA certificate: %v", err)
+			return errors.Wrapf(err, "while reading CA certificate")
 		}
 
 		if ok := certPool.AppendCertsFromPEM(ca); !ok {
-			return fmt.Errorf("fail while appending client certificates")
+			return errors.New("error while appending client certificates to cert pool")
 		}
 
 		creds := credentials.NewTLS(&tls.Config{
@@ -151,20 +168,29 @@ func WithInsecureGRPCServer() Option {
 // that will be return completely initialized.
 func New(options ...Option) (Server, error) {
 	if len(options) == 0 {
-		return nil, fmt.Errorf("no options received for creating a new Server")
+		return nil, errors.New("no options received for creating a new Server")
 	}
 
 	s := &server{}
 	for _, opt := range options {
 		if err := opt(s); err != nil {
-			return nil, fmt.Errorf("while creating a new Server: %v", err)
+			return nil, errors.Wrapf(err, "while creating a new Server")
 		}
 	}
 
 	if s.srv == nil {
 		insecureOpt := WithInsecureGRPCServer()
 		if err := insecureOpt(s); err != nil {
-			return nil, fmt.Errorf("while creating a new Server: %v", err)
+			return nil, errors.Wrapf(err, "while creating a new Server")
+		}
+	}
+
+	if s.cache == nil {
+		// 262,144,000 its the number of bytes for the cache capacity.
+		// 262144000 Bytes => 250 Megabytes
+		cacheOpt := WithCache(1e7, 262144000, 64)
+		if err := cacheOpt(s); err != nil {
+			return nil, errors.Wrapf(err, "while creating a new Server")
 		}
 	}
 
@@ -180,7 +206,7 @@ func (s *server) Serve() error {
 // Connect tries to connect the Server to its database.
 func (s *server) Connect() error {
 	if err := s.db.Connect(); err != nil {
-		return fmt.Errorf("while connecting Server to database: %v", err)
+		return errors.Wrapf(err, "while connecting Server to database")
 	}
 
 	return nil

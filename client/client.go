@@ -127,7 +127,7 @@ func (c *client) UpdateCommand(ctx context.Context, cmd *proto.BotCommand) (*emp
 func (c *client) DeleteCommand(ctx context.Context, cmd *proto.Command) (*empty.Empty, error) {
 	command := cmd.GetCommand()
 	if command == "" {
-		return nil, fmt.Errorf("received an proto.Command with no command")
+		return nil, fmt.Errorf("received an empty proto.Command")
 	}
 
 	return c.client.DeleteCommand(ctx, cmd)

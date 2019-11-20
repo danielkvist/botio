@@ -115,14 +115,6 @@ func TestListCommands(t *testing.T) {
 	if len(commands.GetCommands()) != 2 {
 		t.Fatalf("expected to get a list of commands with %v elements. got=%v elements", 2, commands.GetCommands())
 	}
-
-	if commands.GetCommands()[0].GetCmd().GetCommand() != commandOne.GetCmd().GetCommand() {
-		t.Fatalf("expected first command to be command %q. got=%q", commands.GetCommands()[0].GetCmd().GetCommand(), commandOne.GetCmd().GetCommand())
-	}
-
-	if commands.GetCommands()[1].GetCmd().GetCommand() != commandTwo.GetCmd().GetCommand() {
-		t.Fatalf("expected second command to be command %q. got=%q", commands.GetCommands()[1].GetCmd().GetCommand(), commandTwo.GetCmd().GetCommand())
-	}
 }
 
 func TestUpdateCommand(t *testing.T) {
