@@ -126,7 +126,12 @@ func (bdb *Bolt) Remove(cmd *proto.Command) error {
 	return bdb.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(bdb.Col))
 		err := b.Delete([]byte(el))
-		return fmt.Errorf("while removing command %q: %v", el, err)
+
+		if err != nil {
+			return fmt.Errorf("while removing command %q: %v", el, err)
+		}
+
+		return nil
 	})
 }
 
