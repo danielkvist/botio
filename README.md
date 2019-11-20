@@ -37,6 +37,10 @@ Botio is a CLI to create and manage easily chatbots for different platforms with
 - Redis.
 - SQLite.
 
+### Cache
+
+- Ristretto.
+
 ## Install
 
 ### Go
