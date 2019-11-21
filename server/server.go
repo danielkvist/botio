@@ -8,6 +8,8 @@ import (
 	"crypto/x509"
 	"io/ioutil"
 	"net"
+	"os"
+	"time"
 
 	"github.com/danielkvist/botio/cache"
 	"github.com/danielkvist/botio/db"
@@ -15,6 +17,7 @@ import (
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -32,10 +35,14 @@ type Server interface {
 }
 
 type server struct {
-	db       db.DB
-	cache    cache.Cache
-	srv      *grpc.Server
-	listener net.Listener
+	db            db.DB
+	dbPlatform    string
+	cache         cache.Cache
+	cachePlatform string
+	srv           *grpc.Server
+	ssl           bool
+	listener      net.Listener
+	log           *logrus.Logger
 }
 
 // Option represents an option for a new *server.
@@ -56,6 +63,7 @@ func WithBoltDB(path, col string) Option {
 		bdb.Col = col
 
 		s.db = bdb
+		s.dbPlatform = "BoltDB"
 
 		return nil
 	}
@@ -80,6 +88,7 @@ func WithPostgresDB(host, port, dbName, table, user, password string) Option {
 		ps.Table = table
 
 		s.db = ps
+		s.dbPlatform = "PostgreSQL"
 
 		return nil
 	}
@@ -91,6 +100,7 @@ func WithTestDB() Option {
 	return func(s *server) error {
 		database := db.Create("testing")
 		s.db = database
+		s.dbPlatform = "In Memory"
 
 		return nil
 	}
@@ -106,6 +116,7 @@ func WithCache(cap int64) Option {
 		}
 
 		s.cache = c
+		s.cachePlatform = "Ristretto"
 
 		return nil
 	}
@@ -151,6 +162,7 @@ func WithSecuredGRPCServer(crt, key, ca string) Option {
 		})
 
 		s.srv = grpc.NewServer(grpc.Creds(creds))
+		s.ssl = true
 		return nil
 	}
 }
@@ -194,6 +206,15 @@ func New(options ...Option) (Server, error) {
 		}
 	}
 
+	s.log = logrus.New()
+	s.log.SetFormatter(&logrus.TextFormatter{
+		FullTimestamp:    true,
+		TimestampFormat:  time.RFC850,
+		DisableSorting:   true,
+		QuoteEmptyFields: true,
+	})
+	s.log.Out = os.Stdout
+
 	proto.RegisterBotioServer(s.srv, s)
 	return s, nil
 }
@@ -206,7 +227,8 @@ func (s *server) Serve() error {
 // Connect tries to connect the Server to its database.
 func (s *server) Connect() error {
 	if err := s.db.Connect(); err != nil {
-		return errors.Wrapf(err, "while connecting Server to database")
+		s.logFatal("db", "Connect", err.Error(), "while connecting Server to database")
+		return err
 	}
 
 	return nil
@@ -214,5 +236,6 @@ func (s *server) Connect() error {
 
 // CloseList closes the Server's listener.
 func (s *server) CloseList() {
+	s.logInfo("server", "CloseList", "closing Server's listener", 0*time.Second)
 	s.listener.Close()
 }
