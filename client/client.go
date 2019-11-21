@@ -4,12 +4,12 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"fmt"
 	"io/ioutil"
 
 	"github.com/danielkvist/botio/proto"
 
 	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -34,7 +34,7 @@ func WithInsecureConn(url string) ConnOption {
 	return func() (*grpc.ClientConn, error) {
 		conn, err := grpc.Dial(url, grpc.WithInsecure())
 		if err != nil {
-			return nil, fmt.Errorf("while creating a new insecure grpc.ClientConn: %v", err)
+			return nil, errors.Wrap(err, "while creating a new insecure grpc.ClientConn")
 		}
 
 		return conn, nil
@@ -45,17 +45,17 @@ func WithTLSSecureConn(url, server, crt, key, ca string) ConnOption {
 	return func() (*grpc.ClientConn, error) {
 		cert, err := tls.LoadX509KeyPair(crt, key)
 		if err != nil {
-			return nil, fmt.Errorf("while loading client SSL key pair: %v", err)
+			return nil, errors.Wrap(err, "while loading client SSL key pair")
 		}
 
 		certPool := x509.NewCertPool()
 		caCert, err := ioutil.ReadFile(ca)
 		if err != nil {
-			return nil, fmt.Errorf("while reading CA certificate: %v", err)
+			return nil, errors.Wrap(err, "while reading CA certificate")
 		}
 
 		if ok := certPool.AppendCertsFromPEM(caCert); !ok {
-			return nil, fmt.Errorf("faile to append CA certificates")
+			return nil, errors.New("faile to append CA certificates")
 		}
 
 		creds := credentials.NewTLS(&tls.Config{
@@ -66,7 +66,7 @@ func WithTLSSecureConn(url, server, crt, key, ca string) ConnOption {
 
 		conn, err := grpc.Dial(url, grpc.WithTransportCredentials(creds))
 		if err != nil {
-			return nil, fmt.Errorf("while creating a new Dial for %q: %v", url, err)
+			return nil, errors.Wrapf(err, "while creating a new Dial for %q", url)
 		}
 
 		return conn, nil
@@ -79,7 +79,7 @@ func New(addr string, connOpt ConnOption) (Client, error) {
 
 	conn, err := connOpt()
 	if err != nil {
-		return nil, fmt.Errorf("while creating new grpc.ClientConn: %v", err)
+		return nil, errors.Wrap(err, "while creating new grpc.ClientConn")
 	}
 
 	c.conn = conn
@@ -91,11 +91,11 @@ func (c *client) AddCommand(ctx context.Context, cmd *proto.BotCommand) (*empty.
 	command := cmd.GetCmd().GetCommand()
 	response := cmd.GetResp().GetResponse()
 	if command == "" || response == "" {
-		return &empty.Empty{}, fmt.Errorf("received proto.BotCommand to add has an invalid command=%q or response=%q", command, response)
+		return &empty.Empty{}, errors.New("received BotCommand is invalid")
 	}
 
 	if _, err := c.client.AddCommand(ctx, cmd); err != nil {
-		return &empty.Empty{}, fmt.Errorf("while adding proto.BotCommand: %v", err)
+		return &empty.Empty{}, errors.Wrapf(err, "while adding BotCommand")
 	}
 
 	return &empty.Empty{}, nil
@@ -104,7 +104,7 @@ func (c *client) AddCommand(ctx context.Context, cmd *proto.BotCommand) (*empty.
 func (c *client) GetCommand(ctx context.Context, cmd *proto.Command) (*proto.BotCommand, error) {
 	command := cmd.GetCommand()
 	if command == "" {
-		return nil, fmt.Errorf("received an proto.Command with no command")
+		return nil, errors.New("received an empty Command")
 	}
 
 	return c.client.GetCommand(ctx, cmd)
@@ -118,7 +118,7 @@ func (c *client) UpdateCommand(ctx context.Context, cmd *proto.BotCommand) (*emp
 	command := cmd.GetCmd().GetCommand()
 	response := cmd.GetResp().GetResponse()
 	if command == "" || response == "" {
-		return nil, fmt.Errorf("received proto.BotCommand to update has an invalid command=%q or response=%q", command, response)
+		return &empty.Empty{}, errors.New("received BotCommand is invalid")
 	}
 
 	return c.client.UpdateCommand(ctx, cmd)
@@ -127,7 +127,7 @@ func (c *client) UpdateCommand(ctx context.Context, cmd *proto.BotCommand) (*emp
 func (c *client) DeleteCommand(ctx context.Context, cmd *proto.Command) (*empty.Empty, error) {
 	command := cmd.GetCommand()
 	if command == "" {
-		return nil, fmt.Errorf("received an empty proto.Command")
+		return &empty.Empty{}, errors.New("received BotCommand is invalid")
 	}
 
 	return c.client.DeleteCommand(ctx, cmd)

@@ -1,12 +1,50 @@
 package bot
 
-import "github.com/sirupsen/logrus"
+import (
+	"time"
 
-func log(logger *logrus.Logger, platform, id, msg, response string) {
-	logger.WithFields(logrus.Fields{
+	"github.com/sirupsen/logrus"
+)
+
+func logInfo(log *logrus.Logger, platform, id, command, response, msg string, t time.Duration) {
+	log.WithFields(logrus.Fields{
 		"platform": platform,
-		"id":       id,
-		"msg":      msg,
-		"response": response,
-	}).Info("command handled")
+		"chatID":   id,
+		"received": command,
+		"sended":   response,
+		"in":       t,
+	}).Info(msg)
+}
+
+func logError(log *logrus.Logger, platform, pkg, function, id, command, err, msg string) {
+	log.WithFields(logrus.Fields{
+		"pkg":      pkg,
+		"platform": platform,
+		"func":     function,
+		"chatID":   id,
+		"received": command,
+		"error":    err,
+	}).Error(msg)
+}
+
+func logWarning(log *logrus.Logger, platform, pkg, function, id, command, err, msg string) {
+	log.WithFields(logrus.Fields{
+		"pkg":      pkg,
+		"platform": platform,
+		"func":     function,
+		"chatID":   id,
+		"received": command,
+		"error":    err,
+	}).Warning(msg)
+}
+
+func logFatal(log *logrus.Logger, platform, pkg, function, id, command, err, msg string) {
+	log.WithFields(logrus.Fields{
+		"pkg":      pkg,
+		"platform": platform,
+		"func":     function,
+		"chatID":   id,
+		"received": command,
+		"error":    err,
+	}).Fatal(msg)
 }

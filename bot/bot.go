@@ -10,7 +10,7 @@ import (
 
 // Bot is an interface to manage bots for differentes platforms.
 type Bot interface {
-	Connect(c client.Client, addr string, token string, cap int) error
+	Connect(c client.Client, addr string, token string, cap int, defaultResponse string) error
 	Start() error
 	Listen() error
 	Stop() error

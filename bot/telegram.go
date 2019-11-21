@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/danielkvist/botio/client"
 	"github.com/danielkvist/botio/proto"
@@ -16,32 +17,35 @@ import (
 // Telegram is a wrapper for a yanzay/tbot client
 // that satifies the Bot interface.
 type Telegram struct {
-	session   *tbot.Server
-	client    client.Client
-	tclient   *tbot.Client
-	responses chan *Response
-	log       *logrus.Logger
-	wg        sync.WaitGroup
+	tclient         *tbot.Client
+	session         *tbot.Server
+	responses       chan *Response
+	defaultResponse string
+	log             *logrus.Logger
+	wg              sync.WaitGroup
+	client          client.Client
 }
 
 // Connect receives a token with which tries to indentify,
 // setups everything necessary and initializes a goroutine
 // to send the responses from the responses channel to the respective
 // clients.
-func (t *Telegram) Connect(c client.Client, addr string, token string, cap int) error {
+func (t *Telegram) Connect(c client.Client, addr string, token string, cap int, defaultResponse string) error {
 	session := tbot.New(token)
 	tclient := session.Client()
 	responses := make(chan *Response, cap)
 
 	t.session = session
-	t.client = c
 	t.tclient = tclient
 	t.responses = responses
+	t.defaultResponse = defaultResponse
+	t.client = c
+
 	t.log = logrus.New()
 	t.log.SetFormatter(&logrus.TextFormatter{
 		FullTimestamp:    true,
+		TimestampFormat:  time.RFC850,
 		QuoteEmptyFields: true,
-		TimestampFormat:  "02-01-2006 15:04:05",
 	})
 	t.log.Out = os.Stdout
 
@@ -62,6 +66,8 @@ func (t *Telegram) Connect(c client.Client, addr string, token string, cap int) 
 // the response back to the client.
 func (t *Telegram) Listen() error {
 	t.session.HandleMessage(".", func(m *tbot.Message) {
+		start := time.Now()
+
 		msg := strings.TrimPrefix(m.Text, "/")
 		resp := &Response{
 			id: m.Chat.ID,
@@ -69,15 +75,34 @@ func (t *Telegram) Listen() error {
 
 		cmd, err := t.client.GetCommand(context.TODO(), &proto.Command{Command: msg})
 		if err != nil {
-			resp.text = "I'm sorry. I didn't understand you. Bzz"
+			resp.text = t.defaultResponse
 			t.responses <- resp
+
+			logError(
+				t.log,
+				"Telegram",
+				"client",
+				"GetCommand",
+				m.Chat.ID,
+				msg,
+				err.Error(),
+				"error while responding to command",
+			)
 			return
 		}
 
 		resp.text = cmd.GetResp().GetResponse()
 		t.responses <- resp
 
-		log(t.log, "telegram", m.Chat.ID, msg, resp.text)
+		logInfo(
+			t.log,
+			"Telegram",
+			m.Chat.ID,
+			msg,
+			resp.text,
+			"command responded successfully",
+			time.Since(start),
+		)
 		return
 	})
 
