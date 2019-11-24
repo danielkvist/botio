@@ -42,6 +42,7 @@ type server struct {
 	srv           *grpc.Server
 	ssl           bool
 	listener      net.Listener
+	httpPort      string
 	log           *logrus.Logger
 }
 
@@ -118,6 +119,15 @@ func WithCache(cap int64) Option {
 		s.cache = c
 		s.cachePlatform = "Ristretto"
 
+		return nil
+	}
+}
+
+// WithHTTPPort returns an Option to a new Server that assigns to its httpPort
+// field the received port.
+func WithHTTPPort(port string) Option {
+	return func(s *server) error {
+		s.httpPort = port
 		return nil
 	}
 }
@@ -221,7 +231,21 @@ func New(options ...Option) (Server, error) {
 
 // Serve accepts incoming connections on the Server's listener.
 func (s *server) Serve() error {
-	return s.srv.Serve(s.listener)
+	errCh := make(chan error, 2)
+
+	go func() {
+		if err := s.srv.Serve(s.listener); err != nil {
+			errCh <- errors.Wrapf(err, "while listening to gRPC requests")
+		}
+	}()
+
+	go func() {
+		if err := s.jsonGateway(); err != nil {
+			errCh <- errors.Wrapf(err, "while listening to HTTP requests")
+		}
+	}()
+
+	return <-errCh
 }
 
 // Connect tries to connect the Server to its database.

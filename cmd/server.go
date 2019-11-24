@@ -1,17 +1,12 @@
 package cmd
 
 import (
-	"context"
 	"log"
-	"net/http"
 
-	"github.com/danielkvist/botio/proto"
 	"github.com/danielkvist/botio/server"
 
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
 )
 
 // Server returns a *cobra.Command.
@@ -48,10 +43,8 @@ func serverWithBoltDB() *cobra.Command {
 		Short:   "Starts a Botio server with BoltDB.",
 		Example: "botio server bolt --database ./data/botio.db --collection commands --http :8081 --port :9091",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			quit := make(chan error, 2)
-			defer close(quit)
-
 			serverOptions := []server.Option{
+				server.WithHTTPPort(httpPort),
 				server.WithListener(port),
 				server.WithBoltDB(database, collection),
 				server.WithCache(cacheCap),
@@ -68,25 +61,17 @@ func serverWithBoltDB() *cobra.Command {
 				return errors.Wrap(err, "while creating a new Botio server with BoltDB")
 			}
 
-			go func() {
-				if err := s.Connect(); err != nil {
-					quit <- errors.Wrapf(err, "while connectign server to BoltDB")
-					return
-				}
-
-				if err := s.Serve(); err != nil {
-					quit <- errors.Wrap(err, "while listening to requests")
-				}
-			}()
-
-			go func() {
-				if err := runHTTPEndpoint(httpPort); err != nil {
-					quit <- err
-				}
-			}()
+			if err := s.Connect(); err != nil {
+				return errors.Wrapf(err, "while connectign server to BoltDB")
+			}
 
 			log.Printf("server with BoltDB listening to HTTP requests on %q and to gRPC requests on %q!", httpPort, port)
-			return <-quit
+
+			if err := s.Serve(); err != nil {
+				return errors.Wrap(err, "while listening to requests")
+			}
+
+			return nil
 		},
 	}
 
@@ -123,10 +108,8 @@ func serverWithPostgresDB() *cobra.Command {
 		Short:   "Starts a Botio server with PostgreSQL.",
 		Example: "botio server postgres --user postgres --password toor --database botio --table commands --http :8081 --port :9091",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			quit := make(chan error, 2)
-			defer close(quit)
-
 			serverOptions := []server.Option{
+				server.WithHTTPPort(httpPort),
 				server.WithListener(port),
 				server.WithCache(cacheCap),
 				// TODO: Clean pport
@@ -144,25 +127,17 @@ func serverWithPostgresDB() *cobra.Command {
 				return errors.Wrap(err, "while creating a new Botio server with PostgreSQL")
 			}
 
-			go func() {
-				if err := s.Connect(); err != nil {
-					quit <- errors.Wrapf(err, "while connectign server to PostgreSQL")
-					return
-				}
-
-				if err := s.Serve(); err != nil {
-					quit <- errors.Wrap(err, "while listening to requests")
-				}
-			}()
-
-			go func() {
-				if err := runHTTPEndpoint(httpPort); err != nil {
-					quit <- err
-				}
-			}()
+			if err := s.Connect(); err != nil {
+				return errors.Wrapf(err, "while connectign server to PostgreSQL")
+			}
 
 			log.Printf("server with PostgreSQL listening to HTTP requests on %q and to gRPC requests on %q!", httpPort, port)
-			return <-quit
+
+			if err := s.Serve(); err != nil {
+				return errors.Wrap(err, "while listening to requests")
+			}
+
+			return nil
 		},
 	}
 
@@ -181,22 +156,4 @@ func serverWithPostgresDB() *cobra.Command {
 	s.Flags().StringVar(&user, "user", "", "user of the PostgreSQL database")
 
 	return s
-}
-
-// FIXME:
-func runHTTPEndpoint(port string) error {
-	ctx := context.Background()
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
-	mux := runtime.NewServeMux()
-	options := []grpc.DialOption{
-		grpc.WithInsecure(),
-	}
-
-	if err := proto.RegisterBotioHandlerFromEndpoint(ctx, mux, port, options); err != nil {
-		return errors.Wrapf(err, "while registering gRPC HTTP endpoint")
-	}
-
-	return http.ListenAndServe(port, mux)
 }
