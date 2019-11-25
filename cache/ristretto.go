@@ -7,14 +7,30 @@ import (
 	"github.com/pkg/errors"
 )
 
-type cache struct {
+type ristrettoCache struct {
 	cache *ristretto.Cache
+}
+
+// Init initializes a Cache based on ristretto with the
+// received capacity.
+func (r *ristrettoCache) Init(cap int) error {
+	c, err := ristretto.NewCache(&ristretto.Config{
+		NumCounters: 1e7,
+		MaxCost:     int64(cap),
+		BufferItems: 64,
+	})
+	if err != nil {
+		return errors.Wrap(err, "while creating a new Cache based on ristretto")
+	}
+
+	r.cache = c
+	return nil
 }
 
 // Add adds to the cache a new *proto.BotCommand. It returns a non-nill error
 // if the received *proto.BotCommand has a Command or a Response empty or if
 // something went wrong while adding the command to the cache itself.
-func (c *cache) Add(cmd *proto.BotCommand) error {
+func (r *ristrettoCache) Add(cmd *proto.BotCommand) error {
 	command := cmd.GetCmd().GetCommand()
 	resp := cmd.GetResp().GetResponse()
 
@@ -25,7 +41,7 @@ func (c *cache) Add(cmd *proto.BotCommand) error {
 		return errors.Errorf("command's response cannot be an empty string")
 	}
 
-	ok := c.cache.Set(command, resp, 1)
+	ok := r.cache.Set(command, resp, 1)
 	if !ok {
 		return errors.Errorf("error while adding command %q with response %q to cache", command, resp)
 	}
@@ -36,10 +52,10 @@ func (c *cache) Add(cmd *proto.BotCommand) error {
 // Get receives a *proto.Command and returns the respective *proto.BotCommand
 // if exists. It returns a non-nil error if the command was not found of if
 // there is any error while getting it.
-func (c *cache) Get(cmd *proto.Command) (*proto.BotCommand, error) {
+func (r *ristrettoCache) Get(cmd *proto.Command) (*proto.BotCommand, error) {
 	el := cmd.GetCommand()
 
-	val, ok := c.cache.Get(el)
+	val, ok := r.cache.Get(el)
 	if !ok {
 		return nil, errors.Errorf("command %q not found on cache", el)
 	}
@@ -61,7 +77,7 @@ func (c *cache) Get(cmd *proto.Command) (*proto.BotCommand, error) {
 
 // Remove deletes a *proto.BotCommand from the cache. It never
 // returns a non-nil error.
-func (c *cache) Remove(cmd *proto.Command) error {
-	c.cache.Del(cmd.GetCommand())
+func (r *ristrettoCache) Remove(cmd *proto.Command) error {
+	r.cache.Del(cmd.GetCommand())
 	return nil
 }

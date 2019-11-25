@@ -7,10 +7,10 @@ import (
 	"github.com/danielkvist/botio/proto"
 )
 
-func TestNew(t *testing.T) {
+func TestInit(t *testing.T) {
 	tt := []struct {
 		name           string
-		capValue       int64
+		capValue       int
 		expectedToFail bool
 	}{
 		{
@@ -24,7 +24,8 @@ func TestNew(t *testing.T) {
 	}
 
 	for _, tc := range tt {
-		if _, err := New(tc.capValue); err != nil {
+		rc := Create("ristretto")
+		if err := rc.Init(tc.capValue); err != nil {
 			if tc.expectedToFail {
 				t.Skipf("test failed as expected: %v", err)
 			}
@@ -81,13 +82,13 @@ func TestAdd(t *testing.T) {
 		},
 	}
 
-	c, err := New(1 << 30)
-	if err != nil {
+	rc := Create("ristretto")
+	if err := rc.Init(1 << 30); err != nil {
 		t.Fatal(err)
 	}
 
 	for _, tc := range tt {
-		if err := c.Add(tc.cmd); err != nil {
+		if err := rc.Add(tc.cmd); err != nil {
 			if tc.expectedToFail {
 				t.Skipf("test failed as expected: %v", err)
 			}
@@ -111,18 +112,18 @@ func TestGet(t *testing.T) {
 		},
 	}
 
-	c, err := New(1 << 30)
-	if err != nil {
+	rc := Create("ristretto")
+	if err := rc.Init(1 << 30); err != nil {
 		t.Fatal(err)
 	}
 
-	if err := c.Add(cmd); err != nil {
+	if err := rc.Add(cmd); err != nil {
 		t.Fatalf("while adding command for testing: %v", err)
 	}
 
 	time.Sleep(10 * time.Millisecond)
 	for i := 0; i <= 1000; i++ {
-		command, err := c.Get(cmd.GetCmd())
+		command, err := rc.Get(cmd.GetCmd())
 		if err != nil {
 			t.Fatalf("(%v) while getting command %q: %v", i, cmd.GetCmd().GetCommand(), err)
 		}
@@ -147,22 +148,22 @@ func TestRemove(t *testing.T) {
 		},
 	}
 
-	c, err := New(1 << 30)
-	if err != nil {
+	rc := Create("ristretto")
+	if err := rc.Init(1 << 30); err != nil {
 		t.Fatal(err)
 	}
 
-	if err := c.Add(cmd); err != nil {
+	if err := rc.Add(cmd); err != nil {
 		t.Fatalf("while adding command for testing: %v", err)
 	}
 
 	time.Sleep(10 * time.Millisecond)
-	if err := c.Remove(cmd.GetCmd()); err != nil {
+	if err := rc.Remove(cmd.GetCmd()); err != nil {
 		t.Fatal(err)
 	}
 
 	time.Sleep(10 * time.Millisecond)
-	if _, err = c.Get(cmd.GetCmd()); err == nil {
+	if _, err := rc.Get(cmd.GetCmd()); err == nil {
 		t.Fatalf("command %q should have triggered an error", cmd.GetCmd().GetCommand())
 	}
 }
