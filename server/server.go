@@ -1,14 +1,13 @@
-// Package server defines a gRPC server implementation
-// with options for its creation and logging.
+// Package server defines a gRPC server.
 package server
 
 import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"io"
 	"io/ioutil"
 	"net"
-	"os"
 	"time"
 
 	"github.com/danielkvist/botio/cache"
@@ -107,11 +106,12 @@ func WithTestDB() Option {
 	}
 }
 
-// WithCache returns an Option to a new Server that assigns to its cache
-// field an in-memory concurrently-safe cache.
-func WithCache(cap int64) Option {
+// WithRistrettoCache returns an Option to a new Server that assigns to its cache
+// a Ristretto's based cache.
+func WithRistrettoCache(cap int) Option {
 	return func(s *server) error {
-		c, err := cache.New(cap)
+		c := cache.Create("ristretto")
+		err := c.Init(cap)
 		if err != nil {
 			return err
 		}
@@ -186,66 +186,92 @@ func WithInsecureGRPCServer() Option {
 	}
 }
 
+// WithTextLogger returns an Option to a new Server with a text
+// based logger.
+func WithTextLogger(out io.Writer) Option {
+	return func(s *server) error {
+		s.log = logrus.New()
+		s.log.SetFormatter(&logrus.TextFormatter{
+			FullTimestamp:    true,
+			TimestampFormat:  time.RFC850,
+			DisableSorting:   true,
+			QuoteEmptyFields: true,
+		})
+		s.log.Out = out
+
+		return nil
+	}
+}
+
+// WithJSONLogger returns an Option to a new Server with a JSON
+// based logger.
+func WithJSONLogger(out io.Writer) Option {
+	return func(s *server) error {
+		s.log = logrus.New()
+		s.log.SetFormatter(&logrus.JSONFormatter{
+			TimestampFormat: time.RFC850,
+			PrettyPrint:     true,
+		})
+		s.log.Out = out
+
+		return nil
+	}
+}
+
 // New should receive one or more Options to apply then to a new Server
 // that will be return completely initialized.
 func New(options ...Option) (Server, error) {
+	errMsg := "while creating a new Server"
 	if len(options) == 0 {
-		return nil, errors.New("no options received for creating a new Server")
+		return nil, errors.Errorf("%s: no options provided", errMsg)
 	}
 
 	s := &server{}
 	for _, opt := range options {
 		if err := opt(s); err != nil {
-			return nil, errors.Wrapf(err, "while creating a new Server")
+			return nil, errors.Wrapf(err, "%s", errMsg)
 		}
 	}
 
-	if s.srv == nil {
-		insecureOpt := WithInsecureGRPCServer()
-		if err := insecureOpt(s); err != nil {
-			return nil, errors.Wrapf(err, "while creating a new Server")
-		}
+	switch {
+	case s.listener == nil:
+		return nil, errors.Errorf("%s: no net.Listener provided", errMsg)
+	case s.srv == nil:
+		return nil, errors.Errorf("%s: no gRPC server provided", errMsg)
+	case s.db == nil:
+		return nil, errors.Errorf("%s: no DB provided", errMsg)
+	case s.log == nil:
+		return nil, errors.Errorf("%s: no logger provided", errMsg)
+	case s.cache == nil:
+		return nil, errors.Errorf("%s: no Cache provided", errMsg)
 	}
-
-	if s.cache == nil {
-		// 262,144,000 its the number of bytes for the cache capacity.
-		// 262144000 Bytes => 250 Megabytes
-		cacheOpt := WithCache(262144000)
-		if err := cacheOpt(s); err != nil {
-			return nil, errors.Wrapf(err, "while creating a new Server")
-		}
-	}
-
-	s.log = logrus.New()
-	s.log.SetFormatter(&logrus.TextFormatter{
-		FullTimestamp:    true,
-		TimestampFormat:  time.RFC850,
-		DisableSorting:   true,
-		QuoteEmptyFields: true,
-	})
-	s.log.Out = os.Stdout
 
 	proto.RegisterBotioServer(s.srv, s)
 	return s, nil
 }
 
-// Serve accepts incoming connections on the Server's listener.
+// Serve accepts incoming gRPC connections using the Server's listeners and also
+// listens to HTTP requests using a JSON gateway. It returns an error if one of the
+// two process fail.
 func (s *server) Serve() error {
 	errCh := make(chan error, 2)
+	defer close(errCh)
 
 	go func() {
 		if err := s.srv.Serve(s.listener); err != nil {
-			errCh <- errors.Wrapf(err, "while listening to gRPC requests")
+			errCh <- errors.Wrapf(err, "while listening to gRPC requests on %q", s.listener.Addr().String())
 		}
 	}()
 
-	go func() {
-		if err := s.jsonGateway(); err != nil {
-			errCh <- errors.Wrapf(err, "while listening to HTTP requests")
-		}
-	}()
+	if s.httpPort != "" {
+		go s.serveJSONGateway(errCh)
+	}
 
 	return <-errCh
+}
+
+func (s *server) serveJSONGateway(errCh chan<- error) {
+	errCh <- errors.Wrapf(s.jsonGateway(), "while listening to HTTP requests on %q", s.httpPort)
 }
 
 // Connect tries to connect the Server to its database.
