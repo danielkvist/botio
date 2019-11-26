@@ -1,25 +1,22 @@
 package client
 
 import (
+	"bytes"
 	"context"
-	"net"
 	"testing"
-	"time"
 
 	"github.com/danielkvist/botio/proto"
 	"github.com/danielkvist/botio/server"
 
 	"github.com/golang/protobuf/ptypes/empty"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/test/bufconn"
 )
 
 func TestAddCommand(t *testing.T) {
-	close := make(chan struct{})
-	c := testClient(t, close)
+	closeCh := make(chan struct{})
+	c := testClient(t, closeCh)
 
 	defer func() {
-		close <- struct{}{}
+		close(closeCh)
 	}()
 
 	tt := []struct {
@@ -81,11 +78,11 @@ func TestAddCommand(t *testing.T) {
 }
 
 func TestGetCommand(t *testing.T) {
-	close := make(chan struct{})
-	c := testClient(t, close)
+	closeCh := make(chan struct{})
+	c := testClient(t, closeCh)
 
 	defer func() {
-		close <- struct{}{}
+		close(closeCh)
 	}()
 
 	command := &proto.BotCommand{
@@ -124,11 +121,11 @@ func TestGetCommand(t *testing.T) {
 }
 
 func TestListCommand(t *testing.T) {
-	close := make(chan struct{})
-	c := testClient(t, close)
+	closeCh := make(chan struct{})
+	c := testClient(t, closeCh)
 
 	defer func() {
-		close <- struct{}{}
+		close(closeCh)
 	}()
 
 	commandOne := &proto.BotCommand{
@@ -167,11 +164,11 @@ func TestListCommand(t *testing.T) {
 }
 
 func TestUpdateCommand(t *testing.T) {
-	close := make(chan struct{})
-	c := testClient(t, close)
+	closeCh := make(chan struct{})
+	c := testClient(t, closeCh)
 
 	defer func() {
-		close <- struct{}{}
+		close(closeCh)
 	}()
 
 	command := &proto.BotCommand{
@@ -232,11 +229,11 @@ func TestUpdateCommand(t *testing.T) {
 }
 
 func TestDeleteCommand(t *testing.T) {
-	close := make(chan struct{})
-	c := testClient(t, close)
+	closeCh := make(chan struct{})
+	c := testClient(t, closeCh)
 
 	defer func() {
-		close <- struct{}{}
+		close(closeCh)
 	}()
 
 	command := &proto.BotCommand{
@@ -275,39 +272,32 @@ func TestDeleteCommand(t *testing.T) {
 	}
 }
 
-func testClient(t *testing.T, close <-chan struct{}) client {
+func testClient(t *testing.T, closeCh <-chan struct{}) Client {
 	t.Helper()
 
-	const bufSize = 1024 * 1024
-	listener := bufconn.Listen(bufSize)
-	s, err := server.New(server.WithTestDB())
+	s, err := server.New(
+		server.WithTestDB(),
+		server.WithRistrettoCache(262144000),
+		server.WithListener(":33333"),
+		server.WithInsecureGRPCServer(),
+		server.WithTextLogger(&bytes.Buffer{}),
+	)
 	if err != nil {
 		t.Fatalf("while creating a new Server for testing: %v", err)
 	}
 
-	srv := grpc.NewServer()
-	proto.RegisterBotioServer(srv, s)
 	go func(t *testing.T) {
-		if err := srv.Serve(listener); err != nil {
-			t.Fatalf("while listening with a BotioServer: %v", err)
+		if err := s.Serve(); err != nil {
+			// Fails when the Server's listener is closed
+			t.Logf("while listening for requests: %v", err)
 		}
 	}(t)
 
-	dialer := func(_ string, _ time.Duration) (net.Conn, error) { return listener.Dial() }
-	conn, err := grpc.DialContext(context.TODO(), "test", grpc.WithDialer(dialer), grpc.WithInsecure())
-	if err != nil {
-		t.Fatalf("while creatin a gRPC dial: %v", err)
-	}
-
 	go func() {
-		<-close
-		defer conn.Close()
+		<-closeCh
+		s.CloseList()
 	}()
 
-	var c client
-	c.conn = conn
-	c.addr = listener.Addr().String()
-	c.client = proto.NewBotioClient(conn)
-
+	c, err := New(":33333", WithInsecureConn(":33333"))
 	return c
 }

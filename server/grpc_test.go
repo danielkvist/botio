@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"testing"
 
@@ -184,7 +185,13 @@ func TestDeleteCommand(t *testing.T) {
 
 func testServer(t *testing.T) Server {
 	t.Helper()
-	s, err := New(WithTestDB())
+	s, err := New(
+		WithTestDB(),
+		WithRistrettoCache(262144000),
+		WithListener(":0"),
+		WithInsecureGRPCServer(),
+		WithTextLogger(&bytes.Buffer{}),
+	)
 	if err != nil {
 		t.Fatalf("while creating a new Server for testing: %v", err)
 	}
