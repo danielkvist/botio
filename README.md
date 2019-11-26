@@ -203,8 +203,9 @@ botio bot --platform telegram --token <telegram-token>
 
 ## gRPC HTTP endpoint
 
-Botio uses the Google's gRPC gateway to provide an HTTP client. For the moment is work in pogress and it doesn't work.
-Once it is finished all the corresponding documentation will be here. If you want to help PRs they are welcome.
+Botio provides HTTP endpoints using Google's gRPC gateway. For the moment is work in progress.
+
+> For more information check this [file](https://github.com/danielkvist/botio/blob/master/proto/commands.proto).
 
 ## Other things that need to improve
 
