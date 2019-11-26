@@ -31,6 +31,7 @@ type Server interface {
 	DeleteCommand(context.Context, *proto.Command) (*empty.Empty, error)
 	Connect() error
 	Serve() error
+	CloseList()
 }
 
 type server struct {

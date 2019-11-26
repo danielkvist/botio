@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"log"
+	"os"
 
 	"github.com/danielkvist/botio/server"
 
@@ -44,6 +45,7 @@ func serverWithBoltDB() *cobra.Command {
 		Example: "botio server bolt --database ./data/botio.db --collection commands --http :8081 --port :9091",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			serverOptions := []server.Option{
+				server.WithTextLogger(os.Stdout),
 				server.WithHTTPPort(httpPort),
 				server.WithListener(port),
 				server.WithBoltDB(database, collection),
@@ -109,6 +111,7 @@ func serverWithPostgresDB() *cobra.Command {
 		Example: "botio server postgres --user postgres --password toor --database botio --table commands --http :8081 --port :9091",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			serverOptions := []server.Option{
+				server.WithTextLogger(os.Stdout),
 				server.WithHTTPPort(httpPort),
 				server.WithListener(port),
 				server.WithRistrettoCache(cacheCap),
