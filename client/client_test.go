@@ -287,10 +287,7 @@ func testClient(t *testing.T, closeCh <-chan struct{}) Client {
 	}
 
 	go func(t *testing.T) {
-		if err := s.Serve(); err != nil {
-			// Fails when the Server's listener is closed
-			t.Logf("while listening for requests: %v", err)
-		}
+		s.Serve()
 	}(t)
 
 	go func() {
