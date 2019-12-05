@@ -25,7 +25,7 @@ func Bot() *cobra.Command {
 	b := &cobra.Command{
 		Use:     "bot",
 		Short:   "Starts a chatbot for the specified platform.",
-		Example: "botio bot --platform telegram --token <telegram-token>",
+		Example: "botio bot --platform telegram --token <telegram-token> --jwt <jwt-token>",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			u, err := checkURL(addr, false, false)
 			if err != nil {

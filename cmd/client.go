@@ -44,7 +44,7 @@ func add() *cobra.Command {
 	add := &cobra.Command{
 		Use:     "add",
 		Short:   "Adds a new command.",
-		Example: "botio client add --command start --response Hello",
+		Example: "botio client add --command start --response Hello --token <jwt-token>",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := getClient(addr, token, serverName, sslcrt, sslkey, sslca)
 			if err != nil {
@@ -91,7 +91,7 @@ func print() *cobra.Command {
 	print := &cobra.Command{
 		Use:     "print",
 		Short:   "Prints the requested command.",
-		Example: "botio client print --command start",
+		Example: "botio client print --command start --token <jwt-token>",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := getClient(addr, token, serverName, sslcrt, sslkey, sslca)
 			if err != nil {
@@ -132,7 +132,7 @@ func list() *cobra.Command {
 	list := &cobra.Command{
 		Use:     "list",
 		Short:   "List all the commands.",
-		Example: "botio client list",
+		Example: "botio client list --token <jwt-token>",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := getClient(addr, token, serverName, sslcrt, sslkey, sslca)
 			if err != nil {
@@ -175,7 +175,7 @@ func update() *cobra.Command {
 	update := &cobra.Command{
 		Use:     "update",
 		Short:   "Updates the requested command or adds it if don't exists.",
-		Example: "botio client update --command start --response Hi",
+		Example: "botio client update --command start --response Hi --token <jwt-token>",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := getClient(addr, token, serverName, sslcrt, sslkey, sslca)
 			if err != nil {
@@ -222,7 +222,7 @@ func delete() *cobra.Command {
 	delete := &cobra.Command{
 		Use:     "delete",
 		Short:   "Deletes the requested command",
-		Example: "botio client delete --command start",
+		Example: "botio client delete --command start --token <jwt-token>",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := getClient(addr, token, serverName, sslcrt, sslkey, sslca)
 			if err != nil {

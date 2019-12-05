@@ -14,17 +14,21 @@ Botio is a CLI to create and manage easily chatbots for different platforms with
 
 ## Support
 
+### AUTH
+
+- JWT-based auth.
+
 ### Platforms
 
-- Telegram.
 - Discord.
+- Telegram.
 
 #### Work is in progress to add support for:
 
-- Slack.
-- Facebook Messenger.
 - Alexa.
+- Facebook Messenger.
 - Google Assistant.
+- Slack.
 
 ### Databases
 
@@ -90,9 +94,9 @@ Usage:
   botio [command]
 
 Examples:
-botio server bolt --database ./data/commands.db --collection commands
-botio bot --platform telegram --token <telegram-token>
-botio client add --command start --response Hi
+botio server bolt --database ./data/commands.db --collection commands --key mysupersecretkey
+botio client add --command start --response Hi --token <jwt-token>
+botio bot --platform telegram --token <telegram-token> --jwt <jwt-token>
 
 Available Commands:
   bot         Starts a chatbot for the specified platform.
@@ -127,19 +131,15 @@ Flags:
 Use "botio server [command] --help" for more information about a command.
 ```
 
-If you want to initialize a Botio's server with BoltDB:
+For example, if you want to initialize a Botio's server with BoltDB:
 
 ```bash
-botio server bolt
-```
-
-Or with PostgreSQL:
-
-```bash
-botio server postgres
+botio server bolt --key mysupersecretkey
 ```
 
 > IMPORTANT: Due to how PostgreSQL works you will need to have created the database before trying to connect Botio to it.
+
+> IMPORTANT: The first log message will contain your generated JWT for authentication.
 
 ### Client
 
@@ -169,7 +169,6 @@ Each subcommand provides and example so feel free to check each one by one.
 
 ### Bot
 
-
 The `bot` subcommand handles the initialization of a chatbot for a specified platform.
 
 ```text
@@ -180,13 +179,15 @@ Usage:
   botio bot [flags]
 
 Examples:
-botio bot --platform telegram --token <telegram-token>
+botio bot --platform telegram --token <telegram-token> --jwt <jwt-token>
 
 Flags:
       --addr string       botio's gRPC server address (default ":9091")
       --goroutines int    number of goroutines (default 10)
   -h, --help              help for bot
+      --jwt string        authentication token
       --platform string   platform (discord or telegram)
+      --resp string       default response for when the bot fails to respond to a command (default "I'm sorry but something's happened and I can't answer that command rigth now")
       --sslca string      ssl client certification file
       --sslcrt string     ssl certification file
       --sslkey string     ssl certification key file

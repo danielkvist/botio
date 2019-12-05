@@ -41,7 +41,7 @@ func serverWithBoltDB() *cobra.Command {
 	s := &cobra.Command{
 		Use:     "bolt",
 		Short:   "Starts a Botio server with BoltDB.",
-		Example: "botio server bolt --database ./data/botio.db --collection commands --http :8081 --port :9091",
+		Example: "botio server bolt --database ./data/botio.db --collection commands --key mysupersecretkey",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			serverOptions := []server.Option{
 				server.WithBoltDB(database, collection),
@@ -110,7 +110,7 @@ func serverWithPostgresDB() *cobra.Command {
 	s := &cobra.Command{
 		Use:     "postgres",
 		Short:   "Starts a Botio server with PostgreSQL.",
-		Example: "botio server postgres --user postgres --password toor --database botio --table commands --http :8081 --port :9091",
+		Example: "botio server postgres --user postgres --password toor --database botio --table commands --key mysupersecretkey",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			serverOptions := []server.Option{
 				server.WithHTTPPort(httpPort),
