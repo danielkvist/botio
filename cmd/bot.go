@@ -32,7 +32,7 @@ func Bot() *cobra.Command {
 				return err
 			}
 
-			c, err := getClient(u, token, serverName, sslcrt, sslkey, sslca)
+			c, err := getClient(u, jwtToken, serverName, sslcrt, sslkey, sslca)
 			if err != nil {
 				return err
 			}
