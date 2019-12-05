@@ -8,6 +8,7 @@ import (
 	"github.com/danielkvist/botio/proto"
 	"github.com/danielkvist/botio/server"
 
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/golang/protobuf/ptypes/empty"
 )
 
@@ -275,18 +276,26 @@ func TestDeleteCommand(t *testing.T) {
 func testClient(t *testing.T, closeCh <-chan struct{}) Client {
 	t.Helper()
 
+	token := jwt.New(jwt.SigningMethodHS256)
+	tokenStr, err := token.SignedString([]byte("testing"))
+	if err != nil {
+		t.Fatalf("while signing authentication token for testing: %v", err)
+	}
+
 	s, err := server.New(
 		server.WithTestDB(),
 		server.WithRistrettoCache(262144000),
-		server.WithListener(":33333"),
+		server.WithListener(":33333"), // FIXME:
 		server.WithInsecureGRPCServer(),
 		server.WithTextLogger(&bytes.Buffer{}),
+		server.WithJWTAuthToken("testing"),
 	)
 	if err != nil {
 		t.Fatalf("while creating a new Server for testing: %v", err)
 	}
 
 	go func(t *testing.T) {
+		// FIXME:
 		s.Serve()
 	}(t)
 
@@ -295,6 +304,6 @@ func testClient(t *testing.T, closeCh <-chan struct{}) Client {
 		s.CloseList()
 	}()
 
-	c, err := New(":33333", WithInsecureConn(":33333"))
+	c, err := New(":33333", tokenStr, WithInsecureConn(":33333"))
 	return c
 }

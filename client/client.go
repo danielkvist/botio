@@ -12,8 +12,10 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/metadata"
 )
 
+// TODO: Add comments
 type Client interface {
 	AddCommand(context.Context, *proto.BotCommand) (*empty.Empty, error)
 	GetCommand(context.Context, *proto.Command) (*proto.BotCommand, error)
@@ -24,6 +26,7 @@ type Client interface {
 
 type client struct {
 	addr   string
+	jwt    string
 	conn   *grpc.ClientConn
 	client proto.BotioClient
 }
@@ -73,7 +76,7 @@ func WithTLSSecureConn(url, server, crt, key, ca string) ConnOption {
 	}
 }
 
-func New(addr string, connOpt ConnOption) (Client, error) {
+func New(addr string, jwt string, connOpt ConnOption) (Client, error) {
 	c := &client{}
 	c.addr = addr
 
@@ -82,6 +85,7 @@ func New(addr string, connOpt ConnOption) (Client, error) {
 		return nil, errors.Wrap(err, "while creating new grpc.ClientConn")
 	}
 
+	c.jwt = jwt
 	c.conn = conn
 	c.client = proto.NewBotioClient(c.conn)
 	return c, nil
@@ -94,6 +98,7 @@ func (c *client) AddCommand(ctx context.Context, cmd *proto.BotCommand) (*empty.
 		return &empty.Empty{}, errors.New("received BotCommand is invalid")
 	}
 
+	ctx = metadata.AppendToOutgoingContext(ctx, "token", c.jwt)
 	if _, err := c.client.AddCommand(ctx, cmd); err != nil {
 		return &empty.Empty{}, errors.Wrapf(err, "while adding BotCommand")
 	}
@@ -107,10 +112,12 @@ func (c *client) GetCommand(ctx context.Context, cmd *proto.Command) (*proto.Bot
 		return nil, errors.New("received an empty Command")
 	}
 
+	ctx = metadata.AppendToOutgoingContext(ctx, "token", c.jwt)
 	return c.client.GetCommand(ctx, cmd)
 }
 
 func (c *client) ListCommands(ctx context.Context, _ *empty.Empty) (*proto.BotCommands, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, "token", c.jwt)
 	return c.client.ListCommands(ctx, &empty.Empty{})
 }
 
@@ -121,6 +128,7 @@ func (c *client) UpdateCommand(ctx context.Context, cmd *proto.BotCommand) (*emp
 		return &empty.Empty{}, errors.New("received BotCommand is invalid")
 	}
 
+	ctx = metadata.AppendToOutgoingContext(ctx, "token", c.jwt)
 	return c.client.UpdateCommand(ctx, cmd)
 }
 
@@ -130,5 +138,6 @@ func (c *client) DeleteCommand(ctx context.Context, cmd *proto.Command) (*empty.
 		return &empty.Empty{}, errors.New("received BotCommand is invalid")
 	}
 
+	ctx = metadata.AppendToOutgoingContext(ctx, "token", c.jwt)
 	return c.client.DeleteCommand(ctx, cmd)
 }

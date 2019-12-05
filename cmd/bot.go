@@ -11,7 +11,7 @@ import (
 
 // Bot returns a *cobra.Command
 func Bot() *cobra.Command {
-	// var jwtToken string
+	var jwtToken string
 	var addr string
 	var goroutines int
 	var platform string
@@ -32,7 +32,7 @@ func Bot() *cobra.Command {
 				return err
 			}
 
-			c, err := getClient(u, serverName, sslcrt, sslkey, sslca)
+			c, err := getClient(u, token, serverName, sslcrt, sslkey, sslca)
 			if err != nil {
 				return err
 			}
@@ -55,7 +55,7 @@ func Bot() *cobra.Command {
 		},
 	}
 
-	// b.Flags().StringVarP(&jwtToken, "jwt", "j", "", "jwt authenticaton token")
+	b.Flags().StringVar(&jwtToken, "jwt", "", "authenticaton token")
 	b.Flags().IntVar(&goroutines, "goroutines", 10, "number of goroutines")
 	b.Flags().StringVar(&addr, "addr", ":9091", "botio's gRPC server address")
 	b.Flags().StringVar(&platform, "platform", "", "platform (discord or telegram)")

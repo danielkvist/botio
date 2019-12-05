@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net"
@@ -13,8 +14,12 @@ import (
 	"github.com/danielkvist/botio/cache"
 	"github.com/danielkvist/botio/db"
 	"github.com/danielkvist/botio/proto"
+	"github.com/dgrijalva/jwt-go"
 
 	"github.com/golang/protobuf/ptypes/empty"
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
+	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -43,6 +48,8 @@ type server struct {
 	ssl           bool
 	listener      net.Listener
 	httpPort      string
+	key           string
+	jwt           string
 	log           *logrus.Logger
 }
 
@@ -172,7 +179,15 @@ func WithSecuredGRPCServer(crt, key, ca string) Option {
 			ClientCAs:    certPool,
 		})
 
-		s.srv = grpc.NewServer(grpc.Creds(creds))
+		s.srv = grpc.NewServer(
+			grpc.Creds(creds),
+			grpc.UnaryInterceptor(
+				grpc_middleware.ChainUnaryServer(
+					grpc_auth.UnaryServerInterceptor(s.jwtAuth),
+					grpc_recovery.UnaryServerInterceptor(),
+				),
+			),
+		)
 		s.ssl = true
 		return nil
 	}
@@ -182,7 +197,14 @@ func WithSecuredGRPCServer(crt, key, ca string) Option {
 // srv field a insecure gRPC server.
 func WithInsecureGRPCServer() Option {
 	return func(s *server) error {
-		s.srv = grpc.NewServer()
+		s.srv = grpc.NewServer(
+			grpc.UnaryInterceptor(
+				grpc_middleware.ChainUnaryServer(
+					grpc_auth.UnaryServerInterceptor(s.jwtAuth),
+					grpc_recovery.UnaryServerInterceptor(),
+				),
+			),
+		)
 		return nil
 	}
 }
@@ -219,9 +241,27 @@ func WithJSONLogger(out io.Writer) Option {
 	}
 }
 
+// WithJWTAuthToken returns an Option to a new Server that creates from
+// the received key a JWT that is assigned to the Server.
+func WithJWTAuthToken(key string) Option {
+	return func(s *server) error {
+		token := jwt.New(jwt.SigningMethodHS256)
+		tokenStr, err := token.SignedString([]byte(key))
+		if err != nil {
+			return errors.Wrap(err, "while signing JWT token for authentication")
+		}
+
+		s.key = key
+		s.jwt = tokenStr
+		return nil
+	}
+}
+
 // New should receive one or more Options to apply then to a new Server
 // that will be return completely initialized.
 func New(options ...Option) (Server, error) {
+	start := time.Now()
+
 	errMsg := "while creating a new Server"
 	if len(options) == 0 {
 		return nil, errors.Errorf("%s: no options provided", errMsg)
@@ -235,19 +275,29 @@ func New(options ...Option) (Server, error) {
 	}
 
 	switch {
-	case s.listener == nil:
-		return nil, errors.Errorf("%s: no net.Listener provided", errMsg)
-	case s.srv == nil:
-		return nil, errors.Errorf("%s: no gRPC server provided", errMsg)
-	case s.db == nil:
-		return nil, errors.Errorf("%s: no DB provided", errMsg)
-	case s.log == nil:
-		return nil, errors.Errorf("%s: no logger provided", errMsg)
 	case s.cache == nil:
 		return nil, errors.Errorf("%s: no Cache provided", errMsg)
+	case s.db == nil:
+		return nil, errors.Errorf("%s: no DB provided", errMsg)
+	case s.jwt == "":
+		return nil, errors.Errorf("%s: no key to generate a valid JWT provided", errMsg)
+	case s.listener == nil:
+		return nil, errors.Errorf("%s: no net.Listener provided", errMsg)
+	case s.log == nil:
+		return nil, errors.Errorf("%s: no logger provided", errMsg)
+	case s.srv == nil:
+		return nil, errors.Errorf("%s: no gRPC server provided", errMsg)
 	}
 
 	proto.RegisterBotioServer(s.srv, s)
+
+	s.logInfo(
+		"server",
+		"New",
+		fmt.Sprintf("created a new Server with JWT auth token: %q", s.jwt),
+		time.Since(start),
+	)
+
 	return s, nil
 }
 

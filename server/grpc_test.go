@@ -190,6 +190,7 @@ func testServer(t *testing.T) Server {
 		WithRistrettoCache(262144000),
 		WithListener(":0"),
 		WithInsecureGRPCServer(),
+		WithJWTAuthToken("testing"),
 		WithTextLogger(&bytes.Buffer{}),
 	)
 	if err != nil {

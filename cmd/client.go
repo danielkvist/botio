@@ -32,7 +32,7 @@ func clientCmd(commands ...*cobra.Command) *cobra.Command {
 }
 
 func add() *cobra.Command {
-	// var token string
+	var token string
 	var addr string
 	var command string
 	var response string
@@ -46,7 +46,7 @@ func add() *cobra.Command {
 		Short:   "Adds a new command.",
 		Example: "botio client add --command start --response Hello",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := getClient(addr, serverName, sslcrt, sslkey, sslca)
+			c, err := getClient(addr, token, serverName, sslcrt, sslkey, sslca)
 			if err != nil {
 				return err
 			}
@@ -67,7 +67,7 @@ func add() *cobra.Command {
 		},
 	}
 
-	// add.Flags().StringVar(&token, "token", "", "jwt authentication token")
+	add.Flags().StringVar(&token, "token", "", "authentication token")
 	add.Flags().StringVar(&addr, "addr", ":9091", "botio's gRPC server address")
 	add.Flags().StringVar(&command, "command", "", "command to add")
 	add.Flags().StringVar(&response, "response", "", "command's response")
@@ -79,7 +79,7 @@ func add() *cobra.Command {
 }
 
 func print() *cobra.Command {
-	// var token string
+	var token string
 	var addr string
 	var command string
 	var serverName string
@@ -92,7 +92,7 @@ func print() *cobra.Command {
 		Short:   "Prints the requested command.",
 		Example: "botio client print --command start",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := getClient(addr, serverName, sslcrt, sslkey, sslca)
+			c, err := getClient(addr, token, serverName, sslcrt, sslkey, sslca)
 			if err != nil {
 				return err
 			}
@@ -109,7 +109,7 @@ func print() *cobra.Command {
 		},
 	}
 
-	// print.Flags().StringVar(&token, "token", "", "jwt authentication token")
+	print.Flags().StringVar(&token, "token", "", "uthentication token")
 	print.Flags().StringVar(&addr, "addr", ":9091", "botio's gRPC server address")
 	print.Flags().StringVar(&command, "command", "", "command to print")
 	print.Flags().StringVar(&sslca, "sslca", "", "ssl client certification file")
@@ -120,7 +120,7 @@ func print() *cobra.Command {
 }
 
 func list() *cobra.Command {
-	// var token string
+	var token string
 	var addr string
 	var serverName string
 	var sslca string
@@ -132,7 +132,7 @@ func list() *cobra.Command {
 		Short:   "List all the commands.",
 		Example: "botio client list",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := getClient(addr, serverName, sslcrt, sslkey, sslca)
+			c, err := getClient(addr, token, serverName, sslcrt, sslkey, sslca)
 			if err != nil {
 				return err
 			}
@@ -150,7 +150,7 @@ func list() *cobra.Command {
 		},
 	}
 
-	// list.Flags().StringVarP(&token, "token", "t", "", "jwt authentication token")
+	list.Flags().StringVar(&token, "token", "", "authentication token")
 	list.Flags().StringVar(&addr, "addr", ":9091", "botio's gRPC server address")
 	list.Flags().StringVar(&sslca, "sslca", "", "ssl client certification file")
 	list.Flags().StringVar(&sslcrt, "sslcrt", "", "ssl certification file")
@@ -160,7 +160,7 @@ func list() *cobra.Command {
 }
 
 func update() *cobra.Command {
-	// var token string
+	var token string
 	var addr string
 	var command string
 	var response string
@@ -174,7 +174,7 @@ func update() *cobra.Command {
 		Short:   "Updates the requested command or adds it if don't exists.",
 		Example: "botio client update --command start --response Hi",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := getClient(addr, serverName, sslcrt, sslkey, sslca)
+			c, err := getClient(addr, token, serverName, sslcrt, sslkey, sslca)
 			if err != nil {
 				return err
 			}
@@ -195,7 +195,7 @@ func update() *cobra.Command {
 		},
 	}
 
-	// update.Flags().StringVarP(&token, "token", "t", "", "jwt authentication token")
+	update.Flags().StringVar(&token, "token", "", "authentication token")
 	update.Flags().StringVar(&addr, "addr", ":9091", "botio's gRPC server address")
 	update.Flags().StringVar(&sslca, "sslca", "", "ssl client certification file")
 	update.Flags().StringVar(&sslcrt, "sslcrt", "", "ssl certification file")
@@ -207,7 +207,7 @@ func update() *cobra.Command {
 }
 
 func delete() *cobra.Command {
-	// var token string
+	var token string
 	var addr string
 	var command string
 	var serverName string
@@ -220,7 +220,7 @@ func delete() *cobra.Command {
 		Short:   "Deletes the requested command",
 		Example: "botio client delete --command start",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := getClient(addr, serverName, sslcrt, sslkey, sslca)
+			c, err := getClient(addr, token, serverName, sslcrt, sslkey, sslca)
 			if err != nil {
 				return err
 			}
@@ -236,7 +236,7 @@ func delete() *cobra.Command {
 		},
 	}
 
-	// delete.Flags().StringVarP(&token, "token", "t", "", "jwt authentication token")
+	delete.Flags().StringVar(&token, "token", "t", "authentication token")
 	delete.Flags().StringVar(&addr, "addr", ":9091", "botio's gRPC server address")
 	delete.Flags().StringVar(&sslca, "sslca", "", "ssl client certification file")
 	delete.Flags().StringVar(&sslcrt, "sslcrt", "", "ssl certification file")
@@ -246,7 +246,7 @@ func delete() *cobra.Command {
 	return delete
 }
 
-func getClient(url, server, crt, key, ca string) (client.Client, error) {
+func getClient(url, token, server, crt, key, ca string) (client.Client, error) {
 	var c client.Client
 	var u string
 	var err error
@@ -257,9 +257,9 @@ func getClient(url, server, crt, key, ca string) (client.Client, error) {
 	}
 
 	if crt == "" || key == "" || ca == "" {
-		c, err = insecureClient(u)
+		c, err = insecureClient(u, token)
 	} else {
-		c, err = securedClient(u, server, crt, key, ca)
+		c, err = securedClient(u, token, server, crt, key, ca)
 	}
 
 	if err != nil {
@@ -269,12 +269,12 @@ func getClient(url, server, crt, key, ca string) (client.Client, error) {
 	return c, nil
 }
 
-func insecureClient(url string) (client.Client, error) {
-	return client.New(url, client.WithInsecureConn(url))
+func insecureClient(url, token string) (client.Client, error) {
+	return client.New(url, token, client.WithInsecureConn(url))
 }
 
-func securedClient(url, server, crt, key, ca string) (client.Client, error) {
-	return client.New(url, client.WithTLSSecureConn(url, server, crt, key, ca))
+func securedClient(url, token, server, crt, key, ca string) (client.Client, error) {
+	return client.New(url, token, client.WithTLSSecureConn(url, server, crt, key, ca))
 }
 
 // FIXME:

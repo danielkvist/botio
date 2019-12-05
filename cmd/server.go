@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"log"
 	"os"
 
 	"github.com/danielkvist/botio/server"
@@ -29,7 +28,7 @@ func serverCmd(commands ...*cobra.Command) *cobra.Command {
 }
 
 func serverWithBoltDB() *cobra.Command {
-	// var key string
+	var key string
 	var cacheCap int
 	var collection string
 	var database string
@@ -58,6 +57,10 @@ func serverWithBoltDB() *cobra.Command {
 				serverOptions = append(serverOptions, server.WithSecuredGRPCServer(sslcrt, sslkey, sslca))
 			}
 
+			if key != "" {
+				serverOptions = append(serverOptions, server.WithJWTAuthToken(key))
+			}
+
 			s, err := server.New(serverOptions...)
 			if err != nil {
 				return errors.Wrap(err, "while creating a new Botio server with BoltDB")
@@ -67,8 +70,6 @@ func serverWithBoltDB() *cobra.Command {
 				return errors.Wrapf(err, "while connectign server to BoltDB")
 			}
 
-			log.Printf("server with BoltDB listening to HTTP requests on %q and to gRPC requests on %q!", httpPort, port)
-
 			if err := s.Serve(); err != nil {
 				return errors.Wrap(err, "while listening to requests")
 			}
@@ -77,7 +78,7 @@ func serverWithBoltDB() *cobra.Command {
 		},
 	}
 
-	// s.Flags().StringVar(&key, "key", "", "authentication key to generate a jwt token")
+	s.Flags().StringVar(&key, "key", "", "key to generate a JWT token for authentication")
 	s.Flags().IntVar(&cacheCap, "cache", 262144000, "capacity of the in-memory cache in bytes")
 	s.Flags().StringVar(&collection, "collection", "commands", "collection used to store commands")
 	s.Flags().StringVar(&database, "database", "./botio.db", "database path")
@@ -133,8 +134,6 @@ func serverWithPostgresDB() *cobra.Command {
 			if err := s.Connect(); err != nil {
 				return errors.Wrapf(err, "while connectign server to PostgreSQL")
 			}
-
-			log.Printf("server with PostgreSQL listening to HTTP requests on %q and to gRPC requests on %q!", httpPort, port)
 
 			if err := s.Serve(); err != nil {
 				return errors.Wrap(err, "while listening to requests")
