@@ -15,7 +15,7 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-// TODO: Add comments
+// Client represents a gRPC BotioCLient with basic CRUD methods.
 type Client interface {
 	AddCommand(context.Context, *proto.BotCommand) (*empty.Empty, error)
 	GetCommand(context.Context, *proto.Command) (*proto.BotCommand, error)
@@ -31,8 +31,13 @@ type client struct {
 	client proto.BotioClient
 }
 
+// ConnOption represents a connection option for a new Client.
 type ConnOption func() (*grpc.ClientConn, error)
 
+// WithInsecureConn receives an URL and creates a new non-secured
+// connection that it will be assigned to a new Client at the moment of its creation.
+// If something goes wrong while creating the insecure connection it returns
+// a non-nil error.
 func WithInsecureConn(url string) ConnOption {
 	return func() (*grpc.ClientConn, error) {
 		conn, err := grpc.Dial(url, grpc.WithInsecure())
@@ -44,6 +49,10 @@ func WithInsecureConn(url string) ConnOption {
 	}
 }
 
+// WithTLSSecureConn receives an URL and SSL related filenames and
+// creates a TLS secured connection that it will be assigned to a new Client at the
+// moment of its creation. If something goes wrong while loading the TLS configuration
+// or while reading the received certificates it will return a non-nil error.
 func WithTLSSecureConn(url, server, crt, key, ca string) ConnOption {
 	return func() (*grpc.ClientConn, error) {
 		cert, err := tls.LoadX509KeyPair(crt, key)
@@ -76,6 +85,9 @@ func WithTLSSecureConn(url, server, crt, key, ca string) ConnOption {
 	}
 }
 
+// New receives and addres, a JWT token for authentication and an option to the new
+// Client's connection that is returned. If something goes wrong while
+// applying the connection option it returns a non-nil error.
 func New(addr string, jwt string, connOpt ConnOption) (Client, error) {
 	c := &client{}
 	c.addr = addr

@@ -28,11 +28,11 @@ func serverCmd(commands ...*cobra.Command) *cobra.Command {
 }
 
 func serverWithBoltDB() *cobra.Command {
-	var key string
 	var cacheCap int
 	var collection string
 	var database string
 	var httpPort string
+	var key string
 	var port string
 	var sslca string
 	var sslcrt string
@@ -44,11 +44,11 @@ func serverWithBoltDB() *cobra.Command {
 		Example: "botio server bolt --database ./data/botio.db --collection commands --http :8081 --port :9091",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			serverOptions := []server.Option{
-				server.WithTextLogger(os.Stdout),
+				server.WithBoltDB(database, collection),
 				server.WithHTTPPort(httpPort),
 				server.WithListener(port),
-				server.WithBoltDB(database, collection),
 				server.WithRistrettoCache(cacheCap),
+				server.WithTextLogger(os.Stdout),
 			}
 
 			if sslcrt == "" || sslkey == "" || sslca == "" {
@@ -76,13 +76,14 @@ func serverWithBoltDB() *cobra.Command {
 
 			return nil
 		},
+		SilenceUsage: true,
 	}
 
-	s.Flags().StringVar(&key, "key", "", "key to generate a JWT token for authentication")
 	s.Flags().IntVar(&cacheCap, "cache", 262144000, "capacity of the in-memory cache in bytes")
 	s.Flags().StringVar(&collection, "collection", "commands", "collection used to store commands")
 	s.Flags().StringVar(&database, "database", "./botio.db", "database path")
 	s.Flags().StringVar(&httpPort, "http", ":8081", "port for HTTP server")
+	s.Flags().StringVar(&key, "key", "", "key to generate a JWT token for authentication")
 	s.Flags().StringVar(&port, "port", ":9091", "port for gRPC server")
 	s.Flags().StringVar(&sslca, "sslca", "", "ssl client certification file")
 	s.Flags().StringVar(&sslcrt, "sslcrt", "", "ssl certification file")
@@ -92,11 +93,11 @@ func serverWithBoltDB() *cobra.Command {
 }
 
 func serverWithPostgresDB() *cobra.Command {
-	// var key string
 	var cacheCap int
 	var database string
 	var host string
 	var httpPort string
+	var key string
 	var password string
 	var port string
 	var pport string
@@ -112,18 +113,22 @@ func serverWithPostgresDB() *cobra.Command {
 		Example: "botio server postgres --user postgres --password toor --database botio --table commands --http :8081 --port :9091",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			serverOptions := []server.Option{
-				server.WithTextLogger(os.Stdout),
 				server.WithHTTPPort(httpPort),
 				server.WithListener(port),
-				server.WithRistrettoCache(cacheCap),
 				// TODO: Clean pport
 				server.WithPostgresDB(host, pport, database, table, user, password),
+				server.WithRistrettoCache(cacheCap),
+				server.WithTextLogger(os.Stdout),
 			}
 
 			if sslcrt == "" || sslkey == "" || sslca == "" {
 				serverOptions = append(serverOptions, server.WithInsecureGRPCServer())
 			} else {
 				serverOptions = append(serverOptions, server.WithSecuredGRPCServer(sslcrt, sslkey, sslca))
+			}
+
+			if key != "" {
+				serverOptions = append(serverOptions, server.WithJWTAuthToken(key))
 			}
 
 			s, err := server.New(serverOptions...)
@@ -141,13 +146,14 @@ func serverWithPostgresDB() *cobra.Command {
 
 			return nil
 		},
+		SilenceUsage: true,
 	}
 
-	// s.Flags().StringVar(&key, "key", "", "authentication key to generate a jwt token")
 	s.Flags().IntVar(&cacheCap, "cache", 262144000, "capacity of the in-memory cache in bytes")
 	s.Flags().StringVar(&database, "database", "botio", "PostgreSQL database name")
 	s.Flags().StringVar(&host, "host", "postgres", "host of the PostgreSQL database")
 	s.Flags().StringVar(&httpPort, "http", ":8081", "port for HTTP server")
+	s.Flags().StringVar(&key, "key", "", "authentication key to generate a jwt token")
 	s.Flags().StringVar(&password, "password", "", "password for the user of the PostgreSQL database")
 	s.Flags().StringVar(&port, "port", ":9091", "port for gRPC server")
 	s.Flags().StringVar(&pport, "postgresPort", "5432", "port of the PostgreSQL database host")

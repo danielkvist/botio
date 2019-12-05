@@ -11,12 +11,12 @@ import (
 
 // Bot returns a *cobra.Command
 func Bot() *cobra.Command {
-	var jwtToken string
 	var addr string
+	var defaultResp string
 	var goroutines int
+	var jwtToken string
 	var platform string
 	var serverName string
-	var defaultResp string
 	var sslca string
 	var sslcrt string
 	var sslkey string
@@ -53,13 +53,14 @@ func Bot() *cobra.Command {
 
 			return nil
 		},
+		SilenceUsage: true,
 	}
 
-	b.Flags().StringVar(&jwtToken, "jwt", "", "authenticaton token")
 	b.Flags().IntVar(&goroutines, "goroutines", 10, "number of goroutines")
 	b.Flags().StringVar(&addr, "addr", ":9091", "botio's gRPC server address")
-	b.Flags().StringVar(&platform, "platform", "", "platform (discord or telegram)")
 	b.Flags().StringVar(&defaultResp, "resp", "I'm sorry but something's happened and I can't answer that command rigth now", "default response for when the bot fails to respond to a command")
+	b.Flags().StringVar(&jwtToken, "jwt", "", "authenticaton token")
+	b.Flags().StringVar(&platform, "platform", "", "platform (discord or telegram)")
 	b.Flags().StringVar(&sslca, "sslca", "", "ssl client certification file")
 	b.Flags().StringVar(&sslcrt, "sslcrt", "", "ssl certification file")
 	b.Flags().StringVar(&sslcrt, "sslkey", "", "ssl certification key file")
