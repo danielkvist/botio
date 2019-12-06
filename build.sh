@@ -6,6 +6,9 @@ main() {
         	go build -v -o botio-$GOOS-$GOARCH .
     	done
 	done
+
+	snapcraft
+	snapcraft push --release edge *.snap
 }
 
 main "$@"

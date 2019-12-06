@@ -1,0 +1,20 @@
+name: botio
+version: git
+summary: A CLI to create and manage chatbots.
+description: |
+  Botio is a CLI to create and manage easily chatbots for different platforms with the possibility of using differents databases.
+confinement: devmode
+base: core18
+
+parts:
+  httplab:
+    plugin: go
+    go-importpath: github.com/danielkvist/botio
+    source: .
+    source-type: git
+    build-packages:
+      - gcc
+
+apps:
+  botio:
+    command: bin/botio

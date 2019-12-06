@@ -59,6 +59,12 @@ go get -u github.com/danielkvist/botio
 docker image pull danielkvist/botio
 ```
 
+### Snap
+
+```bash
+snap install --edge --devmode botio
+```
+
 ## Development
 
 ### Clone
