@@ -233,7 +233,6 @@ func WithJSONLogger(out io.Writer) Option {
 		s.log = logrus.New()
 		s.log.SetFormatter(&logrus.JSONFormatter{
 			TimestampFormat: time.RFC850,
-			PrettyPrint:     true,
 		})
 		s.log.Out = out
 

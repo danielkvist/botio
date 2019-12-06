@@ -32,6 +32,7 @@ func serverWithBoltDB() *cobra.Command {
 	var collection string
 	var database string
 	var httpPort string
+	var jsonOutput bool
 	var key string
 	var port string
 	var sslca string
@@ -43,12 +44,17 @@ func serverWithBoltDB() *cobra.Command {
 		Short:   "Starts a Botio server with BoltDB.",
 		Example: "botio server bolt --database ./data/botio.db --collection commands --key mysupersecretkey",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if key == "" {
+				return errors.New("you need to provide a valid key for JWT based authentication")
+			}
+
 			serverOptions := []server.Option{
 				server.WithBoltDB(database, collection),
 				server.WithHTTPPort(httpPort),
 				server.WithListener(port),
 				server.WithRistrettoCache(cacheCap),
 				server.WithTextLogger(os.Stdout),
+				server.WithJWTAuthToken(key),
 			}
 
 			if sslcrt == "" || sslkey == "" || sslca == "" {
@@ -57,8 +63,8 @@ func serverWithBoltDB() *cobra.Command {
 				serverOptions = append(serverOptions, server.WithSecuredGRPCServer(sslcrt, sslkey, sslca))
 			}
 
-			if key != "" {
-				serverOptions = append(serverOptions, server.WithJWTAuthToken(key))
+			if jsonOutput {
+				serverOptions = append(serverOptions, server.WithJSONLogger(os.Stdout))
 			}
 
 			s, err := server.New(serverOptions...)
@@ -79,6 +85,7 @@ func serverWithBoltDB() *cobra.Command {
 		SilenceUsage: true,
 	}
 
+	s.Flags().BoolVar(&jsonOutput, "json", false, "enables JSON formatted logs")
 	s.Flags().IntVar(&cacheCap, "cache", 262144000, "capacity of the in-memory cache in bytes")
 	s.Flags().StringVar(&collection, "collection", "commands", "collection used to store commands")
 	s.Flags().StringVar(&database, "database", "./botio.db", "database path")
@@ -97,6 +104,7 @@ func serverWithPostgresDB() *cobra.Command {
 	var database string
 	var host string
 	var httpPort string
+	var jsonOutput bool
 	var key string
 	var password string
 	var port string
@@ -112,6 +120,10 @@ func serverWithPostgresDB() *cobra.Command {
 		Short:   "Starts a Botio server with PostgreSQL.",
 		Example: "botio server postgres --user postgres --password toor --database botio --table commands --key mysupersecretkey",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if key == "" {
+				return errors.New("you need to provide a valid key for JWT based authentication")
+			}
+
 			serverOptions := []server.Option{
 				server.WithHTTPPort(httpPort),
 				server.WithListener(port),
@@ -119,6 +131,7 @@ func serverWithPostgresDB() *cobra.Command {
 				server.WithPostgresDB(host, pport, database, table, user, password),
 				server.WithRistrettoCache(cacheCap),
 				server.WithTextLogger(os.Stdout),
+				server.WithJWTAuthToken(key),
 			}
 
 			if sslcrt == "" || sslkey == "" || sslca == "" {
@@ -127,8 +140,8 @@ func serverWithPostgresDB() *cobra.Command {
 				serverOptions = append(serverOptions, server.WithSecuredGRPCServer(sslcrt, sslkey, sslca))
 			}
 
-			if key != "" {
-				serverOptions = append(serverOptions, server.WithJWTAuthToken(key))
+			if jsonOutput {
+				serverOptions = append(serverOptions, server.WithJSONLogger(os.Stdout))
 			}
 
 			s, err := server.New(serverOptions...)
@@ -149,6 +162,7 @@ func serverWithPostgresDB() *cobra.Command {
 		SilenceUsage: true,
 	}
 
+	s.Flags().BoolVar(&jsonOutput, "json", false, "enables JSON formatted logs")
 	s.Flags().IntVar(&cacheCap, "cache", 262144000, "capacity of the in-memory cache in bytes")
 	s.Flags().StringVar(&database, "database", "botio", "PostgreSQL database name")
 	s.Flags().StringVar(&host, "host", "postgres", "host of the PostgreSQL database")
