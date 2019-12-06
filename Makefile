@@ -1,3 +1,5 @@
+PLATFORMS := linux/amd64 linux/arm linux/arm64 windows/amd64 darwin/amd64
+
 install:
 	# More info: https://github.com/grpc-ecosystem/grpc-gateway
 	go get -u \
@@ -21,5 +23,4 @@ generate:
 
 setup: install generate
 
-build:
-	go build .
+build: ./build.sh
