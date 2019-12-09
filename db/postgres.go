@@ -3,23 +3,26 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/danielkvist/botio/proto"
 
 	// postgres driver
-	_ "github.com/lib/pq"
+	_ "github.com/jackc/pgx/v4"
 )
 
 // Postgres wraps a sql.DB client for PostgreSQL and
 // satisfies the DB interface.
 type Postgres struct {
-	Host     string
-	Port     string
-	User     string
-	Password string
-	DB       string
-	Table    string
-	client   *sql.DB
+	Host            string
+	Port            string
+	User            string
+	Password        string
+	DB              string
+	Table           string
+	client          *sql.DB
+	MaxConns        int
+	MaxConnLifetime time.Duration
 }
 
 // Connect tries to connect to a PostgreSQL database. If it fails it returns
@@ -30,6 +33,8 @@ func (ps *Postgres) Connect() error {
 	if err != nil {
 		return fmt.Errorf("while validating arguments to connect to DB: %v", err)
 	}
+	client.SetMaxOpenConns(ps.MaxConns)
+	client.SetConnMaxLifetime(ps.MaxConnLifetime)
 
 	ps.client = client
 	if err := ps.client.Ping(); err != nil {

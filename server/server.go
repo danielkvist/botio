@@ -80,7 +80,7 @@ func WithBoltDB(path, col string) Option {
 // WithPostgresDB receives a set of parameters to create a PostgreSQL client
 // and assign it to the new server. If something goes wrong while
 // configuring the client it panics.
-func WithPostgresDB(host, port, dbName, table, user, password string) Option {
+func WithPostgresDB(host, port, dbName, table, user, password string, conns int, lifeConns time.Duration) Option {
 	return func(s *server) error {
 		database := db.Create("postgres")
 		ps, ok := database.(*db.Postgres)
@@ -94,6 +94,8 @@ func WithPostgresDB(host, port, dbName, table, user, password string) Option {
 		ps.Password = password
 		ps.DB = dbName
 		ps.Table = table
+		ps.MaxConns = conns
+		ps.MaxConnLifetime = lifeConns
 
 		s.db = ps
 		s.dbPlatform = "PostgreSQL"
@@ -244,6 +246,10 @@ func WithJSONLogger(out io.Writer) Option {
 // the received key a JWT that is assigned to the Server.
 func WithJWTAuthToken(key string) Option {
 	return func(s *server) error {
+		if key == "" {
+			return errors.New("key provided is invalid")
+		}
+
 		token := jwt.New(jwt.SigningMethodHS256)
 		tokenStr, err := token.SignedString([]byte(key))
 		if err != nil {
