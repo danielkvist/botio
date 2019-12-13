@@ -116,7 +116,7 @@ func print() *cobra.Command {
 	print.Flags().StringVar(&sslca, "sslca", "", "ssl client certification file")
 	print.Flags().StringVar(&sslcrt, "sslcrt", "", "ssl certification file")
 	print.Flags().StringVar(&sslkey, "sslkey", "", "ssl certification key file")
-	print.Flags().StringVar(&token, "token", "", "uthentication token")
+	print.Flags().StringVar(&token, "token", "", "authentication token")
 
 	return print
 }

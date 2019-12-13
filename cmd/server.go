@@ -12,7 +12,7 @@ import (
 
 // Server returns a *cobra.Command.
 func Server() *cobra.Command {
-	return serverCmd(serverWithBoltDB(), serverWithPostgresDB())
+	return serverCmd(serverWithBoltDB(), serverWithPostgresDB(), serverWithSQLiteDB())
 }
 
 func serverCmd(commands ...*cobra.Command) *cobra.Command {
@@ -173,6 +173,78 @@ func serverWithPostgresDB() *cobra.Command {
 	s.Flags().StringVar(&sslkey, "sslkey", "", "ssl certification key file")
 	s.Flags().StringVar(&table, "table", "commands", "table of the PostgreSQL database")
 	s.Flags().StringVar(&user, "user", "", "user of the PostgreSQL database")
+
+	return s
+}
+
+func serverWithSQLiteDB() *cobra.Command {
+	var cacheCap int
+	var database string
+	var httpPort string
+	var jsonOutput bool
+	var key string
+	var maxConnLifetime time.Duration
+	var maxConns int
+	var port string
+	var sslca string
+	var sslcrt string
+	var sslkey string
+	var table string
+
+	s := &cobra.Command{
+		Use:     "sqlite",
+		Short:   "Starts a Botio server with SQLite3.",
+		Example: "botio server sqlite --key mysupersecretkey",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			serverOptions := []server.Option{
+				server.WithHTTPPort(httpPort),
+				server.WithListener(port),
+				server.WithSQLiteDB(database, table, maxConns, maxConnLifetime),
+				server.WithRistrettoCache(cacheCap),
+				server.WithTextLogger(os.Stdout),
+				server.WithJWTAuthToken(key),
+			}
+
+			if sslcrt == "" || sslkey == "" || sslca == "" {
+				serverOptions = append(serverOptions, server.WithInsecureGRPCServer())
+			} else {
+				serverOptions = append(serverOptions, server.WithSecuredGRPCServer(sslcrt, sslkey, sslca))
+			}
+
+			if jsonOutput {
+				serverOptions = append(serverOptions, server.WithJSONLogger(os.Stdout))
+			}
+
+			s, err := server.New(serverOptions...)
+			if err != nil {
+				return errors.Wrap(err, "while creating a new Botio server with SQLite")
+			}
+
+			if err := s.Connect(); err != nil {
+				return errors.Wrapf(err, "while connectign server to SQLite")
+			}
+
+			if err := s.Serve(); err != nil {
+				return errors.Wrap(err, "while listening to requests")
+			}
+
+			return nil
+		},
+		SilenceUsage: true,
+	}
+
+	s.Flags().BoolVar(&jsonOutput, "json", false, "enables JSON formatted logs")
+	s.Flags().DurationVar(&maxConnLifetime, "maxConnLifetime", 2*time.Minute, "sets the lifetime of idle connections")
+	s.Flags().IntVar(&cacheCap, "cache", 262144000, "capacity of the in-memory cache in bytes")
+	s.Flags().IntVar(&maxConns, "maxConns", 5, "maximum number of open connections")
+	s.Flags().StringVar(&database, "database", "./data/botio.db", "database path")
+	s.Flags().StringVar(&httpPort, "http", ":8081", "port for HTTP server")
+	s.Flags().StringVar(&key, "key", "", "authentication key to generate a jwt token")
+	s.Flags().StringVar(&port, "port", ":9091", "port for gRPC server")
+	s.Flags().StringVar(&sslca, "sslca", "", "ssl client certification file")
+	s.Flags().StringVar(&sslcrt, "sslcrt", "", "ssl certification file")
+	s.Flags().StringVar(&sslkey, "sslkey", "", "ssl certification key file")
+	s.Flags().StringVar(&table, "table", "commands", "table of the SQLite database")
 
 	return s
 }

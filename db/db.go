@@ -27,6 +27,8 @@ func Create(env string) DB {
 		return &Bolt{}
 	case "postgres":
 		return &Postgres{}
+	case "sqlite":
+		return &SQLite{}
 	case "testing":
 		var m Mem
 		m = make(map[string]string)

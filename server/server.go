@@ -14,8 +14,8 @@ import (
 	"github.com/danielkvist/botio/cache"
 	"github.com/danielkvist/botio/db"
 	"github.com/danielkvist/botio/proto"
-	"github.com/dgrijalva/jwt-go"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/golang/protobuf/ptypes/empty"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
@@ -58,7 +58,7 @@ type Option func(s *server) error
 
 // WithBoltDB receives a path and a colletion to create a BoltDB client
 // and assign it to the new server. If something goes wrong while
-// configuring the client it panics.
+// configuring the client it returns a non-nil error.
 func WithBoltDB(path, col string) Option {
 	return func(s *server) error {
 		database := db.Create("local")
@@ -79,7 +79,7 @@ func WithBoltDB(path, col string) Option {
 
 // WithPostgresDB receives a set of parameters to create a PostgreSQL client
 // and assign it to the new server. If something goes wrong while
-// configuring the client it panics.
+// configuring the client it returns a non-nil error.
 func WithPostgresDB(host, port, dbName, table, user, password string, conns int, lifeConns time.Duration) Option {
 	return func(s *server) error {
 		database := db.Create("postgres")
@@ -99,6 +99,31 @@ func WithPostgresDB(host, port, dbName, table, user, password string, conns int,
 
 		s.db = ps
 		s.dbPlatform = "PostgreSQL"
+
+		return nil
+	}
+}
+
+// WithSQLiteDB receives a set of basic parameters to create a SQLite3 client
+// and assigns it to the new Server. If something goes wrong while
+// configuring the the client it returns a non-nil error.
+func WithSQLiteDB(path, table string, conns int, lifeConns time.Duration) Option {
+	return func(s *server) error {
+		database := db.Create("sqlite")
+		sq, ok := database.(*db.SQLite)
+		if !ok {
+			return errors.Errorf("while connecting SQLite database on path %q a fatal error happened", path)
+		}
+
+		fmt.Println(path, table, conns, lifeConns)
+
+		sq.Path = path
+		sq.Table = table
+		sq.MaxConns = conns
+		sq.MaxConnLifetime = lifeConns
+
+		s.db = sq
+		s.dbPlatform = "SQLite3"
 
 		return nil
 	}

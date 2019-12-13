@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/danielkvist/botio/proto"
+
 	bolt "go.etcd.io/bbolt"
 )
 

@@ -59,9 +59,9 @@ func (ps *Postgres) Connect() error {
 // SQL statement it returns a non-nil error.
 func (ps *Postgres) Add(cmd *proto.BotCommand) error {
 	statement := `INSERT INTO $1 (command, response) VALUES ($2, $3);`
-
 	el := cmd.GetCmd().GetCommand()
 	val := cmd.GetResp().GetResponse()
+
 	if _, err := ps.client.Exec(statement, ps.Table, el, val); err != nil {
 		return fmt.Errorf("while adding command %q: %v", el, err)
 	}

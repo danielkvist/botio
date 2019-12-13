@@ -34,12 +34,12 @@ Botio is a CLI to create and manage easily chatbots for different platforms with
 
 - BoltDB
 - PostgreSQL
+- SQLite 3.
 
 #### Work is in progress to add support for:
 
 - MongoDB.
 - Redis.
-- SQLite.
 
 ### Cache
 
@@ -130,6 +130,7 @@ Usage:
 Available Commands:
   bolt        Starts a Botio server with BoltDB.
   postgres    Starts a Botio server with PostgreSQL.
+  sqlite      Starts a Botio server with SQLite3.
 
 Flags:
   -h, --help   help for server
@@ -143,7 +144,7 @@ For example, if you want to initialize a Botio's server with BoltDB:
 botio server bolt --key mysupersecretkey
 ```
 
-> IMPORTANT: Due to how PostgreSQL works you will need to have created the database before trying to connect Botio to it.
+> IMPORTANT: Due to how PostgreSQL and SQLite 3 works you will need to have created the database before trying to connect Botio to it.
 
 > IMPORTANT: The first log message will contain your generated JWT for authentication.
 
