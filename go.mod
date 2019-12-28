@@ -3,7 +3,7 @@ module github.com/danielkvist/botio
 go 1.12
 
 require (
-	github.com/bwmarrin/discordgo v0.20.1
+	github.com/bwmarrin/discordgo v0.20.2
 	github.com/dgraph-io/ristretto v0.0.0-20191114170855-99d1bbbf28e6
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/golang/protobuf v1.3.2
