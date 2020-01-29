@@ -12,7 +12,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway v1.12.1
 	github.com/jackc/pgtype v1.0.3 // indirect
 	github.com/jackc/pgx/v4 v4.1.2
-	github.com/mattn/go-sqlite3 v2.0.2+incompatible
+	github.com/mattn/go-sqlite3 v2.0.3+incompatible
 	github.com/pkg/errors v0.8.1
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/cobra v0.0.5
