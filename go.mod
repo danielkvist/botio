@@ -9,7 +9,7 @@ require (
 	github.com/golang/protobuf v1.3.3
 	github.com/gorilla/websocket v1.4.1 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.0
-	github.com/grpc-ecosystem/grpc-gateway v1.12.1
+	github.com/grpc-ecosystem/grpc-gateway v1.14.2
 	github.com/jackc/pgtype v1.0.3 // indirect
 	github.com/jackc/pgx/v4 v4.1.2
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible
