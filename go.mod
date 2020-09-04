@@ -9,7 +9,7 @@ require (
 	github.com/golang/protobuf v1.3.3
 	github.com/gorilla/websocket v1.4.1 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.0
-	github.com/grpc-ecosystem/grpc-gateway v1.12.1
+	github.com/grpc-ecosystem/grpc-gateway v1.14.8
 	github.com/jackc/pgtype v1.0.3 // indirect
 	github.com/jackc/pgx/v4 v4.1.2
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible
@@ -22,8 +22,7 @@ require (
 	golang.org/x/crypto v0.0.0-20191206172530-e9b2fee46413 // indirect
 	golang.org/x/net v0.0.0-20191204025024-5ee1b9f4859a // indirect
 	golang.org/x/sys v0.0.0-20191204072324-ce4227a45e2e // indirect
-	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543 // indirect
-	google.golang.org/genproto v0.0.0-20191205163323-51378566eb59
-	google.golang.org/grpc v1.27.0
+	google.golang.org/genproto v0.0.0-20200513103714-09dca8ec2884
+	google.golang.org/grpc v1.31.1
 	gopkg.in/yaml.v2 v2.2.7 // indirect
 )
